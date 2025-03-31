@@ -1,6 +1,13 @@
+"""
+AutoGen Studio Component.
+
+This module provides functionality to build and run AutoGen Studio locally,
+providing a visual interface for creating and testing agent workflows.
+"""
+
 import os
 import argparse
-from utils import run_command, debug_args, ROOT_DIR
+from menu.utils import run_command, debug_args, ROOT_DIR
 
 
 @debug_args

@@ -30,7 +30,7 @@ def run_all(args: argparse.Namespace) -> int:
     print(f"[DEBUG] Module path: {os.path.abspath(__file__)}")
 
     # Get a list of all component modules
-    from import components
+    from menu import components
 
     # First, let's collect the components to run
     component_list = []

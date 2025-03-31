@@ -7,7 +7,7 @@ how to integrate external knowledge with LLM agents through retrieval.
 
 import os
 import argparse
-from utils import run_command, debug_args
+from menu.utils import run_command, debug_args
 
 
 @debug_args

@@ -7,7 +7,7 @@ models through the AutoGen framework.
 
 import os
 import argparse
-from utils import run_command, debug_args
+from menu.utils import run_command, debug_args
 
 
 @debug_args

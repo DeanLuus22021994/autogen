@@ -7,7 +7,7 @@ making it easy to get started with the full-featured UI for AutoGen.
 
 import os
 import argparse
-from utils import run_command, debug_args, ROOT_DIR
+from menu.utils import run_command, debug_args, ROOT_DIR
 
 
 @debug_args
@@ -64,7 +64,7 @@ def docker_studio(args: argparse.Namespace) -> int:
         "-e", f"AUTOGENSTUDIO_ENABLE_CACHE={str(args.enable_cache).lower()}",
         "-e", f"AUTOGENSTUDIO_CACHE_DIR=/app/.cache",
         "-e", f"AUTOGENSTUDIO_NUM_WORKERS={args.num_workers}",
-        "-e", f"AUTOGENSTUDIO_LOG_LEVEL={args.log_level}",
+        "-e", "AUTOGENSTUDIO_LOG_LEVEL={args.log_level}",
         "-e", f"AUTOGENSTUDIO_REQUEST_TIMEOUT={args.request_timeout}",
         "-e", f"AUTOGENSTUDIO_MAX_FILE_SIZE={args.max_file_size}",
         "--memory", args.container_memory,
