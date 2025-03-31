@@ -4,7 +4,7 @@ from typing import Any, Dict
 from autogen_core.tools import BaseTool, FunctionTool
 from pydantic import BaseModel, Field, model_validator
 
-from .. import EVENT_LOGGER_NAME
+from import EVENT_LOGGER_NAME
 
 event_logger = logging.getLogger(EVENT_LOGGER_NAME)
 
@@ -37,10 +37,12 @@ class Handoff(BaseModel):
         else:
             name = values["name"]
             if not isinstance(name, str):
-                raise ValueError(f"Handoff name must be a string: {values['name']}")
+                raise ValueError(
+                    f"Handoff name must be a string: {values['name']}")
             # Check if name is a valid identifier.
             if not name.isidentifier():
-                raise ValueError(f"Handoff name must be a valid identifier: {values['name']}")
+                raise ValueError(
+                    f"Handoff name must be a valid identifier: {values['name']}")
         if not values.get("message"):
             values["message"] = (
                 f"Transferred to {values['target']}, adopting the role of {values['target']} immediately."

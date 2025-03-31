@@ -6,8 +6,8 @@ from autogen_core.code_executor import CodeBlock, CodeExecutor
 from pydantic import BaseModel
 from typing_extensions import Self
 
-from ..base import Response
-from ..messages import BaseChatMessage, TextMessage
+from base import Response
+from messages import BaseChatMessage, TextMessage
 from ._base_chat_agent import BaseChatAgent
 
 
@@ -129,7 +129,8 @@ class CodeExecutorAgent(BaseChatAgent, Component[CodeExecutorAgentConfig]):
         for msg in messages:
             if isinstance(msg, TextMessage):
                 if self._sources is None or msg.source in self._sources:
-                    code_blocks.extend(self._extract_markdown_code_blocks(msg.content))
+                    code_blocks.extend(
+                        self._extract_markdown_code_blocks(msg.content))
         if code_blocks:
             # Execute the code blocks.
             result = await self._code_executor.execute_code_blocks(code_blocks, cancellation_token=cancellation_token)

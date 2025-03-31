@@ -3,8 +3,8 @@ from typing import List
 from pydantic import BaseModel
 from typing_extensions import Self
 
-from .._component_config import Component
-from ..models import LLMMessage
+from _component_config import Component
+from models import LLMMessage
 from ._chat_completion_context import ChatCompletionContext
 
 

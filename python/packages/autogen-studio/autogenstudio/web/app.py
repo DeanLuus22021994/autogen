@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from loguru import logger
 
-from ..version import VERSION
+from version import VERSION
 from .auth import authroutes
 from .auth.middleware import AuthMiddleware
 from .config import settings

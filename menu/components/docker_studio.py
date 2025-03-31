@@ -7,7 +7,7 @@ making it easy to get started with the full-featured UI for AutoGen.
 
 import os
 import argparse
-from ..utils import run_command, debug_args, ROOT_DIR
+from utils import run_command, debug_args, ROOT_DIR
 
 
 @debug_args

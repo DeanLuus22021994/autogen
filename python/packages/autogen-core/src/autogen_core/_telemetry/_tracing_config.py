@@ -6,8 +6,8 @@ from opentelemetry.trace import SpanKind
 from opentelemetry.util import types
 from typing_extensions import NotRequired
 
-from .._agent_id import AgentId
-from .._topic import TopicId
+from _agent_id import AgentId
+from _topic import TopicId
 from ._constants import NAMESPACE
 
 logger = logging.getLogger("autogen_core")
@@ -92,11 +92,13 @@ class ExtraMessageRuntimeAttributes(TypedDict):
 
 
 MessagingDestination = Union[AgentId, TopicId, str, None]
-MessagingOperation = Literal["create", "send", "publish", "receive", "intercept", "process", "ack"]
+MessagingOperation = Literal["create", "send",
+                             "publish", "receive", "intercept", "process", "ack"]
 
 
 class MessageRuntimeTracingConfig(
-    TracingConfig[MessagingOperation, MessagingDestination, ExtraMessageRuntimeAttributes]
+    TracingConfig[MessagingOperation, MessagingDestination,
+                  ExtraMessageRuntimeAttributes]
 ):
     """
     A class that defines the configuration for message runtime instrumentation.

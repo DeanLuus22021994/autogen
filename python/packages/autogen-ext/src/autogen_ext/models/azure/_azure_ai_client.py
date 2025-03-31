@@ -60,10 +60,11 @@ from autogen_ext.models.azure.config import (
     AzureAIChatCompletionClientConfig,
 )
 
-from .._utils.parse_r1_content import parse_r1_content
+from _utils.parse_r1_content import parse_r1_content
 
 create_kwargs = set(getfullargspec(ChatCompletionsClient.complete).kwonlyargs)
-AzureMessage = Union[AzureSystemMessage, AzureUserMessage, AzureAssistantMessage, AzureToolMessage]
+AzureMessage = Union[AzureSystemMessage, AzureUserMessage,
+                     AzureAssistantMessage, AzureToolMessage]
 
 logger = logging.getLogger(EVENT_LOGGER_NAME)
 
@@ -103,7 +104,8 @@ def convert_tools(tools: Sequence[Tool | ToolSchema]) -> List[ChatCompletionsToo
 def _func_call_to_azure(message: FunctionCall) -> ChatCompletionsToolCall:
     return ChatCompletionsToolCall(
         id=message.id,
-        function=AzureFunctionCall(arguments=message.arguments, name=message.name),
+        function=AzureFunctionCall(
+            arguments=message.arguments, name=message.name),
     )
 
 
@@ -123,7 +125,8 @@ def _user_message_to_azure(message: UserMessage) -> AzureUserMessage:
             elif isinstance(part, Image):
                 # TODO: support url based images
                 # TODO: support specifying details
-                parts.append(ImageContentItem(image_url=ImageUrl(url=part.data_uri, detail=ImageDetailLevel.AUTO)))
+                parts.append(ImageContentItem(image_url=ImageUrl(
+                    url=part.data_uri, detail=ImageDetailLevel.AUTO)))
             else:
                 raise ValueError(f"Unknown content type: {message.content}")
         return AzureUserMessage(content=parts)
@@ -170,9 +173,11 @@ def assert_valid_name(name: str) -> str:
     For munging LLM responses use _normalize_name to ensure LLM specified names don't break the API.
     """
     if not re.match(r"^[a-zA-Z0-9_-]+$", name):
-        raise ValueError(f"Invalid name: {name}. Only letters, numbers, '_' and '-' are allowed.")
+        raise ValueError(
+            f"Invalid name: {name}. Only letters, numbers, '_' and '-' are allowed.")
     if len(name) > 64:
-        raise ValueError(f"Invalid name: {name}. Name must be less than 64 characters.")
+        raise ValueError(
+            f"Invalid name: {name}. Name must be less than 64 characters.")
     return name
 
 
@@ -297,14 +302,18 @@ class AzureAIChatCompletionClient(ChatCompletionClient):
     @staticmethod
     def _validate_config(config: Dict[str, Any]) -> AzureAIChatCompletionClientConfig:
         if "endpoint" not in config:
-            raise ValueError("endpoint is required for AzureAIChatCompletionClient")
+            raise ValueError(
+                "endpoint is required for AzureAIChatCompletionClient")
         if "credential" not in config:
-            raise ValueError("credential is required for AzureAIChatCompletionClient")
+            raise ValueError(
+                "credential is required for AzureAIChatCompletionClient")
         if "model_info" not in config:
-            raise ValueError("model_info is required for AzureAIChatCompletionClient")
+            raise ValueError(
+                "model_info is required for AzureAIChatCompletionClient")
         validate_model_info(config["model_info"])
         if _is_github_model(config["endpoint"]) and "model" not in config:
-            raise ValueError("model is required for when using a Github model with AzureAIChatCompletionClient")
+            raise ValueError(
+                "model is required for when using a Github model with AzureAIChatCompletionClient")
         return cast(AzureAIChatCompletionClientConfig, config)
 
     @staticmethod
@@ -333,7 +342,8 @@ class AzureAIChatCompletionClient(ChatCompletionClient):
             for message in messages:
                 if isinstance(message, UserMessage):
                     if isinstance(message.content, list) and any(isinstance(x, Image) for x in message.content):
-                        raise ValueError("Model does not support vision and image was provided")
+                        raise ValueError(
+                            "Model does not support vision and image was provided")
 
         if json_output is not None:
             if self.model_info["json_output"] is False and json_output is True:
@@ -341,7 +351,8 @@ class AzureAIChatCompletionClient(ChatCompletionClient):
 
             if isinstance(json_output, type):
                 # TODO: we should support this in the future.
-                raise ValueError("Structured output is not currently supported for AzureAIChatCompletionClient")
+                raise ValueError(
+                    "Structured output is not currently supported for AzureAIChatCompletionClient")
 
             if json_output is True and "response_format" not in create_args:
                 create_args["response_format"] = "json_object"
@@ -362,7 +373,8 @@ class AzureAIChatCompletionClient(ChatCompletionClient):
     ) -> CreateResult:
         extra_create_args_keys = set(extra_create_args.keys())
         if not create_kwargs.issuperset(extra_create_args_keys):
-            raise ValueError(f"Extra create args are invalid: {extra_create_args_keys - create_kwargs}")
+            raise ValueError(
+                f"Extra create args are invalid: {extra_create_args_keys - create_kwargs}")
 
         # Copy the create args and overwrite anything in extra_create_args
         create_args = self._create_args.copy()
@@ -371,14 +383,16 @@ class AzureAIChatCompletionClient(ChatCompletionClient):
         self._validate_model_info(messages, tools, json_output, create_args)
 
         azure_messages_nested = [to_azure_message(msg) for msg in messages]
-        azure_messages = [item for sublist in azure_messages_nested for item in sublist]
+        azure_messages = [
+            item for sublist in azure_messages_nested for item in sublist]
 
         task: Task[ChatCompletions]
 
         if len(tools) > 0:
             converted_tools = convert_tools(tools)
             task = asyncio.create_task(  # type: ignore
-                self._client.complete(messages=azure_messages, tools=converted_tools, **create_args)  # type: ignore
+                self._client.complete(
+                    messages=azure_messages, tools=converted_tools, **create_args)  # type: ignore
             )
         else:
             task = asyncio.create_task(  # type: ignore
@@ -457,7 +471,8 @@ class AzureAIChatCompletionClient(ChatCompletionClient):
     ) -> AsyncGenerator[Union[str, CreateResult], None]:
         extra_create_args_keys = set(extra_create_args.keys())
         if not create_kwargs.issuperset(extra_create_args_keys):
-            raise ValueError(f"Extra create args are invalid: {extra_create_args_keys - create_kwargs}")
+            raise ValueError(
+                f"Extra create args are invalid: {extra_create_args_keys - create_kwargs}")
 
         create_args: Dict[str, Any] = self._create_args.copy()
         create_args.update(extra_create_args)
@@ -466,15 +481,18 @@ class AzureAIChatCompletionClient(ChatCompletionClient):
 
         # azure_messages = [to_azure_message(m) for m in messages]
         azure_messages_nested = [to_azure_message(msg) for msg in messages]
-        azure_messages = [item for sublist in azure_messages_nested for item in sublist]
+        azure_messages = [
+            item for sublist in azure_messages_nested for item in sublist]
 
         if len(tools) > 0:
             converted_tools = convert_tools(tools)
             task = asyncio.create_task(
-                self._client.complete(messages=azure_messages, tools=converted_tools, stream=True, **create_args)
+                self._client.complete(
+                    messages=azure_messages, tools=converted_tools, stream=True, **create_args)
             )
         else:
-            task = asyncio.create_task(self._client.complete(messages=azure_messages, stream=True, **create_args))
+            task = asyncio.create_task(self._client.complete(
+                messages=azure_messages, stream=True, **create_args))
 
         if cancellation_token is not None:
             cancellation_token.link_future(task)
@@ -503,12 +521,14 @@ class AzureAIChatCompletionClient(ChatCompletionClient):
             choice = chunk.choices[0] if len(chunk.choices) > 0 else None
             if choice and choice.finish_reason is not None:
                 if isinstance(choice.finish_reason, CompletionsFinishReason):
-                    finish_reason = cast(FinishReasons, choice.finish_reason.value)
+                    finish_reason = cast(
+                        FinishReasons, choice.finish_reason.value)
                 else:
                     if choice.finish_reason in ["stop", "length", "function_calls", "content_filter", "unknown"]:
                         finish_reason = choice.finish_reason  # type: ignore
                     else:
-                        raise ValueError(f"Unexpected finish reason: {choice.finish_reason}")
+                        raise ValueError(
+                            f"Unexpected finish reason: {choice.finish_reason}")
 
             # We first try to load the content
             if choice and choice.delta.content is not None:
@@ -523,7 +543,8 @@ class AzureAIChatCompletionClient(ChatCompletionClient):
                     else:
                         idx = tool_call_chunk.id
                     if idx not in full_tool_calls:
-                        full_tool_calls[idx] = FunctionCall(id="", arguments="", name="")
+                        full_tool_calls[idx] = FunctionCall(
+                            id="", arguments="", name="")
 
                     full_tool_calls[idx].id += tool_call_chunk.id
                     full_tool_calls[idx].name += tool_call_chunk.function.name

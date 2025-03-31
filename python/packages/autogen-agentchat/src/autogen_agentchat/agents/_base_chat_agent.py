@@ -4,14 +4,14 @@ from typing import Any, AsyncGenerator, List, Mapping, Sequence
 from autogen_core import CancellationToken, ComponentBase
 from pydantic import BaseModel
 
-from ..base import ChatAgent, Response, TaskResult
-from ..messages import (
+from base import ChatAgent, Response, TaskResult
+from messages import (
     BaseAgentEvent,
     BaseChatMessage,
     ModelClientStreamingChunkEvent,
     TextMessage,
 )
-from ..state import BaseState
+from state import BaseState
 
 
 class BaseChatAgent(ChatAgent, ABC, ComponentBase[BaseModel]):
@@ -41,7 +41,8 @@ class BaseChatAgent(ChatAgent, ABC, ComponentBase[BaseModel]):
     def __init__(self, name: str, description: str) -> None:
         self._name = name
         if self._name.isidentifier() is False:
-            raise ValueError("The agent name must be a valid Python identifier.")
+            raise ValueError(
+                "The agent name must be a valid Python identifier.")
         self._description = description
 
     @property
@@ -132,7 +133,8 @@ class BaseChatAgent(ChatAgent, ABC, ComponentBase[BaseModel]):
                     input_messages.append(msg)
                     output_messages.append(msg)
                 else:
-                    raise ValueError(f"Invalid message type in sequence: {type(msg)}")
+                    raise ValueError(
+                        f"Invalid message type in sequence: {type(msg)}")
         response = await self.on_messages(input_messages, cancellation_token)
         if response.inner_messages is not None:
             output_messages += response.inner_messages
@@ -171,7 +173,8 @@ class BaseChatAgent(ChatAgent, ABC, ComponentBase[BaseModel]):
                     output_messages.append(msg)
                     yield msg
                 else:
-                    raise ValueError(f"Invalid message type in sequence: {type(msg)}")
+                    raise ValueError(
+                        f"Invalid message type in sequence: {type(msg)}")
         async for message in self.on_messages_stream(input_messages, cancellation_token):
             if isinstance(message, Response):
                 yield message.chat_message

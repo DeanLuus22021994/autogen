@@ -33,7 +33,7 @@ from typing_extensions import AsyncGenerator, Union
 
 from autogen_ext.tools.semantic_kernel import KernelFunctionFromTool
 
-from .._utils.parse_r1_content import parse_r1_content
+from _utils.parse_r1_content import parse_r1_content
 
 logger = logging.getLogger(EVENT_LOGGER_NAME)
 
@@ -46,7 +46,8 @@ def ensure_serializable(data: BaseModel) -> BaseModel:
         json.dumps(data)
     except TypeError:
         # use `vars` to coerce nested data into dictionaries
-        data_json_from_dicts = json.dumps(data, default=lambda x: vars(x))  # type: ignore
+        data_json_from_dicts = json.dumps(
+            data, default=lambda x: vars(x))  # type: ignore
         data_obj = json.loads(data_json_from_dicts)
         data = type(data)(**data_obj)
     return data
@@ -358,7 +359,9 @@ class SKChatCompletionAdapter(ChatCompletionClient):
         """Build PromptExecutionSettings from extra_create_args"""
 
         if default_prompt_settings is not None:
-            prompt_args: dict[str, Any] = default_prompt_settings.prepare_settings_dict()  # type: ignore
+            # type: ignore
+            prompt_args: dict[str,
+                              Any] = default_prompt_settings.prepare_settings_dict()
         else:
             prompt_args = {}
 
@@ -384,7 +387,8 @@ class SKChatCompletionAdapter(ChatCompletionClient):
         current_tool_names = set(self._tools_plugin.functions.keys())
 
         # Get new tool names
-        new_tool_names = {tool.schema["name"] if isinstance(tool, Tool) else tool["name"] for tool in tools}
+        new_tool_names = {tool.schema["name"] if isinstance(
+            tool, Tool) else tool["name"] for tool in tools}
 
         # Remove tools that are no longer needed
         for tool_name in current_tool_names - new_tool_names:
@@ -395,7 +399,8 @@ class SKChatCompletionAdapter(ChatCompletionClient):
             if isinstance(tool, BaseTool):
                 # Convert Tool to KernelFunction using KernelFunctionFromTool
                 kernel_function = KernelFunctionFromTool(tool)  # type: ignore
-                self._tools_plugin.functions[tool.schema["name"]] = kernel_function
+                self._tools_plugin.functions[tool.schema["name"]
+                                             ] = kernel_function
 
         kernel.add_plugin(self._tools_plugin)
 
@@ -420,15 +425,18 @@ class SKChatCompletionAdapter(ChatCompletionClient):
                 else:
                     arguments = item.arguments or "{}"
 
-                function_calls.append(FunctionCall(id=item.id, name=full_name, arguments=arguments))
+                function_calls.append(FunctionCall(
+                    id=item.id, name=full_name, arguments=arguments))
         return function_calls
 
     def _get_kernel(self, extra_create_args: Mapping[str, Any]) -> Kernel:
         kernel = extra_create_args.get("kernel", self._kernel)
         if not kernel:
-            raise ValueError("kernel must be provided either in constructor or extra_create_args")
+            raise ValueError(
+                "kernel must be provided either in constructor or extra_create_args")
         if not isinstance(kernel, Kernel):
-            raise ValueError("kernel must be an instance of semantic_kernel.kernel.Kernel")
+            raise ValueError(
+                "kernel must be an instance of semantic_kernel.kernel.Kernel")
         return kernel
 
     def _get_prompt_settings(self, extra_create_args: Mapping[str, Any]) -> Optional[PromptExecutionSettings]:
@@ -468,7 +476,8 @@ class SKChatCompletionAdapter(ChatCompletionClient):
             CreateResult: The result of the chat completion.
         """
         if isinstance(json_output, type) and issubclass(json_output, BaseModel):
-            raise ValueError("structured output is not currently supported in SKChatCompletionAdapter")
+            raise ValueError(
+                "structured output is not currently supported in SKChatCompletionAdapter")
 
         kernel = self._get_kernel(extra_create_args)
 
@@ -518,7 +527,8 @@ class SKChatCompletionAdapter(ChatCompletionClient):
         return CreateResult(
             content=content,
             finish_reason=finish_reason,
-            usage=RequestUsage(prompt_tokens=prompt_tokens, completion_tokens=completion_tokens),
+            usage=RequestUsage(prompt_tokens=prompt_tokens,
+                               completion_tokens=completion_tokens),
             cached=False,
             thought=thought,
         )
@@ -535,7 +545,8 @@ class SKChatCompletionAdapter(ChatCompletionClient):
             existing_call.arguments = new_chunk.arguments
         else:
             # If there's a mismatch (str vs dict), handle as needed
-            warnings.warn("Mismatch in argument types during merge. Existing arguments retained.", stacklevel=2)
+            warnings.warn(
+                "Mismatch in argument types during merge. Existing arguments retained.", stacklevel=2)
 
         # Optionally update name/function_name if newly provided
         if new_chunk.name:
@@ -580,7 +591,8 @@ class SKChatCompletionAdapter(ChatCompletionClient):
         """
 
         if isinstance(json_output, type) and issubclass(json_output, BaseModel):
-            raise ValueError("structured output is not currently supported in SKChatCompletionAdapter")
+            raise ValueError(
+                "structured output is not currently supported in SKChatCompletionAdapter")
 
         kernel = self._get_kernel(extra_create_args)
         chat_history = self._convert_to_chat_history(messages)
@@ -631,7 +643,8 @@ class SKChatCompletionAdapter(ChatCompletionClient):
                             else:
                                 # Merge partial arguments into existing call
                                 existing_call = function_calls_in_progress[last_function_call_id]
-                                self._merge_function_call_content(existing_call, item)
+                                self._merge_function_call_content(
+                                    existing_call, item)
                         else:
                             # item.id is None, so we assume it belongs to the last known ID
                             if not last_function_call_id:
@@ -644,7 +657,8 @@ class SKChatCompletionAdapter(ChatCompletionClient):
 
                             existing_call = function_calls_in_progress[last_function_call_id]
                             # Merge partial chunk
-                            self._merge_function_call_content(existing_call, item)
+                            self._merge_function_call_content(
+                                existing_call, item)
 
                 # Check if the model signaled tool_calls finished
                 if msg.finish_reason == "tool_calls" and function_calls_in_progress:
@@ -674,7 +688,8 @@ class SKChatCompletionAdapter(ChatCompletionClient):
                     yield CreateResult(
                         content=calls_to_yield,
                         finish_reason="function_calls",
-                        usage=RequestUsage(prompt_tokens=prompt_tokens, completion_tokens=completion_tokens),
+                        usage=RequestUsage(
+                            prompt_tokens=prompt_tokens, completion_tokens=completion_tokens),
                         cached=False,
                     )
                     return
@@ -695,7 +710,8 @@ class SKChatCompletionAdapter(ChatCompletionClient):
         result = CreateResult(
             content=accumulated_text,
             finish_reason="stop",
-            usage=RequestUsage(prompt_tokens=prompt_tokens, completion_tokens=completion_tokens),
+            usage=RequestUsage(prompt_tokens=prompt_tokens,
+                               completion_tokens=completion_tokens),
             cached=False,
             thought=thought,
         )

@@ -23,7 +23,7 @@ from autogen_core.code_executor import (
 )
 from typing_extensions import ParamSpec
 
-from .._common import build_python_functions_file, get_required_packages, to_stub
+from _common import build_python_functions_file, get_required_packages, to_stub
 
 if TYPE_CHECKING:
     from azure.core.credentials import AccessToken
@@ -179,7 +179,8 @@ $functions"""
         endpoint = self._pool_management_endpoint
         if not endpoint.endswith("/"):
             endpoint += "/"
-        url = endpoint + f"{path}?api-version={self._AZURE_API_VER}&identifier={self._session_id}"
+        url = endpoint + \
+            f"{path}?api-version={self._AZURE_API_VER}&identifier={self._session_id}"
         return url
 
     async def get_available_packages(self, cancellation_token: CancellationToken) -> set[str]:
@@ -192,7 +193,8 @@ import pkg_resources\n[d.project_name for d in pkg_resources.working_set]
             [CodeBlock(code=avail_pkgs, language="python")], cancellation_token
         )
         if ret.exit_code != 0:
-            raise ValueError(f"Failed to get list of available packages: {ret.output.strip()}")
+            raise ValueError(
+                f"Failed to get list of available packages: {ret.output.strip()}")
         pkgs = ret.output.strip("[]")
         pkglist = pkgs.split(",\n")
         return {pkg.strip(" '") for pkg in pkglist}
@@ -205,34 +207,42 @@ import pkg_resources\n[d.project_name for d in pkg_resources.working_set]
             self._func_code = build_python_functions_file(self._functions)
 
             # Check required function imports and packages
-            lists_of_packages = [x.python_packages for x in self._functions if isinstance(x, FunctionWithRequirements)]
+            lists_of_packages = [x.python_packages for x in self._functions if isinstance(
+                x, FunctionWithRequirements)]
             # Should we also be checking the imports?
 
-            flattened_packages = [item for sublist in lists_of_packages for item in sublist]
+            flattened_packages = [
+                item for sublist in lists_of_packages for item in sublist]
             required_packages = set(flattened_packages)
             if self._available_packages is not None:
-                missing_pkgs = set(required_packages - self._available_packages)
+                missing_pkgs = set(required_packages -
+                                   self._available_packages)
                 if len(missing_pkgs) > 0:
-                    raise ValueError(f"Packages unavailable in environment: {missing_pkgs}")
+                    raise ValueError(
+                        f"Packages unavailable in environment: {missing_pkgs}")
 
         # Attempt to load the function file to check for syntax errors, imports etc.
         exec_result = await self._execute_code_dont_check_setup(
-            [CodeBlock(code=self._func_code, language="python")], cancellation_token
+            [CodeBlock(code=self._func_code, language="python")
+             ], cancellation_token
         )
 
         if exec_result.exit_code != 0:
-            raise ValueError(f"Functions failed to load: {exec_result.output.strip()}")
+            raise ValueError(
+                f"Functions failed to load: {exec_result.output.strip()}")
 
         self._setup_functions_complete = True
 
     async def _setup_cwd(self, cancellation_token: CancellationToken) -> None:
         # Change the cwd to /mnt/data to properly have access to uploaded files
         exec_result = await self._execute_code_dont_check_setup(
-            [CodeBlock(code="import os; os.chdir('/mnt/data')", language="python")], cancellation_token
+            [CodeBlock(code="import os; os.chdir('/mnt/data')",
+                       language="python")], cancellation_token
         )
 
         if exec_result.exit_code != 0:
-            raise ValueError("Failed to set up Azure container working directory")
+            raise ValueError(
+                "Failed to set up Azure container working directory")
         self._setup_cwd_complete = True
 
     async def get_file_list(self, cancellation_token: CancellationToken) -> List[str]:
@@ -259,7 +269,8 @@ import pkg_resources\n[d.project_name for d in pkg_resources.working_set]
                 raise asyncio.TimeoutError("Timeout getting file list") from e
             except asyncio.CancelledError as e:
                 # e.add_note is only in py 3.11+
-                raise asyncio.CancelledError("File list retrieval cancelled") from e
+                raise asyncio.CancelledError(
+                    "File list retrieval cancelled") from e
             except aiohttp.ClientResponseError as e:
                 raise ConnectionError("Error while getting file list") from e
 
@@ -307,12 +318,15 @@ import pkg_resources\n[d.project_name for d in pkg_resources.working_set]
 
                     except asyncio.TimeoutError as e:
                         # e.add_note is only in py 3.11+
-                        raise asyncio.TimeoutError("Timeout uploading files") from e
+                        raise asyncio.TimeoutError(
+                            "Timeout uploading files") from e
                     except asyncio.CancelledError as e:
                         # e.add_note is only in py 3.11+
-                        raise asyncio.CancelledError("Uploading files cancelled") from e
+                        raise asyncio.CancelledError(
+                            "Uploading files cancelled") from e
                     except aiohttp.ClientResponseError as e:
-                        raise ConnectionError("Error while uploading files") from e
+                        raise ConnectionError(
+                            "Error while uploading files") from e
 
     async def download_files(self, files: List[Union[Path, str]], cancellation_token: CancellationToken) -> List[str]:
         self._ensure_access_token()
@@ -345,12 +359,15 @@ import pkg_resources\n[d.project_name for d in pkg_resources.working_set]
                         await f.write(await resp.read())
                 except asyncio.TimeoutError as e:
                     # e.add_note is only in py 3.11+
-                    raise asyncio.TimeoutError("Timeout downloading files") from e
+                    raise asyncio.TimeoutError(
+                        "Timeout downloading files") from e
                 except asyncio.CancelledError as e:
                     # e.add_note is only in py 3.11+
-                    raise asyncio.CancelledError("Downloading files cancelled") from e
+                    raise asyncio.CancelledError(
+                        "Downloading files cancelled") from e
                 except aiohttp.ClientResponseError as e:
-                    raise ConnectionError("Error while downloading files") from e
+                    raise ConnectionError(
+                        "Error while downloading files") from e
         return local_paths
 
     async def execute_code_blocks(
@@ -416,7 +433,8 @@ import pkg_resources\n[d.project_name for d in pkg_resources.working_set]
                     if len(missing_pkgs) > 0:
                         # In case the code requires packages that are not available in the environment
                         exitcode = 1
-                        logs_all += "\n" + f"Python packages unavailable in environment: {missing_pkgs}"
+                        logs_all += "\n" + \
+                            f"Python packages unavailable in environment: {missing_pkgs}"
                         break
 
                 properties["code"] = code_block.code

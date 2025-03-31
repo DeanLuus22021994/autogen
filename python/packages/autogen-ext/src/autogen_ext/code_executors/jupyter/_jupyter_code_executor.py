@@ -22,7 +22,7 @@ from nbformat import NotebookNode
 from nbformat import v4 as nbformat
 from typing_extensions import Self
 
-from .._common import silence_pip
+from _common import silence_pip
 
 
 @dataclass
@@ -187,7 +187,8 @@ class JupyterCodeExecutor(CodeExecutor, Component[JupyterCodeExecutorConfig]):
         """
         execute_task = asyncio.create_task(
             self._execute_cell(
-                nbformat.new_code_cell(silence_pip(code_block.code, code_block.language))  # type: ignore
+                nbformat.new_code_cell(silence_pip(
+                    code_block.code, code_block.language))  # type: ignore
             )
         )
 
@@ -203,7 +204,8 @@ class JupyterCodeExecutor(CodeExecutor, Component[JupyterCodeExecutorConfig]):
                 case "stream":
                     outputs.append(output.get("text", ""))
                 case "error":
-                    traceback = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", "\n".join(output["traceback"]))
+                    traceback = re.sub(
+                        r"\x1b\[[0-9;]*[A-Za-z]", "", "\n".join(output["traceback"]))
                     outputs.append(traceback)
                     exit_code = 1
                 case "execute_result" | "display_data":
@@ -267,7 +269,8 @@ class JupyterCodeExecutor(CodeExecutor, Component[JupyterCodeExecutorConfig]):
     def _to_config(self) -> JupyterCodeExecutorConfig:
         """Convert current instance to config object"""
         return JupyterCodeExecutorConfig(
-            kernel_name=self._kernel_name, timeout=self._timeout, output_dir=str(self._output_dir)
+            kernel_name=self._kernel_name, timeout=self._timeout, output_dir=str(
+                self._output_dir)
         )
 
     @classmethod

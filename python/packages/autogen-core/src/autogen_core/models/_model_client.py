@@ -7,9 +7,9 @@ from typing import Literal, Mapping, Optional, Sequence, TypeAlias
 from pydantic import BaseModel
 from typing_extensions import Any, AsyncGenerator, Required, TypedDict, Union, deprecated
 
-from .. import CancellationToken
-from .._component_config import ComponentBase
-from ..tools import Tool, ToolSchema
+from import CancellationToken
+from _component_config import ComponentBase
+from tools import Tool, ToolSchema
 from ._types import CreateResult, LLMMessage, RequestUsage
 
 
@@ -57,7 +57,8 @@ class ModelFamily:
     ]
 
     def __new__(cls, *args: Any, **kwargs: Any) -> ModelFamily:
-        raise TypeError(f"{cls.__name__} is a namespace class and cannot be instantiated.")
+        raise TypeError(
+            f"{cls.__name__} is a namespace class and cannot be instantiated.")
 
     @staticmethod
     def is_claude(family: str) -> bool:
@@ -211,10 +212,12 @@ class ChatCompletionClient(ComponentBase[BaseModel], ABC):
     def total_usage(self) -> RequestUsage: ...
 
     @abstractmethod
-    def count_tokens(self, messages: Sequence[LLMMessage], *, tools: Sequence[Tool | ToolSchema] = []) -> int: ...
+    def count_tokens(self, messages: Sequence[LLMMessage],
+                     *, tools: Sequence[Tool | ToolSchema] = []) -> int: ...
 
     @abstractmethod
-    def remaining_tokens(self, messages: Sequence[LLMMessage], *, tools: Sequence[Tool | ToolSchema] = []) -> int: ...
+    def remaining_tokens(
+        self, messages: Sequence[LLMMessage], *, tools: Sequence[Tool | ToolSchema] = []) -> int: ...
 
     # Deprecated
     @property

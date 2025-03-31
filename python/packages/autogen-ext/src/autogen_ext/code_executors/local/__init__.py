@@ -17,7 +17,7 @@ from autogen_core.code_executor import CodeBlock, CodeExecutor, FunctionWithRequ
 from pydantic import BaseModel
 from typing_extensions import ParamSpec, Self
 
-from .._common import (
+from _common import (
     PYTHON_VARIANTS,
     CommandLineCodeResult,
     build_python_functions_file,
@@ -237,8 +237,10 @@ $functions"""
         func_file.write_text(func_file_content)
 
         # Collect requirements
-        lists_of_packages = [x.python_packages for x in self._functions if isinstance(x, FunctionWithRequirements)]
-        flattened_packages = [item for sublist in lists_of_packages for item in sublist]
+        lists_of_packages = [x.python_packages for x in self._functions if isinstance(
+            x, FunctionWithRequirements)]
+        flattened_packages = [
+            item for sublist in lists_of_packages for item in sublist]
         required_packages = list(set(flattened_packages))
         if len(required_packages) > 0:
             logging.info("Ensuring packages are installed in executor.")
@@ -270,11 +272,13 @@ $functions"""
                 raise ValueError("Pip install was cancelled") from e
 
             if proc.returncode is not None and proc.returncode != 0:
-                raise ValueError(f"Pip install failed. {stdout.decode()}, {stderr.decode()}")
+                raise ValueError(
+                    f"Pip install failed. {stdout.decode()}, {stderr.decode()}")
 
         # Attempt to load the function file to check for syntax errors, imports etc.
         exec_result = await self._execute_code_dont_check_setup(
-            [CodeBlock(code=func_file_content, language="python")], cancellation_token
+            [CodeBlock(code=func_file_content, language="python")
+             ], cancellation_token
         )
 
         if exec_result.exit_code != 0:
@@ -357,13 +361,15 @@ $functions"""
             # Build environment
             env = os.environ.copy()
             if self._virtual_env_context:
-                virtual_env_bin_abs_path = os.path.abspath(self._virtual_env_context.bin_path)
+                virtual_env_bin_abs_path = os.path.abspath(
+                    self._virtual_env_context.bin_path)
                 env["PATH"] = f"{virtual_env_bin_abs_path}{os.pathsep}{env['PATH']}"
 
             # Decide how to invoke the script
             if lang == "python":
                 program = (
-                    os.path.abspath(self._virtual_env_context.env_exe) if self._virtual_env_context else sys.executable
+                    os.path.abspath(
+                        self._virtual_env_context.env_exe) if self._virtual_env_context else sys.executable
                 )
                 extra_args = [str(written_file.absolute())]
             else:
@@ -444,9 +450,11 @@ $functions"""
 
     def _to_config(self) -> LocalCommandLineCodeExecutorConfig:
         if self._functions:
-            logging.info("Functions will not be included in serialized configuration")
+            logging.info(
+                "Functions will not be included in serialized configuration")
         if self._virtual_env_context:
-            logging.info("Virtual environment context will not be included in serialized configuration")
+            logging.info(
+                "Virtual environment context will not be included in serialized configuration")
 
         return LocalCommandLineCodeExecutorConfig(
             timeout=self._timeout,

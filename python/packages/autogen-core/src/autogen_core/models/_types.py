@@ -4,7 +4,7 @@ from typing import List, Literal, Optional, Union
 from pydantic import BaseModel, Field
 from typing_extensions import Annotated
 
-from .. import FunctionCall, Image
+from import FunctionCall, Image
 
 
 class SystemMessage(BaseModel):
@@ -78,7 +78,8 @@ class FunctionExecutionResultMessage(BaseModel):
 
 
 LLMMessage = Annotated[
-    Union[SystemMessage, UserMessage, AssistantMessage, FunctionExecutionResultMessage], Field(discriminator="type")
+    Union[SystemMessage, UserMessage, AssistantMessage,
+          FunctionExecutionResultMessage], Field(discriminator="type")
 ]
 
 
@@ -88,7 +89,8 @@ class RequestUsage:
     completion_tokens: int
 
 
-FinishReasons = Literal["stop", "length", "function_calls", "content_filter", "unknown"]
+FinishReasons = Literal["stop", "length",
+                        "function_calls", "content_filter", "unknown"]
 
 
 @dataclass

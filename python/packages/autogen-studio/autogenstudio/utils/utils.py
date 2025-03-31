@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Tuple, Union
 from dotenv import load_dotenv
 from loguru import logger
 
-from ..version import APP_NAME
+from version import APP_NAME
 
 
 def sha256_hash(text: str) -> str:
@@ -151,7 +151,8 @@ def get_modified_files(start_timestamp: float, end_timestamp: float, source_dir:
     for root, dirs, files in os.walk(source_dir):
         # Update directories and files to exclude those to be ignored
         dirs[:] = [d for d in dirs if d not in ignore_files]
-        files[:] = [f for f in files if f not in ignore_files and os.path.splitext(f)[1] not in ignore_extensions]
+        files[:] = [f for f in files if f not in ignore_files and os.path.splitext(f)[
+            1] not in ignore_extensions]
 
         for file in files:
             file_path = os.path.join(root, file)
@@ -160,7 +161,9 @@ def get_modified_files(start_timestamp: float, end_timestamp: float, source_dir:
             # Verify if the file was modified within the given timestamp range
             if start_timestamp <= file_mtime <= end_timestamp:
                 file_relative_path = (
-                    "files/user" + file_path.split("files/user", 1)[1] if "files/user" in file_path else ""
+                    "files/user" +
+                    file_path.split(
+                        "files/user", 1)[1] if "files/user" in file_path else ""
                 )
                 file_type = get_file_type(file_path)
 
@@ -246,7 +249,8 @@ class Version:
             # Split into major.minor.patch
             self.major, self.minor, self.patch = map(int, ver_str.split("."))
         except (ValueError, AttributeError) as err:
-            raise ValueError(f"Invalid version format: {ver_str}. Expected: major.minor.patch") from err
+            raise ValueError(
+                f"Invalid version format: {ver_str}. Expected: major.minor.patch") from err
 
     def __str__(self):
         return f"{self.major}.{self.minor}.{self.patch}"

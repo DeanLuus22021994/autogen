@@ -3,8 +3,8 @@ from typing import Dict
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from ...datamodel import Settings, SettingsConfig
-from ..deps import get_db
+from .datamodel import Settings, SettingsConfig
+from deps import get_db
 
 router = APIRouter()
 
@@ -16,7 +16,8 @@ async def get_settings(user_id: str, db=Depends(get_db)) -> Dict:
         if not response.status or not response.data:
             # create a default settings
             config = SettingsConfig()
-            default_settings = Settings(user_id=user_id, config=config.model_dump())
+            default_settings = Settings(
+                user_id=user_id, config=config.model_dump())
             db.upsert(default_settings)
             response = db.get(Settings, filters={"user_id": user_id})
         # print(response.data[0])

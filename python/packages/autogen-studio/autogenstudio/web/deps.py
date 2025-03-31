@@ -7,8 +7,8 @@ from typing import Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Request, WebSocket, status
 
-from ..database import DatabaseManager
-from ..teammanager import TeamManager
+from database import DatabaseManager
+from teammanager import TeamManager
 from .auth import AuthConfig, AuthManager, AuthMiddleware
 from .auth.dependencies import get_auth_manager
 from .config import settings
@@ -61,7 +61,8 @@ async def get_websocket_manager() -> WebSocketManager:
 async def get_team_manager() -> TeamManager:
     """Dependency provider for team manager"""
     if not _team_manager:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Team manager not initialized")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Team manager not initialized")
     return _team_manager
 
 
@@ -78,7 +79,8 @@ async def get_current_user(request: Request) -> str:
     if auth_manager.config.type == "none":
         return settings.DEFAULT_USER_ID
 
-    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail="Authentication required")
 
 
 def init_auth_manager(config_dir: Path) -> AuthManager:
@@ -88,10 +90,12 @@ def init_auth_manager(config_dir: Path) -> AuthManager:
     if auth_config_path and os.path.exists(auth_config_path):
         try:
             auth_manager = AuthManager.from_yaml(auth_config_path)
-            logger.info(f"Authentication initialized with provider: {auth_manager.config.type}")
+            logger.info(
+                f"Authentication initialized with provider: {auth_manager.config.type}")
             return auth_manager
         except Exception as e:
-            logger.error(f"Failed to initialize authentication from config file: {str(e)}")
+            logger.error(
+                f"Failed to initialize authentication from config file: {str(e)}")
             logger.warning("Falling back to no authentication")
 
     # Default or fallback
@@ -124,7 +128,8 @@ async def init_managers(database_uri: str, config_dir: str | Path, app_root: str
 
     try:
         # Initialize database manager
-        _db_manager = DatabaseManager(engine_uri=database_uri, base_dir=app_root)
+        _db_manager = DatabaseManager(
+            engine_uri=database_uri, base_dir=app_root)
         _db_manager.initialize_database(auto_upgrade=settings.UPGRADE_DATABASE)
 
         # init default team config
@@ -218,10 +223,12 @@ def require_managers(*manager_names: str):
 
     async def dependency():
         manager_status = get_manager_status()  # Different name
-        missing = [name for name in manager_names if not manager_status.get(f"{name}_manager")]
+        missing = [name for name in manager_names if not manager_status.get(
+            f"{name}_manager")]
         if missing:
             raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,  # Now this refers to the imported module
+                # Now this refers to the imported module
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail=f"Required managers not available: {', '.join(missing)}",
             )
         return True

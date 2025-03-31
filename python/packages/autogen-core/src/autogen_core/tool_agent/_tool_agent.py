@@ -2,9 +2,9 @@ import json
 from dataclasses import dataclass
 from typing import List
 
-from .. import FunctionCall, MessageContext, RoutedAgent, message_handler
-from ..models import FunctionExecutionResult
-from ..tools import Tool
+from import FunctionCall, MessageContext, RoutedAgent, message_handler
+from models import FunctionExecutionResult
+from tools import Tool
 
 __all__ = [
     "ToolAgent",
@@ -75,7 +75,8 @@ class ToolAgent(RoutedAgent):
             InvalidToolArgumentsException: If the tool arguments are invalid.
             ToolExecutionException: If the tool execution fails.
         """
-        tool = next((tool for tool in self._tools if tool.name == message.name), None)
+        tool = next(
+            (tool for tool in self._tools if tool.name == message.name), None)
         if tool is None:
             raise ToolNotFoundException(
                 call_id=message.id, content=f"Error: Tool not found: {message.name}", name=message.name
@@ -90,5 +91,6 @@ class ToolAgent(RoutedAgent):
                     call_id=message.id, content=f"Error: Invalid arguments: {message.arguments}", name=message.name
                 ) from e
             except Exception as e:
-                raise ToolExecutionException(call_id=message.id, content=f"Error: {e}", name=message.name) from e
+                raise ToolExecutionException(
+                    call_id=message.id, content=f"Error: {e}", name=message.name) from e
         return FunctionExecutionResult(content=result_as_str, call_id=message.id, is_error=False, name=message.name)

@@ -8,8 +8,8 @@ from loguru import logger
 from sqlalchemy import exc, inspect, text
 from sqlmodel import Session, SQLModel, and_, create_engine, select
 
-from ..datamodel import Response, Team
-from ..teammanager import TeamManager
+from datamodel import Response, Team
+from teammanager import TeamManager
 from .schema_manager import SchemaManager
 
 
@@ -32,13 +32,15 @@ class DatabaseManager:
             engine_uri: Database connection URI (e.g. sqlite:///db.sqlite3)
             base_dir: Base directory for migration files. If None, uses current directory
         """
-        connection_args = {"check_same_thread": True} if "sqlite" in engine_uri else {}
+        connection_args = {
+            "check_same_thread": True} if "sqlite" in engine_uri else {}
 
         if base_dir is not None and isinstance(base_dir, str):
             base_dir = Path(base_dir)
 
         self.engine = create_engine(
-            engine_uri, connect_args=connection_args, json_serializer=lambda obj: json.dumps(obj, cls=CustomJSONEncoder)
+            engine_uri, connect_args=connection_args, json_serializer=lambda obj: json.dumps(
+                obj, cls=CustomJSONEncoder)
         )
         self.schema_manager = SchemaManager(
             engine=self.engine,
@@ -113,7 +115,8 @@ class DatabaseManager:
                 try:
                     # Disable foreign key checks for SQLite
                     if "sqlite" in str(self.engine.url):
-                        session.exec(text("PRAGMA foreign_keys=OFF"))  # type: ignore
+                        # type: ignore
+                        session.exec(text("PRAGMA foreign_keys=OFF"))
 
                     # Drop all tables
                     SQLModel.metadata.drop_all(self.engine)
@@ -121,7 +124,8 @@ class DatabaseManager:
 
                     # Re-enable foreign key checks for SQLite
                     if "sqlite" in str(self.engine.url):
-                        session.exec(text("PRAGMA foreign_keys=ON"))  # type: ignore
+                        # type: ignore
+                        session.exec(text("PRAGMA foreign_keys=ON"))
 
                     session.commit()
 
@@ -134,7 +138,8 @@ class DatabaseManager:
 
             if recreate_tables:
                 logger.info("Recreating tables...")
-                self.initialize_database(auto_upgrade=False, force_init_alembic=True)
+                self.initialize_database(
+                    auto_upgrade=False, force_init_alembic=True)
 
             return Response(
                 message="Database reset successfully" if recreate_tables else "Database tables dropped successfully",
@@ -168,7 +173,8 @@ class DatabaseManager:
 
         with Session(self.engine) as session:
             try:
-                existing_model = session.exec(select(model_class).where(model_class.id == model.id)).first()
+                existing_model = session.exec(
+                    select(model_class).where(model_class.id == model.id)).first()
                 if existing_model:
                     model.updated_at = datetime.now()
                     for key, value in model.model_dump().items():
@@ -181,7 +187,8 @@ class DatabaseManager:
                 session.refresh(model)
             except Exception as e:
                 session.rollback()
-                logger.error("Error while updating/creating " + str(model_class.__name__) + ": " + str(e))
+                logger.error("Error while updating/creating " +
+                             str(model_class.__name__) + ": " + str(e))
                 status = False
 
         return Response(
@@ -213,21 +220,25 @@ class DatabaseManager:
             try:
                 statement = select(model_class)
                 if filters:
-                    conditions = [getattr(model_class, col) == value for col, value in filters.items()]
+                    conditions = [
+                        getattr(model_class, col) == value for col, value in filters.items()]
                     statement = statement.where(and_(*conditions))
 
                 if hasattr(model_class, "created_at") and order:
-                    order_by_clause = getattr(model_class.created_at, order)()  # Dynamically apply asc/desc
+                    # Dynamically apply asc/desc
+                    order_by_clause = getattr(model_class.created_at, order)()
                     statement = statement.order_by(order_by_clause)
 
                 items = session.exec(statement).all()
-                result = [self._model_to_dict(item) if return_json else item for item in items]
+                result = [self._model_to_dict(
+                    item) if return_json else item for item in items]
                 status_message = f"{model_class.__name__} Retrieved Successfully"
             except Exception as e:
                 session.rollback()
                 status = False
                 status_message = f"Error while fetching {model_class.__name__}"
-                logger.error("Error while getting items: " + str(model_class.__name__) + " " + str(e))
+                logger.error("Error while getting items: " +
+                             str(model_class.__name__) + " " + str(e))
 
             return Response(message=status_message, status=status, data=result)
 
@@ -242,7 +253,8 @@ class DatabaseManager:
                     session.exec(text("PRAGMA foreign_keys=ON"))
                 statement = select(model_class)
                 if filters:
-                    conditions = [getattr(model_class, col) == value for col, value in filters.items()]
+                    conditions = [
+                        getattr(model_class, col) == value for col, value in filters.items()]
                     statement = statement.where(and_(*conditions))
 
                 rows = session.exec(statement).all()
@@ -332,7 +344,8 @@ class DatabaseManager:
 
                 except Exception as e:
                     logger.error(f"Failed to import team config: {str(e)}")
-                    results.append({"status": False, "message": str(e), "id": None})
+                    results.append(
+                        {"status": False, "message": str(e), "id": None})
 
             return Response(message="Directory import complete", status=True, data=results)
 

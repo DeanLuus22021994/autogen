@@ -8,7 +8,7 @@ making it easy to test or demonstrate the full suite of AutoGen capabilities.
 import os
 import argparse
 import time
-from ..utils import debug_args
+from utils import debug_args
 
 
 @debug_args
@@ -30,7 +30,7 @@ def run_all(args: argparse.Namespace) -> int:
     print(f"[DEBUG] Module path: {os.path.abspath(__file__)}")
 
     # Get a list of all component modules
-    from .. import components
+    from import components
 
     # First, let's collect the components to run
     component_list = []

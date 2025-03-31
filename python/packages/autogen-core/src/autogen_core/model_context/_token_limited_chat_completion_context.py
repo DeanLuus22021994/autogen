@@ -3,9 +3,9 @@ from typing import List
 from pydantic import BaseModel
 from typing_extensions import Self
 
-from .._component_config import Component, ComponentModel
-from ..models import ChatCompletionClient, FunctionExecutionResultMessage, LLMMessage
-from ..tools import ToolSchema
+from _component_config import Component, ComponentModel
+from models import ChatCompletionClient, FunctionExecutionResultMessage, LLMMessage
+from tools import ToolSchema
 from ._chat_completion_context import ChatCompletionContext
 
 
@@ -59,17 +59,21 @@ class TokenLimitedChatCompletionContext(ChatCompletionContext, Component[TokenLi
         provided, then return as many messages as the remaining token allowed by the model client."""
         messages = list(self._messages)
         if self._token_limit is None:
-            remaining_tokens = self._model_client.remaining_tokens(messages, tools=self._tool_schema)
+            remaining_tokens = self._model_client.remaining_tokens(
+                messages, tools=self._tool_schema)
             while remaining_tokens < 0 and len(messages) > 0:
                 middle_index = len(messages) // 2
                 messages.pop(middle_index)
-                remaining_tokens = self._model_client.remaining_tokens(messages, tools=self._tool_schema)
+                remaining_tokens = self._model_client.remaining_tokens(
+                    messages, tools=self._tool_schema)
         else:
-            token_count = self._model_client.count_tokens(messages, tools=self._tool_schema)
+            token_count = self._model_client.count_tokens(
+                messages, tools=self._tool_schema)
             while token_count > self._token_limit and len(messages) > 0:
                 middle_index = len(messages) // 2
                 messages.pop(middle_index)
-                token_count = self._model_client.count_tokens(messages, tools=self._tool_schema)
+                token_count = self._model_client.count_tokens(
+                    messages, tools=self._tool_schema)
         if messages and isinstance(messages[0], FunctionExecutionResultMessage):
             # Handle the first message is a function call result message.
             # Remove the first message from the list.
@@ -87,7 +91,8 @@ class TokenLimitedChatCompletionContext(ChatCompletionContext, Component[TokenLi
     @classmethod
     def _from_config(cls, config: TokenLimitedChatCompletionContextConfig) -> Self:
         return cls(
-            model_client=ChatCompletionClient.load_component(config.model_client),
+            model_client=ChatCompletionClient.load_component(
+                config.model_client),
             token_limit=config.token_limit,
             tool_schema=config.tool_schema,
             initial_messages=config.initial_messages,

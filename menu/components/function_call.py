@@ -7,7 +7,7 @@ function calling capabilities integrated with AutoGen agents.
 
 import os
 import argparse
-from ..utils import run_command, debug_args
+from utils import run_command, debug_args
 
 
 @debug_args

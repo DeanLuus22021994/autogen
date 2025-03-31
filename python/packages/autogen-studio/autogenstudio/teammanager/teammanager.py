@@ -15,7 +15,7 @@ from autogen_agentchat.teams import BaseGroupChat
 from autogen_core import EVENT_LOGGER_NAME, CancellationToken, Component, ComponentModel
 from autogen_core.logging import LLMCallEvent
 
-from ..datamodel.types import EnvironmentVariable, LLMCallEventMessage, TeamResult
+from datamodel.types import EnvironmentVariable, LLMCallEventMessage, TeamResult
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,8 @@ class RunEventLogger(logging.Handler):
 
     def emit(self, record: logging.LogRecord):
         if isinstance(record.msg, LLMCallEvent):
-            self.events.put_nowait(LLMCallEventMessage(content=str(record.msg)))
+            self.events.put_nowait(
+                LLMCallEventMessage(content=str(record.msg)))
 
 
 class TeamManager:

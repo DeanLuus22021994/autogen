@@ -36,10 +36,10 @@ from autogen_core.tools import BaseTool, FunctionTool
 from pydantic import BaseModel
 from typing_extensions import Self
 
-from .. import EVENT_LOGGER_NAME
-from ..base import Handoff as HandoffBase
-from ..base import Response
-from ..messages import (
+from import EVENT_LOGGER_NAME
+from base import Handoff as HandoffBase
+from base import Response
+from messages import (
     BaseAgentEvent,
     BaseChatMessage,
     HandoffMessage,
@@ -51,8 +51,8 @@ from ..messages import (
     ToolCallRequestEvent,
     ToolCallSummaryMessage,
 )
-from ..state import AssistantAgentState
-from ..utils import remove_images
+from state import AssistantAgentState
+from utils import remove_images
 from ._base_chat_agent import BaseChatAgent
 
 event_logger = logging.getLogger(EVENT_LOGGER_NAME)
@@ -603,7 +603,8 @@ class AssistantAgent(BaseChatAgent, Component[AssistantAgentConfig]):
         name: str,
         model_client: ChatCompletionClient,
         *,
-        tools: List[BaseTool[Any, Any] | Callable[..., Any] | Callable[..., Awaitable[Any]]] | None = None,
+        tools: List[BaseTool[Any, Any] | Callable[..., Any]
+                    | Callable[..., Awaitable[Any]]] | None = None,
         handoffs: List[HandoffBase | str] | None = None,
         model_context: ChatCompletionContext | None = None,
         description: str = "An agent that provides assistance with ability to use tools.",
@@ -635,7 +636,8 @@ class AssistantAgent(BaseChatAgent, Component[AssistantAgentConfig]):
             if isinstance(memory, list):
                 self._memory = memory
             else:
-                raise TypeError(f"Expected Memory, List[Memory], or None, got {type(memory)}")
+                raise TypeError(
+                    f"Expected Memory, List[Memory], or None, got {type(memory)}")
 
         self._system_messages: List[SystemMessage] = []
         if system_message is None:
@@ -645,7 +647,8 @@ class AssistantAgent(BaseChatAgent, Component[AssistantAgentConfig]):
         self._tools: List[BaseTool[Any, Any]] = []
         if tools is not None:
             if model_client.model_info["function_calling"] is False:
-                raise ValueError("The model does not support function calling.")
+                raise ValueError(
+                    "The model does not support function calling.")
             for tool in tools:
                 if isinstance(tool, BaseTool):
                     self._tools.append(tool)
@@ -654,7 +657,8 @@ class AssistantAgent(BaseChatAgent, Component[AssistantAgentConfig]):
                         description = tool.__doc__
                     else:
                         description = ""
-                    self._tools.append(FunctionTool(tool, description=description))
+                    self._tools.append(FunctionTool(
+                        tool, description=description))
                 else:
                     raise ValueError(f"Unsupported tool type: {type(tool)}")
         # Check if tool names are unique.
@@ -667,7 +671,8 @@ class AssistantAgent(BaseChatAgent, Component[AssistantAgentConfig]):
         self._handoffs: Dict[str, HandoffBase] = {}
         if handoffs is not None:
             if model_client.model_info["function_calling"] is False:
-                raise ValueError("The model does not support function calling, which is needed for handoffs.")
+                raise ValueError(
+                    "The model does not support function calling, which is needed for handoffs.")
             for handoff in handoffs:
                 if isinstance(handoff, str):
                     handoff = HandoffBase(target=handoff)
@@ -675,11 +680,13 @@ class AssistantAgent(BaseChatAgent, Component[AssistantAgentConfig]):
                     self._handoff_tools.append(handoff.handoff_tool)
                     self._handoffs[handoff.name] = handoff
                 else:
-                    raise ValueError(f"Unsupported handoff type: {type(handoff)}")
+                    raise ValueError(
+                        f"Unsupported handoff type: {type(handoff)}")
         # Check if handoff tool names are unique.
         handoff_tool_names = [tool.name for tool in self._handoff_tools]
         if len(handoff_tool_names) != len(set(handoff_tool_names)):
-            raise ValueError(f"Handoff names must be unique: {handoff_tool_names}")
+            raise ValueError(
+                f"Handoff names must be unique: {handoff_tool_names}")
         # Check if handoff tool names not in tool names.
         if any(name in tool_names for name in handoff_tool_names):
             raise ValueError(
@@ -716,7 +723,8 @@ class AssistantAgent(BaseChatAgent, Component[AssistantAgentConfig]):
         async for message in self.on_messages_stream(messages, cancellation_token):
             if isinstance(message, Response):
                 return message
-        raise AssertionError("The stream should have returned the final result.")
+        raise AssertionError(
+            "The stream should have returned the final result.")
 
     async def on_messages_stream(
         self, messages: Sequence[BaseChatMessage], cancellation_token: CancellationToken
@@ -776,7 +784,8 @@ class AssistantAgent(BaseChatAgent, Component[AssistantAgentConfig]):
 
         # --- NEW: If the model produced a hidden "thought," yield it as an event ---
         if model_result.thought:
-            thought_event = ThoughtEvent(content=model_result.thought, source=agent_name)
+            thought_event = ThoughtEvent(
+                content=model_result.thought, source=agent_name)
             yield thought_event
             inner_messages.append(thought_event)
 
@@ -858,7 +867,8 @@ class AssistantAgent(BaseChatAgent, Component[AssistantAgentConfig]):
         Perform a model inference and yield either streaming chunk events or the final CreateResult.
         """
         all_messages = await model_context.get_messages()
-        llm_messages = cls._get_compatible_context(model_client=model_client, messages=system_messages + all_messages)
+        llm_messages = cls._get_compatible_context(
+            model_client=model_client, messages=system_messages + all_messages)
 
         all_tools = tools + handoff_tools
 
@@ -1039,7 +1049,8 @@ class AssistantAgent(BaseChatAgent, Component[AssistantAgentConfig]):
                         thought=getattr(model_result, "thought", None),
                     )
                 )
-                handoff_context.append(FunctionExecutionResultMessage(content=tool_call_results))
+                handoff_context.append(
+                    FunctionExecutionResultMessage(content=tool_call_results))
 
             # Return response for the first handoff
             return Response(
@@ -1068,7 +1079,8 @@ class AssistantAgent(BaseChatAgent, Component[AssistantAgentConfig]):
         and yield the final text response (or streaming chunks).
         """
         all_messages = system_messages + await model_context.get_messages()
-        llm_messages = cls._get_compatible_context(model_client=model_client, messages=all_messages)
+        llm_messages = cls._get_compatible_context(
+            model_client=model_client, messages=all_messages)
 
         reflection_result: Optional[CreateResult] = None
 
@@ -1084,11 +1096,13 @@ class AssistantAgent(BaseChatAgent, Component[AssistantAgentConfig]):
             reflection_result = await model_client.create(llm_messages)
 
         if not reflection_result or not isinstance(reflection_result.content, str):
-            raise RuntimeError("Reflect on tool use produced no valid text response.")
+            raise RuntimeError(
+                "Reflect on tool use produced no valid text response.")
 
         # --- NEW: If the reflection produced a thought, yield it ---
         if reflection_result.thought:
-            thought_event = ThoughtEvent(content=reflection_result.thought, source=agent_name)
+            thought_event = ThoughtEvent(
+                content=reflection_result.thought, source=agent_name)
             yield thought_event
             inner_messages.append(thought_event)
 
@@ -1122,7 +1136,8 @@ class AssistantAgent(BaseChatAgent, Component[AssistantAgentConfig]):
         If reflect_on_tool_use=False, create a summary message of all tool calls.
         """
         # Filter out calls which were actually handoffs
-        normal_tool_calls = [(call, result) for call, result in executed_calls_and_results if call.name not in handoffs]
+        normal_tool_calls = [
+            (call, result) for call, result in executed_calls_and_results if call.name not in handoffs]
         tool_call_summaries: List[str] = []
         for tool_call, tool_call_result in normal_tool_calls:
             tool_call_summaries.append(
@@ -1154,10 +1169,13 @@ class AssistantAgent(BaseChatAgent, Component[AssistantAgentConfig]):
             all_tools = tools + handoff_tools
             if not all_tools:
                 raise ValueError("No tools are available.")
-            tool = next((t for t in all_tools if t.name == tool_call.name), None)
+            tool = next(
+                (t for t in all_tools if t.name == tool_call.name), None)
             if tool is None:
-                raise ValueError(f"The tool '{tool_call.name}' is not available.")
-            arguments: Dict[str, Any] = json.loads(tool_call.arguments) if tool_call.arguments else {}
+                raise ValueError(
+                    f"The tool '{tool_call.name}' is not available.")
+            arguments: Dict[str, Any] = json.loads(
+                tool_call.arguments) if tool_call.arguments else {}
             result = await tool.run_json(arguments, cancellation_token)
             result_as_str = tool.return_value_as_string(result)
             return (
@@ -1212,7 +1230,8 @@ class AssistantAgent(BaseChatAgent, Component[AssistantAgentConfig]):
             tools=[tool.dump_component() for tool in self._tools],
             handoffs=list(self._handoffs.values()) if self._handoffs else None,
             model_context=self._model_context.dump_component(),
-            memory=[memory.dump_component() for memory in self._memory] if self._memory else None,
+            memory=[memory.dump_component()
+                    for memory in self._memory] if self._memory else None,
             description=self.description,
             system_message=self._system_messages[0].content
             if self._system_messages and isinstance(self._system_messages[0].content, str)
@@ -1228,11 +1247,14 @@ class AssistantAgent(BaseChatAgent, Component[AssistantAgentConfig]):
         """Create an assistant agent from a declarative config."""
         return cls(
             name=config.name,
-            model_client=ChatCompletionClient.load_component(config.model_client),
-            tools=[BaseTool.load_component(tool) for tool in config.tools] if config.tools else None,
+            model_client=ChatCompletionClient.load_component(
+                config.model_client),
+            tools=[BaseTool.load_component(
+                tool) for tool in config.tools] if config.tools else None,
             handoffs=config.handoffs,
             model_context=None,
-            memory=[Memory.load_component(memory) for memory in config.memory] if config.memory else None,
+            memory=[Memory.load_component(
+                memory) for memory in config.memory] if config.memory else None,
             description=config.description,
             system_message=config.system_message,
             model_client_stream=config.model_client_stream,

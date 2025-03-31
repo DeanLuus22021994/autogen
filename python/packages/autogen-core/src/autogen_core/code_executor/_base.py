@@ -11,8 +11,8 @@ from typing import List, Optional, Type
 from pydantic import BaseModel
 from typing_extensions import Self
 
-from .._cancellation_token import CancellationToken
-from .._component_config import ComponentBase
+from _cancellation_token import CancellationToken
+from _component_config import ComponentBase
 
 
 @dataclass

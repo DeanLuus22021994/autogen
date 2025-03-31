@@ -4,10 +4,10 @@ from typing import Any, Dict, List, Union
 
 from pydantic import BaseModel, ConfigDict, field_serializer
 
-from .._cancellation_token import CancellationToken
-from .._component_config import ComponentBase
-from .._image import Image
-from ..model_context import ChatCompletionContext
+from _cancellation_token import CancellationToken
+from _component_config import ComponentBase
+from _image import Image
+from model_context import ChatCompletionContext
 
 
 class MemoryMimeType(Enum):

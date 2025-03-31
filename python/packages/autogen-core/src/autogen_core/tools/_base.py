@@ -9,10 +9,10 @@ from opentelemetry.trace import get_tracer
 from pydantic import BaseModel
 from typing_extensions import NotRequired, TypedDict
 
-from .. import EVENT_LOGGER_NAME, CancellationToken
-from .._component_config import ComponentBase
-from .._function_utils import normalize_annotated_type
-from ..logging import ToolCallEvent
+from import EVENT_LOGGER_NAME, CancellationToken
+from _component_config import ComponentBase
+from _function_utils import normalize_annotated_type
+from logging import ToolCallEvent
 
 T = TypeVar("T", bound=BaseModel, contravariant=True)
 
@@ -52,7 +52,8 @@ class Tool(Protocol):
 
     def return_value_as_string(self, value: Any) -> str: ...
 
-    async def run_json(self, args: Mapping[str, Any], cancellation_token: CancellationToken) -> Any: ...
+    async def run_json(
+        self, args: Mapping[str, Any], cancellation_token: CancellationToken) -> Any: ...
 
     def save_state_json(self) -> Mapping[str, Any]: ...
 
@@ -87,14 +88,16 @@ class BaseTool(ABC, Tool, Generic[ArgsT, ReturnT], ComponentBase[BaseModel]):
         model_schema: Dict[str, Any] = self._args_type.model_json_schema()
 
         if "$defs" in model_schema:
-            model_schema = cast(Dict[str, Any], jsonref.replace_refs(obj=model_schema, proxies=False))  # type: ignore
+            model_schema = cast(Dict[str, Any], jsonref.replace_refs(
+                obj=model_schema, proxies=False))  # type: ignore
             del model_schema["$defs"]
 
         parameters = ParametersSchema(
             type="object",
             properties=model_schema["properties"],
             required=model_schema.get("required", []),
-            additionalProperties=model_schema.get("additionalProperties", False),
+            additionalProperties=model_schema.get(
+                "additionalProperties", False),
         )
 
         # If strict is enabled, the tool schema should list all properties as required.
@@ -145,7 +148,8 @@ class BaseTool(ABC, Tool, Generic[ArgsT, ReturnT], ComponentBase[BaseModel]):
         return str(value)
 
     @abstractmethod
-    async def run(self, args: ArgsT, cancellation_token: CancellationToken) -> ReturnT: ...
+    async def run(self, args: ArgsT,
+                  cancellation_token: CancellationToken) -> ReturnT: ...
 
     async def run_json(self, args: Mapping[str, Any], cancellation_token: CancellationToken) -> Any:
         with get_tracer("base_tool").start_as_current_span(

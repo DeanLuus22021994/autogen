@@ -5,7 +5,7 @@ from typing import List, Optional, Set
 from openai import OpenAI
 from pydantic import BaseModel
 
-from .._base import BaseQualitativeCoder, Code, CodedDocument, Document
+from _base import BaseQualitativeCoder, Code, CodedDocument, Document
 
 
 class CodeList(BaseModel):
@@ -35,7 +35,8 @@ class OAIQualitativeCoder(BaseQualitativeCoder):
     ) -> Optional[CodedDocument]:
         # get hash of the document
         doc_hash = hash(doc)
-        cache_file = os.path.join(self.cache_dir, f"{doc_hash}.json") if self.cache_enabled else None
+        cache_file = os.path.join(
+            self.cache_dir, f"{doc_hash}.json") if self.cache_enabled else None
 
         if self.cache_enabled:
             if not os.path.exists(self.cache_dir):
@@ -140,7 +141,8 @@ The above names are too high level and unclear. Please DO NOT use such names.
 
             message = completion.choices[0].message
             if message.parsed and len(message.parsed.code_list) > 0:
-                coded_document = CodedDocument(doc=doc, codes=set(message.parsed.code_list))
+                coded_document = CodedDocument(
+                    doc=doc, codes=set(message.parsed.code_list))
             else:
                 print(message.refusal)
                 raise ValueError("Error in coding document with OpenAI")
@@ -195,7 +197,8 @@ the context of the example.
                 code_list = message.parsed.code_list
                 # filter out codes whose names are not in the code_set
                 code_set_names = {code.name for code in code_set}
-                code_list = [code for code in code_list if code.name in code_set_names]
+                code_list = [
+                    code for code in code_list if code.name in code_set_names]
 
                 coded_document = CodedDocument(doc=doc, codes=set(code_list))
 

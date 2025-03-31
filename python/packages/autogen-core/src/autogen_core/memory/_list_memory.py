@@ -3,10 +3,10 @@ from typing import Any, List
 from pydantic import BaseModel
 from typing_extensions import Self
 
-from .._cancellation_token import CancellationToken
-from .._component_config import Component
-from ..model_context import ChatCompletionContext
-from ..models import SystemMessage
+from _cancellation_token import CancellationToken
+from _component_config import Component
+from model_context import ChatCompletionContext
+from models import SystemMessage
 from ._base_memory import Memory, MemoryContent, MemoryQueryResult, UpdateContextResult
 
 
@@ -72,7 +72,8 @@ class ListMemory(Memory, Component[ListMemoryConfig]):
 
     def __init__(self, name: str | None = None, memory_contents: List[MemoryContent] | None = None) -> None:
         self._name = name or "default_list_memory"
-        self._contents: List[MemoryContent] = memory_contents if memory_contents is not None else []
+        self._contents: List[MemoryContent] = memory_contents if memory_contents is not None else [
+        ]
 
     @property
     def name(self) -> str:
@@ -120,10 +121,12 @@ class ListMemory(Memory, Component[ListMemoryConfig]):
         if not self._contents:
             return UpdateContextResult(memories=MemoryQueryResult(results=[]))
 
-        memory_strings = [f"{i}. {str(memory.content)}" for i, memory in enumerate(self._contents, 1)]
+        memory_strings = [
+            f"{i}. {str(memory.content)}" for i, memory in enumerate(self._contents, 1)]
 
         if memory_strings:
-            memory_context = "\nRelevant memory content (in chronological order):\n" + "\n".join(memory_strings) + "\n"
+            memory_context = "\nRelevant memory content (in chronological order):\n" + "\n".join(
+                memory_strings) + "\n"
             await model_context.add_message(SystemMessage(content=memory_context))
 
         return UpdateContextResult(memories=MemoryQueryResult(results=self._contents))

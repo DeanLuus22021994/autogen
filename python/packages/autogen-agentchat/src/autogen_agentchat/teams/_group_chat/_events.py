@@ -2,8 +2,8 @@ from typing import List
 
 from pydantic import BaseModel
 
-from ...base import Response
-from ...messages import BaseAgentEvent, BaseChatMessage, StopMessage
+from .base import Response
+from .messages import BaseAgentEvent, BaseChatMessage, StopMessage
 
 
 class GroupChatStart(BaseModel):

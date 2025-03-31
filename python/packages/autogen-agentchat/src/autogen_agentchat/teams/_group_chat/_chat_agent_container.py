@@ -4,8 +4,8 @@ from autogen_core import DefaultTopicId, MessageContext, event, rpc
 
 from autogen_agentchat.messages import BaseAgentEvent, BaseChatMessage, MessageFactory
 
-from ...base import ChatAgent, Response
-from ...state import ChatAgentContainerState
+from .base import ChatAgent, Response
+from .state import ChatAgentContainerState
 from ._events import (
     GroupChatAgentResponse,
     GroupChatMessage,
@@ -80,7 +80,8 @@ class ChatAgentContainer(SequentialRoutedAgent):
             else:
                 await self._log_message(msg)
         if response is None:
-            raise ValueError("The agent did not produce a final response. Check the agent's on_messages_stream method.")
+            raise ValueError(
+                "The agent did not produce a final response. Check the agent's on_messages_stream method.")
 
         # Publish the response to the group chat.
         self._message_buffer.clear()
@@ -92,13 +93,15 @@ class ChatAgentContainer(SequentialRoutedAgent):
 
     def _buffer_message(self, message: BaseChatMessage) -> None:
         if not self._message_factory.is_registered(message.__class__):
-            raise ValueError(f"Message type {message.__class__} is not registered.")
+            raise ValueError(
+                f"Message type {message.__class__} is not registered.")
         # Buffer the message.
         self._message_buffer.append(message)
 
     async def _log_message(self, message: BaseAgentEvent | BaseChatMessage) -> None:
         if not self._message_factory.is_registered(message.__class__):
-            raise ValueError(f"Message type {message.__class__} is not registered.")
+            raise ValueError(
+                f"Message type {message.__class__} is not registered.")
         # Log the message.
         await self.publish_message(
             GroupChatMessage(message=message),
@@ -116,12 +119,14 @@ class ChatAgentContainer(SequentialRoutedAgent):
         await self._agent.on_resume(ctx.cancellation_token)
 
     async def on_unhandled_message(self, message: Any, ctx: MessageContext) -> None:
-        raise ValueError(f"Unhandled message in agent container: {type(message)}")
+        raise ValueError(
+            f"Unhandled message in agent container: {type(message)}")
 
     async def save_state(self) -> Mapping[str, Any]:
         agent_state = await self._agent.save_state()
         state = ChatAgentContainerState(
-            agent_state=agent_state, message_buffer=[message.dump() for message in self._message_buffer]
+            agent_state=agent_state, message_buffer=[
+                message.dump() for message in self._message_buffer]
         )
         return state.model_dump()
 
@@ -133,5 +138,6 @@ class ChatAgentContainer(SequentialRoutedAgent):
             if isinstance(message, BaseChatMessage):
                 self._message_buffer.append(message)
             else:
-                raise ValueError(f"Invalid message type in message buffer: {type(message)}")
+                raise ValueError(
+                    f"Invalid message type in message buffer: {type(message)}")
         await self._agent.load_state(container_state.agent_state)

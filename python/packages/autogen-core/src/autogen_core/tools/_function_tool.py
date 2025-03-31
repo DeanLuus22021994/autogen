@@ -7,13 +7,13 @@ from typing import Any, Callable, Sequence
 from pydantic import BaseModel
 from typing_extensions import Self
 
-from .. import CancellationToken
-from .._component_config import Component
-from .._function_utils import (
+from import CancellationToken
+from _component_config import Component
+from _function_utils import (
     args_base_model_from_signature,
     get_typed_signature,
 )
-from ..code_executor._func_with_reqs import Import, import_to_str, to_code
+from code_executor._func_with_reqs import Import, import_to_str, to_code
 from ._base import BaseTool
 
 
@@ -96,8 +96,10 @@ class FunctionTool(BaseTool[BaseModel, BaseModel], Component[FunctionToolConfig]
         self._func = func
         self._global_imports = global_imports
         self._signature = get_typed_signature(func)
-        func_name = name or func.func.__name__ if isinstance(func, functools.partial) else name or func.__name__
-        args_model = args_base_model_from_signature(func_name + "args", self._signature)
+        func_name = name or func.func.__name__ if isinstance(
+            func, functools.partial) else name or func.__name__
+        args_model = args_base_model_from_signature(
+            func_name + "args", self._signature)
         self._has_cancellation_support = "cancellation_token" in self._signature.parameters
         return_type = self._signature.return_annotation
         super().__init__(args_model, return_type, func_name, description, strict)
@@ -125,7 +127,8 @@ class FunctionTool(BaseTool[BaseModel, BaseModel], Component[FunctionToolConfig]
                     ),
                 )
             else:
-                future = asyncio.get_event_loop().run_in_executor(None, functools.partial(self._func, **kwargs))
+                future = asyncio.get_event_loop().run_in_executor(
+                    None, functools.partial(self._func, **kwargs))
                 cancellation_token.link_future(future)
                 result = await future
 
@@ -162,16 +165,19 @@ class FunctionTool(BaseTool[BaseModel, BaseModel], Component[FunctionToolConfig]
                     f"Failed to import {import_code}: Module not found. Please ensure the module is installed."
                 ) from e
             except ImportError as e:
-                raise ImportError(f"Failed to import {import_code}: {str(e)}") from e
+                raise ImportError(
+                    f"Failed to import {import_code}: {str(e)}") from e
             except Exception as e:
-                raise RuntimeError(f"Unexpected error while importing {import_code}: {str(e)}") from e
+                raise RuntimeError(
+                    f"Unexpected error while importing {import_code}: {str(e)}") from e
 
         # Execute function code
         try:
             exec(config.source_code, exec_globals)
             func_name = config.source_code.split("def ")[1].split("(")[0]
         except Exception as e:
-            raise ValueError(f"Could not compile and load function: {e}") from e
+            raise ValueError(
+                f"Could not compile and load function: {e}") from e
 
         # Get function and verify it's callable
         func: Callable[..., Any] = exec_globals[func_name]

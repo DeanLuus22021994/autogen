@@ -3,7 +3,7 @@ from typing import AsyncGenerator, Protocol, Sequence
 
 from autogen_core import CancellationToken
 
-from ..messages import BaseAgentEvent, BaseChatMessage
+from messages import BaseAgentEvent, BaseChatMessage
 
 
 @dataclass

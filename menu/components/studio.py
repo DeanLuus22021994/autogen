@@ -1,6 +1,7 @@
 import os
 import argparse
-from ..utils import run_command, debug_args, ROOT_DIR
+from utils import run_command, debug_args, ROOT_DIR
+
 
 @debug_args
 def autogen_studio_build(args: argparse.Namespace) -> int:
@@ -21,7 +22,7 @@ def autogen_studio_build(args: argparse.Namespace) -> int:
     # Auto-recompile check - this module will be recompiled on each run if valid
     print(f"[DEBUG] Running module: {__name__}")
     print(f"[DEBUG] Module path: {os.path.abspath(__file__)}")
-    
+
     # Install Python package
     install_cmd = [
         "pip", "install", "-e", "python/samples/apps/autogen-studio[dev]"
@@ -78,11 +79,12 @@ def autogen_studio_build(args: argparse.Namespace) -> int:
 
     return run_command(run_cmd)
 
+
 def register_parser(subparsers):
     """Register the AutoGen Studio parser"""
     parser = subparsers.add_parser(
         "studio", help="Build and run AutoGen Studio")
-    
+
     # Add arguments
     parser.add_argument(
         "--host", default="0.0.0.0", help="Host to bind to")
@@ -124,8 +126,8 @@ def register_parser(subparsers):
         "--log_file", default="autogenstudio.log", help="Log file")
     parser.add_argument(
         "--file_log_level", default="DEBUG", help="File log level")
-    
+
     # Set the function to execute
     parser.set_defaults(func=autogen_studio_build)
-    
+
     return parser

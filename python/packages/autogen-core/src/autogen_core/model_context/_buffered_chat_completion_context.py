@@ -3,8 +3,8 @@ from typing import List
 from pydantic import BaseModel
 from typing_extensions import Self
 
-from .._component_config import Component
-from ..models import FunctionExecutionResultMessage, LLMMessage
+from _component_config import Component
+from models import FunctionExecutionResultMessage, LLMMessage
 from ._chat_completion_context import ChatCompletionContext
 
 
@@ -33,7 +33,7 @@ class BufferedChatCompletionContext(ChatCompletionContext, Component[BufferedCha
 
     async def get_messages(self) -> List[LLMMessage]:
         """Get at most `buffer_size` recent messages."""
-        messages = self._messages[-self._buffer_size :]
+        messages = self._messages[-self._buffer_size:]
         # Handle the first message is a function call result message.
         if messages and isinstance(messages[0], FunctionExecutionResultMessage):
             # Remove the first message from the list.

@@ -7,7 +7,7 @@ multi-agent conversations with code generation and execution.
 
 import os
 import argparse
-from ..utils import run_command, debug_args
+from utils import run_command, debug_args
 
 
 @debug_args

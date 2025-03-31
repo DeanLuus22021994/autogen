@@ -4,8 +4,8 @@ from typing import Dict
 from fastapi import APIRouter, Depends, HTTPException
 from loguru import logger
 
-from ...datamodel import Message, Run, Session
-from ..deps import get_db
+from .datamodel import Message, Run, Session
+from deps import get_db
 
 router = APIRouter()
 
@@ -54,7 +54,8 @@ async def update_session(session_id: int, user_id: str, session: Session, db=Dep
 @router.delete("/{session_id}")
 async def delete_session(session_id: int, user_id: str, db=Depends(get_db)) -> Dict:
     """Delete a session"""
-    db.delete(filters={"id": session_id, "user_id": user_id}, model_class=Session)
+    db.delete(filters={"id": session_id, "user_id": user_id},
+              model_class=Session)
     return {"status": True, "message": "Session deleted successfully"}
 
 
@@ -64,16 +65,21 @@ async def list_session_runs(session_id: int, user_id: str, db=Depends(get_db)) -
 
     try:
         # 1. Verify session exists and belongs to user
-        session = db.get(Session, filters={"id": session_id, "user_id": user_id}, return_json=False)
+        session = db.get(Session, filters={
+                         "id": session_id, "user_id": user_id}, return_json=False)
         if not session.status:
-            raise HTTPException(status_code=500, detail="Database error while fetching session")
+            raise HTTPException(
+                status_code=500, detail="Database error while fetching session")
         if not session.data:
-            raise HTTPException(status_code=404, detail="Session not found or access denied")
+            raise HTTPException(
+                status_code=404, detail="Session not found or access denied")
 
         # 2. Get ordered runs for session
-        runs = db.get(Run, filters={"session_id": session_id}, order="asc", return_json=False)
+        runs = db.get(
+            Run, filters={"session_id": session_id}, order="asc", return_json=False)
         if not runs.status:
-            raise HTTPException(status_code=500, detail="Database error while fetching runs")
+            raise HTTPException(
+                status_code=500, detail="Database error while fetching runs")
 
         # 3. Build response with messages per run
         run_data = []
@@ -81,9 +87,11 @@ async def list_session_runs(session_id: int, user_id: str, db=Depends(get_db)) -
             for run in runs.data:
                 try:
                     # Get messages for this specific run
-                    messages = db.get(Message, filters={"run_id": run.id}, order="asc", return_json=False)
+                    messages = db.get(Message, filters={
+                                      "run_id": run.id}, order="asc", return_json=False)
                     if not messages.status:
-                        logger.error(f"Failed to fetch messages for run {run.id}")
+                        logger.error(
+                            f"Failed to fetch messages for run {run.id}")
                         # Continue processing other runs even if one fails
                         messages.data = []
 
@@ -118,4 +126,5 @@ async def list_session_runs(session_id: int, user_id: str, db=Depends(get_db)) -
         raise  # Re-raise HTTP exceptions
     except Exception as e:
         logger.error(f"Unexpected error in list_messages: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error while fetching session data") from e
+        raise HTTPException(
+            status_code=500, detail="Internal server error while fetching session data") from e

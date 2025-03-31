@@ -23,7 +23,7 @@ from autogen_core.code_executor import (
 from pydantic import BaseModel
 from typing_extensions import Self
 
-from .._common import (
+from _common import (
     CommandLineCodeResult,
     build_python_functions_file,
     get_file_name_from_content,
@@ -233,8 +233,10 @@ $functions"""
         func_file.write_text(func_file_content)
 
         # Collect requirements
-        lists_of_packages = [x.python_packages for x in self._functions if isinstance(x, FunctionWithRequirements)]
-        flattened_packages = [item for sublist in lists_of_packages for item in sublist]
+        lists_of_packages = [x.python_packages for x in self._functions if isinstance(
+            x, FunctionWithRequirements)]
+        flattened_packages = [
+            item for sublist in lists_of_packages for item in sublist]
         required_packages = list(set(flattened_packages))
         if len(required_packages) > 0:
             logging.info("Ensuring packages are installed in executor.")
@@ -242,7 +244,8 @@ $functions"""
             packages = shlex.join(required_packages)
 
             result = await self._execute_code_dont_check_setup(
-                [CodeBlock(code=f"python -m pip install {packages}", language="sh")], cancellation_token
+                [CodeBlock(
+                    code=f"python -m pip install {packages}", language="sh")], cancellation_token
             )
 
             if result.exit_code != 0:
@@ -252,7 +255,8 @@ $functions"""
 
         # Attempt to load the function file to check for syntax errors, imports etc.
         exec_result = await self._execute_code_dont_check_setup(
-            [CodeBlock(code=func_file_content, language="python")], cancellation_token
+            [CodeBlock(code=func_file_content, language="python")
+             ], cancellation_token
         )
 
         if exec_result.exit_code != 0:
@@ -267,9 +271,11 @@ $functions"""
 
     async def _execute_command(self, command: List[str], cancellation_token: CancellationToken) -> Tuple[str, int]:
         if self._container is None or not self._running:
-            raise ValueError("Container is not running. Must first be started with either start or a context manager.")
+            raise ValueError(
+                "Container is not running. Must first be started with either start or a context manager.")
 
-        exec_task = asyncio.create_task(asyncio.to_thread(self._container.exec_run, command))
+        exec_task = asyncio.create_task(
+            asyncio.to_thread(self._container.exec_run, command))
         cancellation_token.link_future(exec_task)
 
         # Wait for the exec task to finish.
@@ -282,14 +288,16 @@ $functions"""
             return output, exit_code
         except asyncio.CancelledError:
             # Schedule a task to kill the running command in the background.
-            self._cancellation_tasks.append(asyncio.create_task(self._kill_running_command(command)))
+            self._cancellation_tasks.append(
+                asyncio.create_task(self._kill_running_command(command)))
             return "Code execution was cancelled.", 1
 
     async def _execute_code_dont_check_setup(
         self, code_blocks: List[CodeBlock], cancellation_token: CancellationToken
     ) -> CommandLineCodeResult:
         if self._container is None or not self._running:
-            raise ValueError("Container is not running. Must first be started with either start or a context manager.")
+            raise ValueError(
+                "Container is not running. Must first be started with either start or a context manager.")
 
         if len(code_blocks) == 0:
             raise ValueError("No code blocks to execute.")
@@ -317,7 +325,8 @@ $functions"""
                 fout.write(code)
             files.append(code_path)
 
-            command = ["timeout", str(self._timeout), lang_to_cmd(lang), filename]
+            command = ["timeout", str(self._timeout),
+                       lang_to_cmd(lang), filename]
 
             output, exit_code = await self._execute_command(command, cancellation_token)
             outputs.append(output)
@@ -346,7 +355,8 @@ $functions"""
 
     async def restart(self) -> None:
         if self._container is None or not self._running:
-            raise ValueError("Container is not running. Must first be started with either start or a context manager.")
+            raise ValueError(
+                "Container is not running. Must first be started with either start or a context manager.")
 
         """(Experimental) Restart the code executor."""
         await asyncio.to_thread(self._container.restart)  # type: ignore
@@ -379,10 +389,12 @@ $functions"""
             client = docker.from_env()
         except DockerException as e:
             if "FileNotFoundError" in str(e):
-                raise RuntimeError("Failed to connect to Docker. Please ensure Docker is installed and running.") from e
+                raise RuntimeError(
+                    "Failed to connect to Docker. Please ensure Docker is installed and running.") from e
             raise
         except Exception as e:
-            raise RuntimeError(f"Unexpected error while connecting to Docker: {str(e)}") from e
+            raise RuntimeError(
+                f"Unexpected error while connecting to Docker: {str(e)}") from e
 
         # Check if the image exists
         try:
@@ -395,7 +407,8 @@ $functions"""
 
         # Prepare the command (if needed)
         shell_command = "/bin/sh"
-        command = ["-c", f"{(self._init_command)};exec {shell_command}"] if self._init_command else None
+        command = [
+            "-c", f"{(self._init_command)};exec {shell_command}"] if self._init_command else None
 
         self._container = await asyncio.to_thread(
             client.containers.create,
@@ -406,7 +419,8 @@ $functions"""
             tty=True,
             detach=True,
             auto_remove=self._auto_remove,
-            volumes={str(self._bind_dir.resolve()): {"bind": "/workspace", "mode": "rw"}, **self._extra_volumes},
+            volumes={str(self._bind_dir.resolve()): {
+                "bind": "/workspace", "mode": "rw"}, **self._extra_volumes},
             working_dir="/workspace",
             extra_hosts=self._extra_hosts,
         )
@@ -424,14 +438,16 @@ $functions"""
         # Check if the container is running
         if self._container.status != "running":
             logs_str = self._container.logs().decode("utf-8")
-            raise ValueError(f"Failed to start container from image {self._image}. Logs: {logs_str}")
+            raise ValueError(
+                f"Failed to start container from image {self._image}. Logs: {logs_str}")
 
         self._running = True
 
     def _to_config(self) -> DockerCommandLineCodeExecutorConfig:
         """(Experimental) Convert the component to a config object."""
         if self._functions:
-            logging.info("Functions will not be included in serialized configuration")
+            logging.info(
+                "Functions will not be included in serialized configuration")
 
         return DockerCommandLineCodeExecutorConfig(
             image=self._image,

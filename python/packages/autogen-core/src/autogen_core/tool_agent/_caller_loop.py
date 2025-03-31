@@ -1,15 +1,15 @@
 import asyncio
 from typing import List
 
-from .. import AgentId, AgentRuntime, BaseAgent, CancellationToken, FunctionCall
-from ..models import (
+from import AgentId, AgentRuntime, BaseAgent, CancellationToken, FunctionCall
+from models import (
     AssistantMessage,
     ChatCompletionClient,
     FunctionExecutionResult,
     FunctionExecutionResultMessage,
     LLMMessage,
 )
-from ..tools import Tool, ToolSchema
+from tools import Tool, ToolSchema
 from ._tool_agent import ToolException
 
 
@@ -40,7 +40,8 @@ async def tool_agent_caller_loop(
     # Get a response from the model.
     response = await model_client.create(input_messages, tools=tool_schema, cancellation_token=cancellation_token)
     # Add the response to the generated messages.
-    generated_messages.append(AssistantMessage(content=response.content, source=caller_source))
+    generated_messages.append(AssistantMessage(
+        content=response.content, source=caller_source))
 
     # Keep iterating until the model stops generating tool calls.
     while isinstance(response.content, list) and all(isinstance(item, FunctionCall) for item in response.content):
@@ -69,12 +70,14 @@ async def tool_agent_caller_loop(
                 )
             elif isinstance(result, BaseException):
                 raise result  # Unexpected exception.
-        generated_messages.append(FunctionExecutionResultMessage(content=function_results))
+        generated_messages.append(
+            FunctionExecutionResultMessage(content=function_results))
         # Query the model again with the new response.
         response = await model_client.create(
             input_messages + generated_messages, tools=tool_schema, cancellation_token=cancellation_token
         )
-        generated_messages.append(AssistantMessage(content=response.content, source=caller_source))
+        generated_messages.append(AssistantMessage(
+            content=response.content, source=caller_source))
 
     # Return the generated messages.
     return generated_messages

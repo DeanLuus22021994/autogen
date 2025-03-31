@@ -2,8 +2,8 @@
 
 from fastapi import APIRouter
 
-from ...validation.component_test_service import ComponentTestRequest, ComponentTestResult, ComponentTestService
-from ...validation.validation_service import ValidationError, ValidationRequest, ValidationResponse, ValidationService
+from .validation.component_test_service import ComponentTestRequest, ComponentTestResult, ComponentTestService
+from .validation.validation_service import ValidationError, ValidationRequest, ValidationResponse, ValidationService
 
 router = APIRouter()
 

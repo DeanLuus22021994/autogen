@@ -15,7 +15,7 @@ from autogen_core.models import (
 from .page_logger import PageLogger
 
 if TYPE_CHECKING:
-    from ..memory_controller import MemoryControllerConfig
+    from memory_controller import MemoryControllerConfig
 
 
 # Following the nested-config pattern, this TypedDict minimizes code changes by encapsulating
@@ -58,9 +58,12 @@ class Apprentice:
         self.disable_prefix_caching = False
         memory_controller_config = None
         if config is not None:
-            self.name_of_agent_or_team = config.get("name_of_agent_or_team", self.name_of_agent_or_team)
-            self.disable_prefix_caching = config.get("disable_prefix_caching", self.disable_prefix_caching)
-            memory_controller_config = config.get("MemoryController", memory_controller_config)
+            self.name_of_agent_or_team = config.get(
+                "name_of_agent_or_team", self.name_of_agent_or_team)
+            self.disable_prefix_caching = config.get(
+                "disable_prefix_caching", self.disable_prefix_caching)
+            memory_controller_config = config.get(
+                "MemoryController", memory_controller_config)
 
         self.client = client
         if self.disable_prefix_caching:
@@ -68,7 +71,7 @@ class Apprentice:
             self.rand.seed(int(time.time() * 1000))
 
         # Create the MemoryController, which creates the MemoryBank.
-        from ..memory_controller import MemoryController
+        from memory_controller import MemoryController
 
         self.memory_controller = MemoryController(
             reset=True,
@@ -172,7 +175,8 @@ In responding to every user message, you follow the same multi-step process give
         system_message: LLMMessage
         if self.client.model_info["family"] == "o1":
             # No system message allowed, so pass it as the first user message.
-            system_message = UserMessage(content=system_message_content, source="User")
+            system_message = UserMessage(
+                content=system_message_content, source="User")
         else:
             # System message allowed.
             system_message = SystemMessage(content=system_message_content)
@@ -180,7 +184,8 @@ In responding to every user message, you follow the same multi-step process give
         user_message: LLMMessage = UserMessage(content=task, source="User")
         system_message_list: List[LLMMessage] = [system_message]
         user_message_list: List[LLMMessage] = [user_message]
-        input_messages: List[LLMMessage] = system_message_list + user_message_list
+        input_messages: List[LLMMessage] = system_message_list + \
+            user_message_list
 
         assistant_agent = AssistantAgent(
             "assistant_agent",
@@ -190,7 +195,8 @@ In responding to every user message, you follow the same multi-step process give
 
         # Get the agent's response to the task.
         task_result: TaskResult = await assistant_agent.run(task=TextMessage(content=task, source="User"))
-        messages: Sequence[BaseAgentEvent | BaseChatMessage] = task_result.messages
+        messages: Sequence[BaseAgentEvent |
+                           BaseChatMessage] = task_result.messages
         message: BaseAgentEvent | BaseChatMessage = messages[-1]
         response_str = message.to_text()
 
@@ -198,7 +204,8 @@ In responding to every user message, you follow the same multi-step process give
         self.logger.log_model_task(
             summary="Ask the model to complete the task", input_messages=input_messages, task_result=task_result
         )
-        self.logger.info("\n-----  RESPONSE  -----\n\n{}\n".format(response_str))
+        self.logger.info(
+            "\n-----  RESPONSE  -----\n\n{}\n".format(response_str))
 
         # Use the response as the work history as well.
         work_history = response_str
@@ -248,7 +255,8 @@ In responding to every user message, you follow the same multi-step process give
             response_str_list.append(message.to_text())
         response_str = "\n".join(response_str_list)
 
-        self.logger.info("\n-----  RESPONSE  -----\n\n{}\n".format(response_str))
+        self.logger.info(
+            "\n-----  RESPONSE  -----\n\n{}\n".format(response_str))
 
         # MagenticOne's response is the chat history, which we use here as the work history.
         work_history = response_str

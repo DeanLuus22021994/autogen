@@ -7,11 +7,11 @@ from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from fastapi.websockets import WebSocketState
 from loguru import logger
 
-from ...datamodel import Run, RunStatus
-from ..auth.dependencies import get_ws_auth_manager
-from ..auth.wsauth import WebSocketAuthHandler
-from ..deps import get_db, get_websocket_manager
-from ..managers import WebSocketManager
+from .datamodel import Run, RunStatus
+from auth.dependencies import get_ws_auth_manager
+from auth.wsauth import WebSocketAuthHandler
+from deps import get_db, get_websocket_manager
+from managers import WebSocketManager
 
 router = APIRouter()
 
@@ -64,7 +64,8 @@ async def run_websocket(
             ws_auth = WebSocketAuthHandler(auth_manager)
             success, user = await ws_auth.authenticate(websocket)
             if not success:
-                logger.warning(f"Authentication failed for WebSocket connection to run {run_id}")
+                logger.warning(
+                    f"Authentication failed for WebSocket connection to run {run_id}")
                 await websocket.send_json(
                     {
                         "type": "error",
@@ -84,7 +85,8 @@ async def run_websocket(
                         "timestamp": datetime.utcnow().isoformat(),
                     }
                 )
-                logger.warning(f"User {user.id} not authorized to access run {run_id}")
+                logger.warning(
+                    f"User {user.id} not authorized to access run {run_id}")
                 # await websocket.close(code=4003, reason="Not authorized to access this run")
                 return
 
@@ -102,9 +104,11 @@ async def run_websocket(
                     team_config = message.get("team_config")
                     if task and team_config:
                         # Start the stream in a separate task
-                        asyncio.create_task(start_stream_wrapper(run_id, task, team_config))
+                        asyncio.create_task(start_stream_wrapper(
+                            run_id, task, team_config))
                     else:
-                        logger.warning(f"Invalid start message format for run {run_id}")
+                        logger.warning(
+                            f"Invalid start message format for run {run_id}")
                         await websocket.send_json(
                             {
                                 "type": "error",
@@ -115,7 +119,8 @@ async def run_websocket(
 
                 elif message.get("type") == "stop":
                     logger.info(f"Received stop request for run {run_id}")
-                    reason = message.get("reason") or "User requested stop/cancellation"
+                    reason = message.get(
+                        "reason") or "User requested stop/cancellation"
                     await ws_manager.stop_run(run_id, reason=reason)
                     break
 
@@ -128,12 +133,14 @@ async def run_websocket(
                     if response is not None:
                         await ws_manager.handle_input_response(run_id, response)
                     else:
-                        logger.warning(f"Invalid input response format for run {run_id}")
+                        logger.warning(
+                            f"Invalid input response format for run {run_id}")
 
             except json.JSONDecodeError:
                 logger.warning(f"Invalid JSON received: {raw_message}")
                 await websocket.send_json(
-                    {"type": "error", "error": "Invalid message format", "timestamp": datetime.utcnow().isoformat()}
+                    {"type": "error", "error": "Invalid message format",
+                        "timestamp": datetime.utcnow().isoformat()}
                 )
 
     except WebSocketDisconnect:

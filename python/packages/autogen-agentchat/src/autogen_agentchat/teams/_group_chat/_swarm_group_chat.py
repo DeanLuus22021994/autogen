@@ -4,9 +4,9 @@ from typing import Any, Callable, List, Mapping
 from autogen_core import AgentRuntime, Component, ComponentModel
 from pydantic import BaseModel
 
-from ...base import ChatAgent, TerminationCondition
-from ...messages import BaseAgentEvent, BaseChatMessage, HandoffMessage, MessageFactory
-from ...state import SwarmManagerState
+from .base import ChatAgent, TerminationCondition
+from .messages import BaseAgentEvent, BaseChatMessage, HandoffMessage, MessageFactory
+from .state import SwarmManagerState
 from ._base_group_chat import BaseGroupChat
 from ._base_group_chat_manager import BaseGroupChatManager
 from ._events import GroupChatTermination
@@ -100,7 +100,8 @@ class SwarmGroupChatManager(BaseGroupChatManager):
 
     async def load_state(self, state: Mapping[str, Any]) -> None:
         swarm_state = SwarmManagerState.model_validate(state)
-        self._message_thread = [self._message_factory.create(message) for message in swarm_state.message_thread]
+        self._message_thread = [self._message_factory.create(
+            message) for message in swarm_state.message_thread]
         self._current_turn = swarm_state.current_turn
         self._current_speaker = swarm_state.current_speaker
 
@@ -212,7 +213,8 @@ class Swarm(BaseGroupChat, Component[SwarmConfig]):
         termination_condition: TerminationCondition | None = None,
         max_turns: int | None = None,
         runtime: AgentRuntime | None = None,
-        custom_message_types: List[type[BaseAgentEvent | BaseChatMessage]] | None = None,
+        custom_message_types: List[type[BaseAgentEvent |
+                                        BaseChatMessage]] | None = None,
     ) -> None:
         super().__init__(
             participants,
@@ -226,7 +228,8 @@ class Swarm(BaseGroupChat, Component[SwarmConfig]):
         # The first participant must be able to produce handoff messages.
         first_participant = self._participants[0]
         if HandoffMessage not in first_participant.produced_message_types:
-            raise ValueError("The first participant must be able to produce a handoff messages.")
+            raise ValueError(
+                "The first participant must be able to produce a handoff messages.")
 
     def _create_group_chat_manager_factory(
         self,
@@ -258,8 +261,10 @@ class Swarm(BaseGroupChat, Component[SwarmConfig]):
         return _factory
 
     def _to_config(self) -> SwarmConfig:
-        participants = [participant.dump_component() for participant in self._participants]
-        termination_condition = self._termination_condition.dump_component() if self._termination_condition else None
+        participants = [participant.dump_component()
+                        for participant in self._participants]
+        termination_condition = self._termination_condition.dump_component(
+        ) if self._termination_condition else None
         return SwarmConfig(
             participants=participants,
             termination_condition=termination_condition,
@@ -268,8 +273,10 @@ class Swarm(BaseGroupChat, Component[SwarmConfig]):
 
     @classmethod
     def _from_config(cls, config: SwarmConfig) -> "Swarm":
-        participants = [ChatAgent.load_component(participant) for participant in config.participants]
+        participants = [ChatAgent.load_component(
+            participant) for participant in config.participants]
         termination_condition = (
-            TerminationCondition.load_component(config.termination_condition) if config.termination_condition else None
+            TerminationCondition.load_component(
+                config.termination_condition) if config.termination_condition else None
         )
         return cls(participants, termination_condition=termination_condition, max_turns=config.max_turns)

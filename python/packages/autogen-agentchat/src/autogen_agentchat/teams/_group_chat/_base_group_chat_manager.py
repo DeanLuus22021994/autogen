@@ -4,8 +4,8 @@ from typing import Any, List
 
 from autogen_core import DefaultTopicId, MessageContext, event, rpc
 
-from ...base import TerminationCondition
-from ...messages import BaseAgentEvent, BaseChatMessage, MessageFactory, StopMessage
+from .base import TerminationCondition
+from .messages import BaseAgentEvent, BaseChatMessage, MessageFactory, StopMessage
 from ._events import (
     GroupChatAgentResponse,
     GroupChatMessage,
@@ -57,11 +57,13 @@ class BaseGroupChatManager(SequentialRoutedAgent, ABC):
         self._group_topic_type = group_topic_type
         self._output_topic_type = output_topic_type
         if len(participant_topic_types) != len(participant_descriptions):
-            raise ValueError("The number of participant topic types, agent types, and descriptions must be the same.")
+            raise ValueError(
+                "The number of participant topic types, agent types, and descriptions must be the same.")
         if len(set(participant_topic_types)) != len(participant_topic_types):
             raise ValueError("The participant topic types must be unique.")
         if group_topic_type in participant_topic_types:
-            raise ValueError("The group topic type must not be in the participant topic types.")
+            raise ValueError(
+                "The group topic type must not be in the participant topic types.")
         self._participant_names = participant_names
         self._participant_name_to_topic_type = {
             name: topic_type for name, topic_type in zip(participant_names, participant_topic_types, strict=True)
@@ -71,7 +73,8 @@ class BaseGroupChatManager(SequentialRoutedAgent, ABC):
         self._output_message_queue = output_message_queue
         self._termination_condition = termination_condition
         if max_turns is not None and max_turns <= 0:
-            raise ValueError("The maximum number of turns must be greater than 0.")
+            raise ValueError(
+                "The maximum number of turns must be greater than 0.")
         self._max_turns = max_turns
         self._current_turn = 0
         self._message_factory = message_factory
@@ -125,12 +128,14 @@ class BaseGroupChatManager(SequentialRoutedAgent, ABC):
                     return
 
         # Select a speaker to start/continue the conversation
-        speaker_name_future = asyncio.ensure_future(self.select_speaker(self._message_thread))
+        speaker_name_future = asyncio.ensure_future(
+            self.select_speaker(self._message_thread))
         # Link the select speaker future to the cancellation token.
         ctx.cancellation_token.link_future(speaker_name_future)
         speaker_name = await speaker_name_future
         if speaker_name not in self._participant_name_to_topic_type:
-            raise RuntimeError(f"Speaker {speaker_name} not found in participant names.")
+            raise RuntimeError(
+                f"Speaker {speaker_name} not found in participant names.")
         speaker_topic_type = self._participant_name_to_topic_type[speaker_name]
         await self.publish_message(
             GroupChatRequestPublish(),
@@ -180,12 +185,14 @@ class BaseGroupChatManager(SequentialRoutedAgent, ABC):
                 return
 
         # Select a speaker to continue the conversation.
-        speaker_name_future = asyncio.ensure_future(self.select_speaker(self._message_thread))
+        speaker_name_future = asyncio.ensure_future(
+            self.select_speaker(self._message_thread))
         # Link the select speaker future to the cancellation token.
         ctx.cancellation_token.link_future(speaker_name_future)
         speaker_name = await speaker_name_future
         if speaker_name not in self._participant_name_to_topic_type:
-            raise RuntimeError(f"Speaker {speaker_name} not found in participant names.")
+            raise RuntimeError(
+                f"Speaker {speaker_name} not found in participant names.")
         speaker_topic_type = self._participant_name_to_topic_type[speaker_name]
         await self.publish_message(
             GroupChatRequestPublish(),
@@ -246,4 +253,5 @@ class BaseGroupChatManager(SequentialRoutedAgent, ABC):
         ...
 
     async def on_unhandled_message(self, message: Any, ctx: MessageContext) -> None:
-        raise ValueError(f"Unhandled message in group chat manager: {type(message)}")
+        raise ValueError(
+            f"Unhandled message in group chat manager: {type(message)}")

@@ -1,10 +1,10 @@
 # api/routes/gallery.py
 from fastapi import APIRouter, Depends, HTTPException
 
-from ...database import DatabaseManager
-from ...datamodel import Gallery, Response
-from ...gallery.builder import create_default_gallery
-from ..deps import get_db
+from .database import DatabaseManager
+from .datamodel import Gallery, Response
+from .gallery.builder import create_default_gallery
+from deps import get_db
 
 router = APIRouter()
 
@@ -19,7 +19,8 @@ async def update_gallery_entry(
         raise HTTPException(status_code=404, detail="Gallery entry not found")
 
     if result.data[0].user_id != user_id:
-        raise HTTPException(status_code=403, detail="Not authorized to update this gallery entry")
+        raise HTTPException(
+            status_code=403, detail="Not authorized to update this gallery entry")
 
     # Update if authorized
     gallery_data.id = gallery_id  # Ensure ID matches
@@ -42,7 +43,8 @@ async def list_gallery_entries(user_id: str, db: DatabaseManager = Depends(get_d
         if not result.data or len(result.data) == 0:
             # create a default gallery entry
             gallery_config = create_default_gallery()
-            default_gallery = Gallery(user_id=user_id, config=gallery_config.model_dump())
+            default_gallery = Gallery(
+                user_id=user_id, config=gallery_config.model_dump())
             db.upsert(default_gallery)
             result = db.get(Gallery, filters={"user_id": user_id})
         return result

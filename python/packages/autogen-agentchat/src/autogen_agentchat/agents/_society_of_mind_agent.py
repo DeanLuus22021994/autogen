@@ -8,8 +8,8 @@ from typing_extensions import Self
 from autogen_agentchat.base import Response
 from autogen_agentchat.state import SocietyOfMindAgentState
 
-from ..base import TaskResult, Team
-from ..messages import (
+from base import TaskResult, Team
+from messages import (
     BaseAgentEvent,
     BaseChatMessage,
     ModelClientStreamingChunkEvent,
@@ -165,7 +165,8 @@ class SocietyOfMindAgent(BaseChatAgent, Component[SocietyOfMindAgentConfig]):
             )
         else:
             # Generate a response using the model client.
-            llm_messages: List[LLMMessage] = [SystemMessage(content=self._instruction)]
+            llm_messages: List[LLMMessage] = [
+                SystemMessage(content=self._instruction)]
             for message in messages:
                 if isinstance(message, BaseChatMessage):
                     llm_messages.append(message.to_model_message())
@@ -173,7 +174,8 @@ class SocietyOfMindAgent(BaseChatAgent, Component[SocietyOfMindAgentConfig]):
             completion = await self._model_client.create(messages=llm_messages, cancellation_token=cancellation_token)
             assert isinstance(completion.content, str)
             yield Response(
-                chat_message=TextMessage(source=self.name, content=completion.content, models_usage=completion.usage),
+                chat_message=TextMessage(
+                    source=self.name, content=completion.content, models_usage=completion.usage),
                 inner_messages=inner_messages,
             )
 

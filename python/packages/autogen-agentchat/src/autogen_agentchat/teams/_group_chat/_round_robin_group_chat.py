@@ -5,9 +5,9 @@ from autogen_core import AgentRuntime, Component, ComponentModel
 from pydantic import BaseModel
 from typing_extensions import Self
 
-from ...base import ChatAgent, TerminationCondition
-from ...messages import BaseAgentEvent, BaseChatMessage, MessageFactory
-from ...state import RoundRobinManagerState
+from .base import ChatAgent, TerminationCondition
+from .messages import BaseAgentEvent, BaseChatMessage, MessageFactory
+from .state import RoundRobinManagerState
 from ._base_group_chat import BaseGroupChat
 from ._base_group_chat_manager import BaseGroupChatManager
 from ._events import GroupChatTermination
@@ -55,7 +55,8 @@ class RoundRobinGroupChatManager(BaseGroupChatManager):
 
     async def save_state(self) -> Mapping[str, Any]:
         state = RoundRobinManagerState(
-            message_thread=[message.dump() for message in self._message_thread],
+            message_thread=[message.dump()
+                            for message in self._message_thread],
             current_turn=self._current_turn,
             next_speaker_index=self._next_speaker_index,
         )
@@ -63,14 +64,16 @@ class RoundRobinGroupChatManager(BaseGroupChatManager):
 
     async def load_state(self, state: Mapping[str, Any]) -> None:
         round_robin_state = RoundRobinManagerState.model_validate(state)
-        self._message_thread = [self._message_factory.create(message) for message in round_robin_state.message_thread]
+        self._message_thread = [self._message_factory.create(
+            message) for message in round_robin_state.message_thread]
         self._current_turn = round_robin_state.current_turn
         self._next_speaker_index = round_robin_state.next_speaker_index
 
     async def select_speaker(self, thread: List[BaseAgentEvent | BaseChatMessage]) -> str:
         """Select a speaker from the participants in a round-robin fashion."""
         current_speaker_index = self._next_speaker_index
-        self._next_speaker_index = (current_speaker_index + 1) % len(self._participant_names)
+        self._next_speaker_index = (
+            current_speaker_index + 1) % len(self._participant_names)
         current_speaker = self._participant_names[current_speaker_index]
         return current_speaker
 
@@ -166,7 +169,8 @@ class RoundRobinGroupChat(BaseGroupChat, Component[RoundRobinGroupChatConfig]):
         termination_condition: TerminationCondition | None = None,
         max_turns: int | None = None,
         runtime: AgentRuntime | None = None,
-        custom_message_types: List[type[BaseAgentEvent | BaseChatMessage]] | None = None,
+        custom_message_types: List[type[BaseAgentEvent |
+                                        BaseChatMessage]] | None = None,
     ) -> None:
         super().__init__(
             participants,
@@ -208,8 +212,10 @@ class RoundRobinGroupChat(BaseGroupChat, Component[RoundRobinGroupChatConfig]):
         return _factory
 
     def _to_config(self) -> RoundRobinGroupChatConfig:
-        participants = [participant.dump_component() for participant in self._participants]
-        termination_condition = self._termination_condition.dump_component() if self._termination_condition else None
+        participants = [participant.dump_component()
+                        for participant in self._participants]
+        termination_condition = self._termination_condition.dump_component(
+        ) if self._termination_condition else None
         return RoundRobinGroupChatConfig(
             participants=participants,
             termination_condition=termination_condition,
@@ -218,8 +224,10 @@ class RoundRobinGroupChat(BaseGroupChat, Component[RoundRobinGroupChatConfig]):
 
     @classmethod
     def _from_config(cls, config: RoundRobinGroupChatConfig) -> Self:
-        participants = [ChatAgent.load_component(participant) for participant in config.participants]
+        participants = [ChatAgent.load_component(
+            participant) for participant in config.participants]
         termination_condition = (
-            TerminationCondition.load_component(config.termination_condition) if config.termination_condition else None
+            TerminationCondition.load_component(
+                config.termination_condition) if config.termination_condition else None
         )
         return cls(participants, termination_condition=termination_condition, max_turns=config.max_turns)

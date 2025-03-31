@@ -9,27 +9,31 @@ from autogen_core.models import AssistantMessage, ChatCompletionClient, ModelFam
 from pydantic import BaseModel
 from typing_extensions import Self
 
-from ... import TRACE_LOGGER_NAME
-from ...agents import BaseChatAgent
-from ...base import ChatAgent, TerminationCondition
-from ...messages import (
+from . import TRACE_LOGGER_NAME
+from .agents import BaseChatAgent
+from .base import ChatAgent, TerminationCondition
+from .messages import (
     BaseAgentEvent,
     BaseChatMessage,
     MessageFactory,
 )
-from ...state import SelectorManagerState
+from .state import SelectorManagerState
 from ._base_group_chat import BaseGroupChat
 from ._base_group_chat_manager import BaseGroupChatManager
 from ._events import GroupChatTermination
 
 trace_logger = logging.getLogger(TRACE_LOGGER_NAME)
 
-SyncSelectorFunc = Callable[[Sequence[BaseAgentEvent | BaseChatMessage]], str | None]
-AsyncSelectorFunc = Callable[[Sequence[BaseAgentEvent | BaseChatMessage]], Awaitable[str | None]]
+SyncSelectorFunc = Callable[[
+    Sequence[BaseAgentEvent | BaseChatMessage]], str | None]
+AsyncSelectorFunc = Callable[[
+    Sequence[BaseAgentEvent | BaseChatMessage]], Awaitable[str | None]]
 SelectorFuncType = Union[SyncSelectorFunc | AsyncSelectorFunc]
 
-SyncCandidateFunc = Callable[[Sequence[BaseAgentEvent | BaseChatMessage]], List[str]]
-AsyncCandidateFunc = Callable[[Sequence[BaseAgentEvent | BaseChatMessage]], Awaitable[List[str]]]
+SyncCandidateFunc = Callable[[
+    Sequence[BaseAgentEvent | BaseChatMessage]], List[str]]
+AsyncCandidateFunc = Callable[[
+    Sequence[BaseAgentEvent | BaseChatMessage]], Awaitable[List[str]]]
 CandidateFuncType = Union[SyncCandidateFunc | AsyncCandidateFunc]
 
 
@@ -76,7 +80,8 @@ class SelectorGroupChatManager(BaseGroupChatManager):
         self._is_selector_func_async = iscoroutinefunction(self._selector_func)
         self._max_selector_attempts = max_selector_attempts
         self._candidate_func = candidate_func
-        self._is_candidate_func_async = iscoroutinefunction(self._candidate_func)
+        self._is_candidate_func_async = iscoroutinefunction(
+            self._candidate_func)
 
     async def validate_group_state(self, messages: List[BaseChatMessage] | None) -> None:
         pass
@@ -98,7 +103,8 @@ class SelectorGroupChatManager(BaseGroupChatManager):
 
     async def load_state(self, state: Mapping[str, Any]) -> None:
         selector_state = SelectorManagerState.model_validate(state)
-        self._message_thread = [self._message_factory.create(msg) for msg in selector_state.message_thread]
+        self._message_thread = [self._message_factory.create(
+            msg) for msg in selector_state.message_thread]
         self._current_turn = selector_state.current_turn
         self._previous_speaker = selector_state.previous_speaker
 
@@ -112,10 +118,12 @@ class SelectorGroupChatManager(BaseGroupChatManager):
         # Use the selector function if provided.
         if self._selector_func is not None:
             if self._is_selector_func_async:
-                async_selector_func = cast(AsyncSelectorFunc, self._selector_func)
+                async_selector_func = cast(
+                    AsyncSelectorFunc, self._selector_func)
                 speaker = await async_selector_func(thread)
             else:
-                sync_selector_func = cast(SyncSelectorFunc, self._selector_func)
+                sync_selector_func = cast(
+                    SyncSelectorFunc, self._selector_func)
                 speaker = sync_selector_func(thread)
             if speaker is not None:
                 if speaker not in self._participant_names:
@@ -129,13 +137,16 @@ class SelectorGroupChatManager(BaseGroupChatManager):
         # Use the candidate function to filter participants if provided
         if self._candidate_func is not None:
             if self._is_candidate_func_async:
-                async_candidate_func = cast(AsyncCandidateFunc, self._candidate_func)
+                async_candidate_func = cast(
+                    AsyncCandidateFunc, self._candidate_func)
                 participants = await async_candidate_func(thread)
             else:
-                sync_candidate_func = cast(SyncCandidateFunc, self._candidate_func)
+                sync_candidate_func = cast(
+                    SyncCandidateFunc, self._candidate_func)
                 participants = sync_candidate_func(thread)
             if not participants:
-                raise ValueError("Candidate function must return a non-empty list of participant names.")
+                raise ValueError(
+                    "Candidate function must return a non-empty list of participant names.")
             if not all(p in self._participant_names for p in participants):
                 raise ValueError(
                     f"Candidate function returned invalid participant names: {participants}. "
@@ -144,7 +155,8 @@ class SelectorGroupChatManager(BaseGroupChatManager):
         else:
             # Construct the candidate agent list to be selected from, skip the previous speaker if not allowed.
             if self._previous_speaker is not None and not self._allow_repeated_speaker:
-                participants = [p for p in self._participant_names if p != self._previous_speaker]
+                participants = [
+                    p for p in self._participant_names if p != self._previous_speaker]
             else:
                 participants = list(self._participant_names)
 
@@ -166,7 +178,8 @@ class SelectorGroupChatManager(BaseGroupChatManager):
         # Each agent sould appear on a single line.
         roles = ""
         for topic_type, description in zip(self._participant_names, self._participant_descriptions, strict=True):
-            roles += re.sub(r"\s+", " ", f"{topic_type}: {description}").strip() + "\n"
+            roles += re.sub(r"\s+", " ",
+                            f"{topic_type}: {description}").strip() + "\n"
         roles = roles.strip()
 
         # Select the next speaker.
@@ -182,32 +195,41 @@ class SelectorGroupChatManager(BaseGroupChatManager):
         select_speaker_prompt = self._selector_prompt.format(
             roles=roles, participants=str(participants), history=history
         )
-        select_speaker_messages: List[SystemMessage | UserMessage | AssistantMessage]
+        select_speaker_messages: List[SystemMessage |
+                                      UserMessage | AssistantMessage]
         if ModelFamily.is_openai(self._model_client.model_info["family"]):
-            select_speaker_messages = [SystemMessage(content=select_speaker_prompt)]
+            select_speaker_messages = [
+                SystemMessage(content=select_speaker_prompt)]
         else:
             # Many other models need a UserMessage to respond to
-            select_speaker_messages = [UserMessage(content=select_speaker_prompt, source="user")]
+            select_speaker_messages = [UserMessage(
+                content=select_speaker_prompt, source="user")]
 
         num_attempts = 0
         while num_attempts < max_attempts:
             num_attempts += 1
             response = await self._model_client.create(messages=select_speaker_messages)
             assert isinstance(response.content, str)
-            select_speaker_messages.append(AssistantMessage(content=response.content, source="selector"))
+            select_speaker_messages.append(AssistantMessage(
+                content=response.content, source="selector"))
             # NOTE: we use all participant names to check for mentions, even if the previous speaker is not allowed.
             # This is because the model may still select the previous speaker, and we want to catch that.
-            mentions = self._mentioned_agents(response.content, self._participant_names)
+            mentions = self._mentioned_agents(
+                response.content, self._participant_names)
             if len(mentions) == 0:
-                trace_logger.debug(f"Model failed to select a valid name: {response.content} (attempt {num_attempts})")
+                trace_logger.debug(
+                    f"Model failed to select a valid name: {response.content} (attempt {num_attempts})")
                 feedback = f"No valid name was mentioned. Please select from: {str(participants)}."
-                select_speaker_messages.append(UserMessage(content=feedback, source="user"))
+                select_speaker_messages.append(
+                    UserMessage(content=feedback, source="user"))
             elif len(mentions) > 1:
-                trace_logger.debug(f"Model selected multiple names: {str(mentions)} (attempt {num_attempts})")
+                trace_logger.debug(
+                    f"Model selected multiple names: {str(mentions)} (attempt {num_attempts})")
                 feedback = (
                     f"Expected exactly one name to be mentioned. Please select only one from: {str(participants)}."
                 )
-                select_speaker_messages.append(UserMessage(content=feedback, source="user"))
+                select_speaker_messages.append(
+                    UserMessage(content=feedback, source="user"))
             else:
                 agent_name = list(mentions.keys())[0]
                 if (
@@ -215,18 +237,22 @@ class SelectorGroupChatManager(BaseGroupChatManager):
                     and self._previous_speaker is not None
                     and agent_name == self._previous_speaker
                 ):
-                    trace_logger.debug(f"Model selected the previous speaker: {agent_name} (attempt {num_attempts})")
+                    trace_logger.debug(
+                        f"Model selected the previous speaker: {agent_name} (attempt {num_attempts})")
                     feedback = (
                         f"Repeated speaker is not allowed, please select a different name from: {str(participants)}."
                     )
-                    select_speaker_messages.append(UserMessage(content=feedback, source="user"))
+                    select_speaker_messages.append(
+                        UserMessage(content=feedback, source="user"))
                 else:
                     # Valid selection
-                    trace_logger.debug(f"Model selected a valid name: {agent_name} (attempt {num_attempts})")
+                    trace_logger.debug(
+                        f"Model selected a valid name: {agent_name} (attempt {num_attempts})")
                     return agent_name
 
         if self._previous_speaker is not None:
-            trace_logger.warning(f"Model failed to select a speaker after {max_attempts}, using the previous speaker.")
+            trace_logger.warning(
+                f"Model failed to select a speaker after {max_attempts}, using the previous speaker.")
             return self._previous_speaker
         trace_logger.warning(
             f"Model failed to select a speaker after {max_attempts} and there was no previous speaker, using the first participant."
@@ -448,7 +474,8 @@ Read the above conversation. Then select the next role from {participants} to pl
         max_selector_attempts: int = 3,
         selector_func: Optional[SelectorFuncType] = None,
         candidate_func: Optional[CandidateFuncType] = None,
-        custom_message_types: List[type[BaseAgentEvent | BaseChatMessage]] | None = None,
+        custom_message_types: List[type[BaseAgentEvent |
+                                        BaseChatMessage]] | None = None,
     ):
         super().__init__(
             participants,
@@ -461,7 +488,8 @@ Read the above conversation. Then select the next role from {participants} to pl
         )
         # Validate the participants.
         if len(participants) < 2:
-            raise ValueError("At least two participants are required for SelectorGroupChat.")
+            raise ValueError(
+                "At least two participants are required for SelectorGroupChat.")
         self._selector_prompt = selector_prompt
         self._model_client = model_client
         self._allow_repeated_speaker = allow_repeated_speaker
@@ -503,9 +531,11 @@ Read the above conversation. Then select the next role from {participants} to pl
 
     def _to_config(self) -> SelectorGroupChatConfig:
         return SelectorGroupChatConfig(
-            participants=[participant.dump_component() for participant in self._participants],
+            participants=[participant.dump_component()
+                          for participant in self._participants],
             model_client=self._model_client.dump_component(),
-            termination_condition=self._termination_condition.dump_component() if self._termination_condition else None,
+            termination_condition=self._termination_condition.dump_component(
+            ) if self._termination_condition else None,
             max_turns=self._max_turns,
             selector_prompt=self._selector_prompt,
             allow_repeated_speaker=self._allow_repeated_speaker,
@@ -516,9 +546,12 @@ Read the above conversation. Then select the next role from {participants} to pl
     @classmethod
     def _from_config(cls, config: SelectorGroupChatConfig) -> Self:
         return cls(
-            participants=[BaseChatAgent.load_component(participant) for participant in config.participants],
-            model_client=ChatCompletionClient.load_component(config.model_client),
-            termination_condition=TerminationCondition.load_component(config.termination_condition)
+            participants=[BaseChatAgent.load_component(
+                participant) for participant in config.participants],
+            model_client=ChatCompletionClient.load_component(
+                config.model_client),
+            termination_condition=TerminationCondition.load_component(
+                config.termination_condition)
             if config.termination_condition
             else None,
             max_turns=config.max_turns,
