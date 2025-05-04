@@ -1,8 +1,9 @@
 #!/bin/bash
 
 # Load environment variables
-if [ -f ".devcontainer/.env" ]; then
-  source .devcontainer/.env
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/.env" ]; then
+  source "$SCRIPT_DIR/.env"
 fi
 
 # Configure Git to use HTTPS with personal access token

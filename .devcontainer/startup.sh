@@ -2,9 +2,10 @@
 
 # Setup Git configuration for repository access
 echo "Setting up Git configuration..."
-if [ -f ".devcontainer/prepare-git.sh" ]; then
-    chmod +x .devcontainer/prepare-git.sh
-    .devcontainer/prepare-git.sh
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/prepare-git.sh" ]; then
+    chmod +x "$SCRIPT_DIR/prepare-git.sh"
+    "$SCRIPT_DIR/prepare-git.sh"
 fi
 
 # dotnet setup
