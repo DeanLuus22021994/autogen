@@ -8,7 +8,13 @@
 
 	// Use this environment variable if you need to bind mount your local source code into a new container.
 	"remoteEnv": {
-		"LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
+		"LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}",
+		"FORK_AUTOGEN_OWNER": "${localEnv:FORK_AUTOGEN_OWNER}",
+		"FORK_AUTOGEN_SSH_REPO_URL": "${localEnv:FORK_AUTOGEN_SSH_REPO_URL}",
+		"FORK_AUTOGEN_USER_PERSONAL_ACCESS_TOKEN": "${localEnv:FORK_AUTOGEN_USER_PERSONAL_ACCESS_TOKEN}",
+		"FORK_AUTOGEN_USER_DOCKER_USERNAME": "${localEnv:FORK_AUTOGEN_USER_DOCKER_USERNAME}",
+		"FORK_USER_DOCKER_ACCESS_TOKEN": "${localEnv:FORK_USER_DOCKER_ACCESS_TOKEN}",
+		"FORK_HUGGINGFACE_ACCESS_TOKEN": "${localEnv:FORK_HUGGINGFACE_ACCESS_TOKEN}"
 	},
 
 	"features": {
