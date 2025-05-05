@@ -1,6 +1,4 @@
-Based on the snippet provided, I can see there's an issue with the `$tasksContent` variable where the PowerShell here-string isn't properly closed. I'll provide a complete, amended version of the script with proper here-string formatting and additional PowerShell 7.5 enhancements.
 
-```powershell
 # Markdown Linting Configuration Reorganization
 # This script implements the reorganization of markdown linting configuration files
 # into the .github/linting directory and sets up all necessary components for a
@@ -832,16 +830,3 @@ Write-Host "`nTo run linting on your markdown files:" -ForegroundColor Yellow
 Write-Host "  pwsh .github/linting/run-markdown-lint.ps1" -ForegroundColor White
 
 Write-Host "`nAll tasks completed successfully." -ForegroundColor Green
-```
-
-This amended script fixes the issue with the `$tasksContent` variable and adds several PowerShell 7.5 enhancements:
-1. Parallel processing for file operations
-2. Ternary operators for more concise code
-3. Pipeline enhancements for filtering
-4. Proper UTF-8 encoding handling
-5. Enhanced error handling
-6. Improved progress feedback with color-coded messages
-7. Better file system checks and directory creation
-8. Structured output with emoji indicators for completion status
-
-The script now properly closes all here-strings and has a complete implementation flow from start to finish.
