@@ -283,63 +283,61 @@ jobs:
           }
 
       - name: Create Custom Dictionary
-        shell: pwsh
+        shell: bash
         run: |
-          $ErrorActionPreference = "Continue"
-          $dictionaryPath = "./.vscode/cspell-dict.txt"
+          DICT_PATH="./.vscode/cspell-dict.txt"
 
-          if (-not (Test-Path $dictionaryPath)) {
-            Write-Host "Creating custom dictionary for spellchecking..."
+          if [ ! -f "$DICT_PATH" ]; then
+            echo "Creating custom dictionary for spellchecking..."
 
-            $dictionaryContent = @"
-# AutoGen Custom Dictionary
-autogen
-mcp
-vscode
-devcontainer
-github
-powershell
-pwsh
-dotnet
-huggingface
-openai
-langchain
-pypi
-conda
-numpy
-tensorflow
-pytorch
-langchain
-gpt
-llm
-transformers
-keras
-scikit
-scipy
-matplotlib
-seaborn
-jupyter
-ipynb
-nlp
-tokenizer
-fastapi
-uvicorn
-pydantic
-asyncio
-aiohttp
-pytest
-mypy
-ruff
-flake8
-azdure
-esrp
-"@
+            mkdir -p ./.vscode
 
-            Set-Content -Path $dictionaryPath -Value $dictionaryContent -Encoding UTF8
-            Write-Host "Created custom dictionary at $dictionaryPath"
-          } else {
-            Write-Host "Custom dictionary exists at $dictionaryPath"
-          }
+            echo "# AutoGen Custom Dictionary" > "$DICT_PATH"
+            echo "autogen" >> "$DICT_PATH"
+            echo "mcp" >> "$DICT_PATH"
+            echo "vscode" >> "$DICT_PATH"
+            echo "devcontainer" >> "$DICT_PATH"
+            echo "github" >> "$DICT_PATH"
+            echo "powershell" >> "$DICT_PATH"
+            echo "pwsh" >> "$DICT_PATH"
+            echo "dotnet" >> "$DICT_PATH"
+            echo "huggingface" >> "$DICT_PATH"
+            echo "openai" >> "$DICT_PATH"
+            echo "langchain" >> "$DICT_PATH"
+            echo "pypi" >> "$DICT_PATH"
+            echo "conda" >> "$DICT_PATH"
+            echo "numpy" >> "$DICT_PATH"
+            echo "tensorflow" >> "$DICT_PATH"
+            echo "pytorch" >> "$DICT_PATH"
+            echo "langchain" >> "$DICT_PATH"
+            echo "gpt" >> "$DICT_PATH"
+            echo "llm" >> "$DICT_PATH"
+            echo "transformers" >> "$DICT_PATH"
+            echo "keras" >> "$DICT_PATH"
+            echo "scikit" >> "$DICT_PATH"
+            echo "scipy" >> "$DICT_PATH"
+            echo "matplotlib" >> "$DICT_PATH"
+            echo "seaborn" >> "$DICT_PATH"
+            echo "jupyter" >> "$DICT_PATH"
+            echo "ipynb" >> "$DICT_PATH"
+            echo "nlp" >> "$DICT_PATH"
+            echo "tokenizer" >> "$DICT_PATH"
+            echo "fastapi" >> "$DICT_PATH"
+            echo "uvicorn" >> "$DICT_PATH"
+            echo "pydantic" >> "$DICT_PATH"
+            echo "asyncio" >> "$DICT_PATH"
+            echo "aiohttp" >> "$DICT_PATH"
+            echo "pytest" >> "$DICT_PATH"
+            echo "mypy" >> "$DICT_PATH"
+            echo "ruff" >> "$DICT_PATH"
+            echo "flake8" >> "$DICT_PATH"
+            echo "azdure" >> "$DICT_PATH"
+            echo "esrp" >> "$DICT_PATH"
+
+            echo "Created custom dictionary at $DICT_PATH"
+          else
+            echo "Custom dictionary exists at $DICT_PATH"
+          fi
 
       - name: Update VS Code settings
         shell: pwsh
