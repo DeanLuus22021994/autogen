@@ -352,11 +352,64 @@ function ConvertTo-PSCustomObjectArray {
     return $result
 }
 
+# .github/linting/core/MarkdownLintConfig.psm1
+# Configuration handling for markdown linting
+
+function Get-MarkdownLintConfig {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $false)]
+        [string]$ConfigName = '.markdownlint-cli2.jsonc'
+    )
+
+    $repoRoot = (Get-RepositoryRoot)
+    $configPath = Join-Path -Path $repoRoot -ChildPath ".github\linting\$ConfigName"
+
+    if (-not (Test-Path -Path $configPath)) {
+        Write-Warning "Config file $ConfigName not found at $configPath"
+        return $null
+    }
+
+    try {
+        $content = Get-Content -Path $configPath -Raw
+        return $content
+    }
+    catch {
+        Write-Error "Failed to read configuration file $configPath: $_"
+        return $null
+    }
+}
+
+function Set-MarkdownLintConfig {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Content,
+
+        [Parameter(Mandatory = $false)]
+        [string]$ConfigName = '.markdownlint-cli2.jsonc'
+    )
+
+    $repoRoot = (Get-RepositoryRoot)
+    $configPath = Join-Path -Path $repoRoot -ChildPath ".github\linting\$ConfigName"
+
+    try {
+        Set-Content -Path $configPath -Value $Content -Force
+        return $true
+    }
+    catch {
+        Write-Error "Failed to write configuration file $configPath: $_"
+        return $false
+    }
+}
+
 # Export functions
 Export-ModuleMember -Function @(
     'Get-DefaultMarkdownLintConfig',
     'Test-MarkdownLintConfig',
     'Merge-MarkdownLintConfig',
     'Export-MarkdownLintConfig',
-    'Import-MarkdownLintConfig'
+    'Import-MarkdownLintConfig',
+    'Get-MarkdownLintConfig',
+    'Set-MarkdownLintConfig'
 )
