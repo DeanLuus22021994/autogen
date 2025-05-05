@@ -2,7 +2,7 @@ name: Validate Environment and Secrets
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, DeanDev ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
@@ -21,7 +21,6 @@ jobs:
           pwsh --version
 
       - name: Validate Required Secrets
-        shell: pwsh
         run: |
           echo "::group::Validating Required Secrets"
           $requiredSecrets = @(
@@ -29,12 +28,13 @@ jobs:
             "FORK_HUGGINGFACE_ACCESS_TOKEN",
             "FORK_USER_DOCKER_ACCESS_TOKEN"
           )
-
           $missing = $false
           foreach ($secret in $requiredSecrets) {
             # Check if the secret exists via env vars in GitHub Actions
-            $secretValue = [Environment]::GetEnvironmentVariable($secret)
-            if ([string]::IsNullOrEmpty($secretValue)) {
+            $secretEnvName = "SECRETS_$secret"
+            $hasSecret = (Get-Item env:$secretEnvName -ErrorAction SilentlyContinue) -ne $null
+
+            if (-not $hasSecret) {
               Write-Host "❌ Secret $secret is not set"
               $missing = $true
             } else {
@@ -49,13 +49,9 @@ jobs:
 
           Write-Host "All required secrets are set! ✅"
           echo "::endgroup::"
-        env:
-          FORK_AUTOGEN_USER_PERSONAL_ACCESS_TOKEN: ${{ secrets.FORK_AUTOGEN_USER_PERSONAL_ACCESS_TOKEN }}
-          FORK_HUGGINGFACE_ACCESS_TOKEN: ${{ secrets.FORK_HUGGINGFACE_ACCESS_TOKEN }}
-          FORK_USER_DOCKER_ACCESS_TOKEN: ${{ secrets.FORK_USER_DOCKER_ACCESS_TOKEN }}
+        shell: pwsh
 
       - name: Check Security Configuration
-        shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
           # Import modules from automation directory
@@ -63,7 +59,7 @@ jobs:
           Import-Module "$modulePath/Common.psm1" -Force
           Import-Module "$modulePath/Security.psm1" -Force
 
-          Write-Host "## Security Configuration Check"
+          Write-SectionHeader "Security Configuration Check"
 
           # Check VS Code configuration for security issues
           $vsCodeDir = Join-Path $PWD ".vscode"
@@ -72,19 +68,18 @@ jobs:
             $issues = Find-ExposedTokens -FilePaths $vsCodeFiles
 
             if ($issues.Count -gt 0) {
-              Write-Host "Found potential security issues in VS Code configuration"
+              Write-StatusMessage "Found potential security issues in VS Code configuration" "Error" 0
               foreach ($issue in $issues) {
-                Write-Host "$($issue.File): $($issue.Issue)"
+                Write-StatusMessage "$($issue.File): $($issue.Issue)" "Error" 1
               }
               exit 1
             } else {
-              Write-Host "No security issues found in VS Code configuration"
+              Write-StatusMessage "No security issues found in VS Code configuration" "Success" 0
             }
           } else {
-            Write-Host "VS Code configuration directory not found"
+            Write-StatusMessage "VS Code configuration directory not found" "Warning" 0
           }
-
-  scan-for-secrets:
+        shell: pwsh  scan-for-secrets:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -107,7 +102,7 @@ jobs:
           Import-Module "$modulePath/Common.psm1" -Force
           Import-Module "$modulePath/Security.psm1" -Force
 
-          Write-Host "## Repository Security Scan"
+          Write-SectionHeader "Repository Security Scan"
 
           # File types to scan for tokens
           $fileTypes = @("*.ps1", "*.py", "*.js", "*.ts", "*.json", "*.md", "*.ipynb")
@@ -121,7 +116,7 @@ jobs:
 
           # Limit to recently changed files in PRs to speed up checks
           if ("${{ github.event_name }}" -eq "pull_request") {
-            Write-Host "Scanning only changed files in PR"
+            Write-StatusMessage "Scanning only changed files in PR" "Info" 0
             $changedFiles = git diff --name-only HEAD~1 HEAD
             $filesToScan = $filesToScan | Where-Object { $changedFiles -contains ($_ -replace [regex]::Escape($PWD.ToString() + "/"), "") }
           }
@@ -129,15 +124,15 @@ jobs:
           $exposedTokens = Find-ExposedTokens -FilePaths $filesToScan
 
           if ($exposedTokens.Count -gt 0) {
-            Write-Host "Found potential exposed tokens in $($exposedTokens.Count) files:"
+            Write-StatusMessage "Found potential exposed tokens in $($exposedTokens.Count) files:" "Error" 0
             foreach ($issue in $exposedTokens) {
-              Write-Host "$($issue.File): $($issue.Issue)"
+              Write-StatusMessage "$($issue.File): $($issue.Issue)" "Error" 1
             }
             exit 1
           } else {
-            Write-Host "No exposed tokens found in scanned files"
+            Write-StatusMessage "No exposed tokens found in scanned files" "Success" 0
           }
-
+        shell: pwsh
   validate-dotnet:
     runs-on: ubuntu-latest
     steps:
@@ -176,3 +171,88 @@ jobs:
       - name: Validate Python configuration
         run: |
           python -c "import autogen; print(f'AutoGen version: {autogen.__version__}')"
+          fetch-depth: 0
+
+      - name: Set up Git Secret Scanner
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  lint-configs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Check VS Code config files for tokens
+        run: |
+          echo "::group::Checking VS Code config files"
+
+          # Check mcp.json for directly embedded tokens
+          if grep -q 'GITHUB_PERSONAL_ACCESS_TOKEN.*=.*\"ghp_' .vscode/mcp.json 2>/dev/null; then
+            echo "::error::Found hardcoded token in .vscode/mcp.json"
+            exit 1
+          elif grep -q 'GITHUB_PERSONAL_ACCESS_TOKEN.*=.*\"github_pat_' .vscode/mcp.json 2>/dev/null; then
+            echo "::error::Found hardcoded token in .vscode/mcp.json"
+            exit 1
+          fi
+
+          # Ensure environment variable references use the correct format
+          if ! grep -q 'GITHUB_PERSONAL_ACCESS_TOKEN.*=.*\"\$\{env:FORK_AUTOGEN_USER_PERSONAL_ACCESS_TOKEN\}\"' .vscode/mcp.json 2>/dev/null; then
+            echo "::warning::mcp.json should use \${env:FORK_AUTOGEN_USER_PERSONAL_ACCESS_TOKEN} for GitHub token"
+          fi
+
+          # Check all .vscode/*.json files for potential tokens
+          for file in .vscode/*.json; do
+            if [[ -f "$file" ]]; then
+              echo "Checking $file for tokens..."
+              if grep -E 'ghp_[a-zA-Z0-9]{36}|github_pat_[a-zA-Z0-9]{22}_[a-zA-Z0-9]{59}|sk-[a-zA-Z0-9]{48}|key-[a-zA-Z0-9]{24}|xoxb-[a-zA-Z0-9\-]{50,}' "$file"; then
+                echo "::error::Found potential token in $file"
+                exit 1
+              fi
+            fi
+          done
+
+          echo "VS Code config files check complete ✅"
+          echo "::endgroup::"
+        shell: bash
+
+  vscode-files-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Validate VS Code configuration files
+        run: |
+          echo "::group::Validating VS Code configuration files"
+
+          # Check if VS Code files exist and are tracked
+          tracked_files=(
+            ".vscode/extensions.json"
+            ".vscode/launch.json"
+            ".vscode/mcp.json"
+            ".vscode/settings.json"
+            ".vscode/tasks.json"
+          )
+
+          for file in "${tracked_files[@]}"; do
+            if [[ -f "$file" ]]; then
+              echo "✅ $file exists"
+
+              # Check if file is tracked by git
+              if git ls-files --error-unmatch "$file" &>/dev/null; then
+                echo "  ✅ $file is tracked by git"
+              else
+                echo "  ❌ $file is not tracked by git"
+                echo "::warning::$file should be tracked in the repository"
+              fi
+            else
+              echo "❓ $file does not exist"
+            fi
+          done
+
+          echo "VS Code configuration files validation complete"
+          echo "::endgroup::"
+        shell: bash
