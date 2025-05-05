@@ -1,4 +1,4 @@
-# .github\linting\utils\FileOperations.psm1
+# .github/linting/utils/FileOperations.psm1
 # File operation utilities for markdown linting
 
 <#
@@ -188,4 +188,4 @@ Export-ModuleMember -Function @(
     'Get-FilesMatchingPattern',
     'Backup-File',
     'Compare-FileContent'
-)<|cursor|>
+)

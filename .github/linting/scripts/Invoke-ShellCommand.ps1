@@ -1,4 +1,4 @@
-# .github/linting/scripts/Process-ShellCommands.ps1
+# .github/linting/scripts/Invoke-ShellCommand.ps1
 # Shell command processing utilities
 
 <#
@@ -12,7 +12,7 @@
 # Note: In shell scripts, "case" blocks end with "esac" (case spelled backwards)
 # This is not a spelling error but a valid shell scripting construct
 
-function Process-ShellCommand {
+function Invoke-ShellCommand {
     <#
     .SYNOPSIS
         Process shell commands with proper handling of shell-specific syntax.
@@ -110,7 +110,8 @@ function Set-ShellScriptExecutable {
     if ($IsLinux -or $IsMacOS) {
         try {
             # Set executable permission
-            chmod +x $ScriptPath
+            # Fix: Use proper ampersand invocation instead of direct command
+            & chmod +x $ScriptPath
             Write-Verbose "Set executable permission on $ScriptPath"
         }
         catch {
@@ -124,7 +125,7 @@ function Set-ShellScriptExecutable {
 
 # Export functions
 Export-ModuleMember -Function @(
-    'Process-ShellCommand',
+    'Invoke-ShellCommand',
     'Get-ShellShebang',
     'Set-ShellScriptExecutable'
 )

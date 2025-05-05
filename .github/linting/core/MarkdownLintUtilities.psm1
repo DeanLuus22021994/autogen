@@ -1,4 +1,4 @@
-# .github\linting\core\MarkdownLintUtilities.psm1
+# .github/linting/core/MarkdownLintUtilities.psm1
 # Common utilities for markdown linting
 
 using namespace System.IO
@@ -221,7 +221,7 @@ function New-FallbackVSCodeTasks {
     }
 }
 
-function Process-ShellCommands {
+function Invoke-ShellCommandProcessing {
     <#
     .SYNOPSIS
         Processes shell commands with proper handling of special keywords.
@@ -242,11 +242,11 @@ function Process-ShellCommands {
     )
 
     # Import the shell processing module if available
-    $shellModulePath = Join-Path -Path (Split-Path $PSScriptRoot) -ChildPath "scripts\Format-ShellCommand.ps1"
+    $shellModulePath = Join-Path -Path (Split-Path $PSScriptRoot) -ChildPath "scripts\Invoke-ShellCommand.ps1"
     if (Test-Path -Path $shellModulePath) {
         try {
             . $shellModulePath
-            return Format-ShellCommand -Command $Command
+            return Invoke-ShellCommand -Command $Command
         }
         catch {
             $errorMessage = Get-FormattedErrorMessage -ErrorRecord $_ -Context "formatting shell command"
@@ -272,5 +272,5 @@ Export-ModuleMember -Function @(
     'Assert-MarkdownLintDependencies',
     'Initialize-MarkdownLintConfiguration',
     'Register-MarkdownLintVSCodeTasks',
-    'Process-ShellCommands'
+    'Invoke-ShellCommandProcessing'
 )

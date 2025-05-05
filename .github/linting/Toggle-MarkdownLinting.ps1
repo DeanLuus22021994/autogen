@@ -1,4 +1,4 @@
-# .github\linting\Toggle-MarkdownLinting.ps1
+# .github/linting/Toggle-MarkdownLinting.ps1
 # Script to quickly toggle markdown linting on/off
 
 using namespace System.Management.Automation
@@ -47,29 +47,32 @@ if (-not (Test-Path $loaderPath)) {
 # Get current configuration
 $currentConfig = Get-LintingConfiguration
 
-# Determine the new enabled state
+# Determine the new enabled state using PowerShell 7 switch expression
 $newEnabled = switch ($PSCmdlet.ParameterSetName) {
     'Enable'  { $true }
     'Disable' { $false }
     'Toggle'  { -not $currentConfig.Enabled }
 }
 
-# Update the configuration
+# Update the configuration using splatting for cleaner parameter passing
 $params = @{
     Enabled = $newEnabled
 }
 
-# Add IgnoreDuringEditing if specified
+# Add IgnoreDuringEditing if specified using null-conditional operator
 if ($null -ne $IgnoreDuringEditing) {
     $params.IgnoreDuringEditing = $IgnoreDuringEditing
 }
 
+# Update configuration and handle result
 $result = Update-LintingConfiguration @params
 
 if ($result) {
+    # Use string interpolation for cleaner string formatting
     $status = if ($newEnabled) { "enabled" } else { "disabled" }
     Write-Host "Markdown linting is now $status" -ForegroundColor Green
 
+    # Use PowerShell 7 null-coalescing operator for more concise code
     if ($newEnabled -and ($params.IgnoreDuringEditing ?? $currentConfig.IgnoreDuringEditing)) {
         Write-Host "Note: Linting will be ignored during editing" -ForegroundColor Yellow
     }
