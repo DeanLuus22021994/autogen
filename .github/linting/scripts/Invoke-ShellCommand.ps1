@@ -87,14 +87,6 @@ function Get-ShellShebang {
 }
 
 function Set-ShellScriptExecutable {
-    <#
-    .SYNOPSIS
-        Sets the executable permission on a shell script.
-    .DESCRIPTION
-        Makes a shell script executable in Unix/Linux environments.
-    .PARAMETER ScriptPath
-        Path to the shell script file.
-    #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
@@ -109,13 +101,12 @@ function Set-ShellScriptExecutable {
     # Check if running on Unix/Linux
     if ($IsLinux -or $IsMacOS) {
         try {
-            # Set executable permission
-            # Fix: Use proper ampersand invocation instead of direct command
+            # FIX: Remove colon after $ScriptPath
             & chmod +x $ScriptPath
             Write-Verbose "Set executable permission on $ScriptPath"
         }
         catch {
-            Write-Warning "Failed to set executable permission on $ScriptPath: $_"
+            Write-Warning "Failed to set executable permission on ${ScriptPath}: $_"
         }
     }
     else {

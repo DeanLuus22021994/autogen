@@ -36,7 +36,7 @@ The linting system is organized into several PowerShell modules:
 - `core/MarkdownLintUtilities.psm1` - Common utilities
 - `core/MarkdownLintConfig.psm1` - Configuration management
 - `core/MarkdownLintRules.psm1` - Rules processing
-- `scripts/Process-ShellCommands.ps1` - Shell command utilities
+- `scripts/Invoke-ShellCommand.ps1` - Shell command utilities
 - `scripts/Update-VsCodeConfig.ps1` - VS Code integration
 - `config/DefaultConfigs.psm1` - Configuration templates
 

@@ -249,21 +249,12 @@ function Invoke-ShellCommandProcessing {
             return Invoke-ShellCommand -Command $Command
         }
         catch {
-            $errorMessage = Get-FormattedErrorMessage -ErrorRecord $_ -Context "formatting shell command"
-            Write-Warning $errorMessage
+            Write-Warning "Error processing shell command: $_"
             # Fall through to fallback implementation
         }
     }
 
     # Fallback implementation
-    # Handle shell commands, including those with case statements
-    # In shell scripts, "case" blocks end with "esac" (case spelled backwards)
-    $casePattern = [regex]::new('case\s+.+\s+in\b', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
-    if ($casePattern.IsMatch($Command)) {
-        # This is a valid shell case statement
-        return $Command
-    }
-
     return $Command
 }
 

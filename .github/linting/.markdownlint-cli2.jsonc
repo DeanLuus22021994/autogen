@@ -2,29 +2,16 @@
   "config": {
     "default": true,
     "MD013": false,
-    "MD022": false,
-    "MD025": false,
-    "MD031": false,
-    "MD032": false,
-    "MD034": false,
-    "MD055": false,
-    "MD056": false
+    "MD024": { "siblings_only": true },
+    "MD033": { "allowed_elements": ["br", "details", "summary", "div", "img"] },
+    "MD041": false
   },
+  "ignores": ["**/node_modules/**", "**/.git/**"],
   "customRules": [
-    ".github/linting/rules/**/*.js"
-  ],
-  "ignores": [
-    "README.md",
-    "node_modules/**",
-    "**/package.json",
-    "**/package-lock.json"
+    "./rules/**/*.js"
   ],
   "noProgress": true,
   "outputFormatters": [
-    [
-      "markdownlint-cli2-formatter-default"
-    ]
-  ],
-  "fix": false,
-  "gitignore": true
+    ["markdownlint-cli2-formatter-default", {"showRules": true}]
+  ]
 }
