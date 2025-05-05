@@ -182,7 +182,7 @@ jobs:
         run: |
           # Create a fixed mypy.ini if it doesn't exist
           if [ ! -f "mypy.ini" ] || grep -q "parsing errors" "mypy.ini"; then
-            cat > mypy.ini << 'EOF'
+            cat > mypy.ini << EOF
 [mypy]
 disallow_untyped_defs = True
 disallow_incomplete_defs = True
