@@ -16,6 +16,7 @@ If you are working in WSL, you can follow the instructions below to set up your 
 
 1. Install Docker Desktop. After installation, restart is needed, then open Docker Desktop, in Settings, Resources, WSL Integration, Enable integration with additional distributions – Ubuntu
 2. Clone autogen and export `AUTOGEN_REPO_BASE`. This environment variable enables the Docker containers to use the correct version agents.
+
     ```bash
     git clone git@github.com:microsoft/autogen.git
     export AUTOGEN_REPO_BASE=<path_to_autogen>
@@ -25,10 +26,9 @@ If you are working in WSL, you can follow the instructions below to set up your 
 
 [Deprecated currently] **To get the most out of AutoGenBench, the `agbench` package should be installed**. At present, the easiest way to do this is to install it via `pip`.
 
-
 If you would prefer working from source code (e.g., for development, or to utilize an alternate branch), simply clone the [AutoGen](https://github.com/microsoft/autogen) repository, then install `agbench` via:
 
-```
+```bash
 pip install -e autogen/python/packages/agbench
 ```
 
@@ -36,7 +36,7 @@ After installation, you must configure your API keys. As with other AutoGen appl
 
 If you will be running multiple benchmarks, it is often most convenient to leverage the environment variable option. You can load your keys into the environment variable by executing:
 
-```
+```bash
 export OAI_CONFIG_LIST=$(cat ./OAI_CONFIG_LIST)
 ```
 
@@ -54,15 +54,13 @@ For some benchmark scenarios, additional keys may be required (e.g., keys for th
 
 Once AutoGenBench and necessary keys are installed, a typical session will look as follows:
 
-
-
 Navigate to HumanEval
 
 ```bash
 cd autogen/python/packages/agbench/benchmarks/HumanEval
 ```
-**Note:** The following instructions are specific to the HumanEval benchmark. For other benchmarks, please refer to the README in the respective benchmark folder, e.g.,: [AssistantBench](benchmarks/AssistantBench/README.md).
 
+**Note:** The following instructions are specific to the HumanEval benchmark. For other benchmarks, please refer to the README in the respective benchmark folder, e.g.,: [AssistantBench](benchmarks/AssistantBench/README.md).
 
 Create a file called ENV.json with the following (required) contents (If you're using MagenticOne), if using Azure:
 
@@ -92,7 +90,6 @@ python Scripts/init_tasks.py
 ```
 
 Note: This will attempt to download HumanEval
-
 
 Once the script completes, you should now see a folder in your current directory called `Tasks` that contains one JSONL file per template in `Templates`.
 
@@ -124,32 +121,31 @@ Each of these commands has extensive in-line help via:
 
 More details of each command are provided in the sections that follow.
 
-
 ## Running AutoGenBench
 
 To run a benchmark (which executes the tasks, but does not compute metrics), simply execute:
 
-```
+```bash
 cd [BENCHMARK]
 agbench run Tasks/*.jsonl
 ```
 
 For example,
 
-```
+```bash
 cd HumanEval
 agbench run Tasks/human_eval_MagenticOne.jsonl
 ```
 
 The default is to run each task once. To run each scenario 10 times, use:
 
-```
+```bash
 agbench run --repeat 10 Tasks/human_eval_MagenticOne.jsonl
 ```
 
 The `agbench` command-line tool allows a number of command-line arguments to control various parameters of execution. Type ``agbench -h`` to explore these options:
 
-```
+```text
 'agbench run' will run the specified autogen scenarios for a given number of repetitions and record all logs and trace information. When running in a Docker environment (default), each run will begin from a common, tightly controlled, environment. The resultant logs can then be further processed by other scripts to produce metrics.
 
 positional arguments:
@@ -196,14 +192,16 @@ For example, consider the following folders:
 
 ``./results/default_two_agents/two_agent_stocks/9``
 
-This folder holds the results for the ``two_agent_stocks`` task of the ``default_two_agents`` tasks file. The ``0`` folder contains the results of the first instance / run. The ``1`` folder contains the results of the second run, and so on. You can think of the _task_id_ as mapping to a prompt, or a unique set of parameters, while the _instance_id_ defines a specific attempt or run.
+This folder holds the results for the ``two_agent_stocks`` task of the ``default_two_agents`` tasks file. The ``0`` folder contains the results of the first instance / run. The ``1`` folder contains the results of the second run, and so on. You can think of the *task_id* as mapping to a prompt, or a unique set of parameters, while the *instance_id* defines a specific attempt or run.
 
 Within each folder, you will find the following files:
 
-- *timestamp.txt*: records the date and time of the run, along with the version of the autogen-agentchat library installed
-- *console_log.txt*: all console output produced by Docker when running AutoGen. Read this like you would a regular console.
-- *[agent]_messages.json*: for each Agent, a log of their messages dictionaries
-- *./coding*: A directory containing all code written by AutoGen, and all artifacts produced by that code.
+```text
+timestamp.txt
+console_log.txt
+[agent]_messages.json
+./coding
+```
 
 ## Contributing or Defining New Tasks or Benchmarks
 
