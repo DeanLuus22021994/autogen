@@ -1,0 +1,120 @@
+name: Refresh Sidecar Containers
+
+on:
+  # Run weekly on Monday at 3 AM UTC
+  schedule:
+    - cron: '0 3 * * 1'
+
+  # Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      force_rebuild:
+        description: 'Force rebuild all containers'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  build-containers:
+    name: Build and Push Sidecar Containers
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        container: ['markdown-lint', 'build-cache', 'build-tools']
+      fail-fast: false
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ghcr.io/microsoft/autogen-${{ matrix.container }}
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ steps.date.outputs.date }}
+            type=sha,format=short
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./.devcontainer/swarm/sidecar-containers/${{ matrix.container }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=ghcr.io/microsoft/autogen-${{ matrix.container }}:latest
+          cache-to: type=inline
+          build-args: |
+            BUILDTIME=${{ fromJSON('["", "--no-cache"]')[github.event.inputs.force_rebuild == 'true'] }}
+
+      - name: Image digest
+        run: echo ${{ steps.build.outputs.digest }}
+
+  update-compose:
+    name: Update Docker Compose Configuration
+    needs: build-containers
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+
+      - name: Update Docker Compose file
+        run: |
+          COMPOSE_FILE=.devcontainer/swarm/sidecar-containers/docker-compose.yml
+          DATE_TAG=${{ steps.date.outputs.date }}
+
+          # Update docker-compose.yml to use the published images instead of build directives
+          sed -i 's/build:/image: ghcr.io\/microsoft\/autogen-markdown-lint:'$DATE_TAG'\n    #build:/' $COMPOSE_FILE
+          sed -i 's/context: .\/markdown-lint/#context: .\/markdown-lint/' $COMPOSE_FILE
+          sed -i 's/dockerfile: Dockerfile/#dockerfile: Dockerfile/' $COMPOSE_FILE
+
+          sed -i 's/build:/image: ghcr.io\/microsoft\/autogen-build-cache:'$DATE_TAG'\n    #build:/' $COMPOSE_FILE | grep -v "image: ghcr.io/microsoft/autogen-markdown-lint"
+          sed -i 's/context: .\/build-cache/#context: .\/build-cache/' $COMPOSE_FILE
+          sed -i 's/dockerfile: Dockerfile/#dockerfile: Dockerfile/' $COMPOSE_FILE
+
+          sed -i 's/build:/image: ghcr.io\/microsoft\/autogen-build-tools:'$DATE_TAG'\n    #build:/' $COMPOSE_FILE | grep -v "image: ghcr.io/microsoft/autogen-build-cache" | grep -v "image: ghcr.io/microsoft/autogen-markdown-lint"
+          sed -i 's/context: .\/build-tools/#context: .\/build-tools/' $COMPOSE_FILE
+          sed -i 's/dockerfile: Dockerfile/#dockerfile: Dockerfile/' $COMPOSE_FILE
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: update-sidecar-containers-${{ steps.date.outputs.date }}
+          title: 'Update sidecar container images to ${{ steps.date.outputs.date }}'
+          commit-message: 'chore: update sidecar container images to ${{ steps.date.outputs.date }}'
+          body: |
+            This PR updates the Docker Compose configuration to use the latest sidecar container images.
+
+            - Updates markdown-lint container to tag ${{ steps.date.outputs.date }}
+            - Updates build-cache container to tag ${{ steps.date.outputs.date }}
+            - Updates build-tools container to tag ${{ steps.date.outputs.date }}
+
+            This change allows developers to use pre-built container images instead of building them locally.
+          labels: |
+            automated-pr
+            dependencies
+          reviewers: ${{ github.actor }}

@@ -1,0 +1,129 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Sidecar Containers",
+      "detail": "Start all development sidecar containers for AutoGen",
+      "type": "shell",
+      "command": "${workspaceFolder}/.devcontainer/swarm/sidecar-containers/manage-sidecars.sh",
+      "args": ["start"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "group": "none"
+    },
+    {
+      "label": "Stop Sidecar Containers",
+      "detail": "Stop all development sidecar containers",
+      "type": "shell",
+      "command": "${workspaceFolder}/.devcontainer/swarm/sidecar-containers/manage-sidecars.sh",
+      "args": ["stop"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "group": "none"
+    },
+    {
+      "label": "Lint Markdown Files",
+      "detail": "Run markdown linting on specified files using sidecar container",
+      "type": "shell",
+      "command": "${workspaceFolder}/.devcontainer/swarm/sidecar-containers/manage-sidecars.sh",
+      "args": ["exec", "markdown-lint", "/app/scripts/lint-exec.sh", "${input:markdownPath}"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "group": "test"
+    },
+    {
+      "label": "Build .NET with Cache",
+      "detail": "Build .NET project using the pre-warmed build tools container",
+      "type": "shell",
+      "command": "${workspaceFolder}/.devcontainer/swarm/sidecar-containers/manage-sidecars.sh",
+      "args": ["exec", "build-tools", "/usr/local/bin/build-dotnet.sh", "${input:dotnetProjectPath}"],
+      "problemMatcher": "$msCompile",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "group": "build"
+    },
+    {
+      "label": "Build Python with Cache",
+      "detail": "Build Python project using the pre-warmed build tools container",
+      "type": "shell",
+      "command": "${workspaceFolder}/.devcontainer/swarm/sidecar-containers/manage-sidecars.sh",
+      "args": ["exec", "build-tools", "/usr/local/bin/build-python.sh", "${input:pythonProjectPath}"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "group": "build"
+    },
+    {
+      "label": "Clear Build Cache",
+      "detail": "Clear all build caches in the build-cache sidecar container",
+      "type": "shell",
+      "command": "${workspaceFolder}/.devcontainer/swarm/sidecar-containers/manage-sidecars.sh",
+      "args": ["exec", "build-cache", "/app/scripts/clear-cache.sh", "--all"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "group": "none"
+    },
+    {
+      "label": "Warm Build Cache",
+      "detail": "Prepare and warm build caches for faster builds",
+      "type": "shell",
+      "command": "${workspaceFolder}/.devcontainer/swarm/sidecar-containers/manage-sidecars.sh",
+      "args": ["exec", "build-cache", "/app/scripts/warm-cache.sh", "--all"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "group": "none"
+    },
+    {
+      "label": "Show Sidecar Container Status",
+      "detail": "Show the status of all sidecar containers",
+      "type": "shell",
+      "command": "${workspaceFolder}/.devcontainer/swarm/sidecar-containers/manage-sidecars.sh",
+      "args": ["status"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "group": "none"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "markdownPath",
+      "description": "Markdown file or directory to lint",
+      "default": "${workspaceFolder}/README.md",
+      "type": "promptString"
+    },
+    {
+      "id": "dotnetProjectPath",
+      "description": "Path to .NET project or solution file",
+      "default": "${workspaceFolder}/dotnet/AutoGen.sln",
+      "type": "promptString"
+    },
+    {
+      "id": "pythonProjectPath",
+      "description": "Path to Python project directory",
+      "default": "${workspaceFolder}/python/packages/autogen",
+      "type": "promptString"
+    }
+  ]
+}
