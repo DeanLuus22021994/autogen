@@ -325,15 +325,99 @@ function Get-GitHubDirectoryChanges {
     }
 }
 
-function Show-GitHubChanges {
+function Get-DirectoryMetrics {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $false)]
-        [switch]$Detailed
+        [Parameter(Mandatory = $true)]
+        [string]$Path
     )
 
-    # Use the improved function that already exists
-    Show-GitHubChanges -Detailed:$Detailed
+    # Initialize script-scoped variables to track metrics
+    $script:totalFiles = 0
+    $script:totalSizeBytes = 0
+    $script:totalDirectories = 1  # Start with 1 for the root directory
+    $script:filesByType = @{}
+
+    # Function to process a directory recursively
+    function Invoke-DirectoryProcessing {
+        param (
+            [string]$DirPath,
+            [string]$RelativePath,
+            [hashtable]$Tree
+        )
+
+        $dirInfo = @{
+            Path = $RelativePath
+            Files = @()
+            Directories = @{}
+            FileCount = 0
+            TotalSizeKB = 0
+        }
+
+        # Process files in this directory
+        $files = Get-ChildItem -Path $DirPath -File
+        foreach ($file in $files) {
+            $script:totalFiles++
+            $script:totalSizeBytes += $file.Length
+
+            # Track files by extension
+            $extension = if ([string]::IsNullOrEmpty($file.Extension)) { "(no extension)" } else { $file.Extension }
+            if (-not $script:filesByType.ContainsKey($extension)) {
+                $script:filesByType[$extension] = 0
+            }
+            $script:filesByType[$extension]++
+
+            # Add file to directory info
+            $dirInfo.Files += @{
+                Name = $file.Name
+                SizeKB = [Math]::Round($file.Length / 1KB, 2)
+                Extension = $extension
+                LastModified = $file.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss")
+            }
+
+            $dirInfo.FileCount++
+            $dirInfo.TotalSizeKB += ($file.Length / 1KB)
+        }
+
+        # Process subdirectories
+        $subdirs = Get-ChildItem -Path $DirPath -Directory
+        foreach ($subdir in $subdirs) {
+            $script:totalDirectories++
+            $subRelPath = if ($RelativePath) { "$RelativePath/$($subdir.Name)" } else { $subdir.Name }
+            $dirInfo.Directories[$subdir.Name] = @{}
+            Invoke-DirectoryProcessing -DirPath $subdir.FullName -RelativePath $subRelPath -Tree $dirInfo.Directories[$subdir.Name]
+        }
+
+        # Update tree with directory info
+        foreach ($key in $dirInfo.Keys) {
+            $Tree[$key] = $dirInfo[$key]
+        }
+    }
+
+    # Process root directory
+    $rootTree = @{}
+    Invoke-DirectoryProcessing -DirPath $Path -RelativePath (Split-Path -Leaf $Path) -Tree $rootTree
+
+    # Convert file type counts to array for easier JSON processing
+    $fileTypeStats = @()
+    foreach ($ext in $script:filesByType.Keys) {
+        $fileTypeStats += @{
+            Extension = $ext
+            Count = $script:filesByType[$ext]
+        }
+    }
+
+    # Create metrics object with proper scoping
+    $metrics = [PSCustomObject]@{
+        RootPath = $Path
+        TotalFiles = $script:totalFiles
+        TotalDirectories = $script:totalDirectories
+        TotalSizeKB = [Math]::Round($script:totalSizeBytes / 1KB, 2)
+        FileTypes = $fileTypeStats
+        DirectoryTree = $rootTree
+    }
+
+    return $metrics
 }
 
 function Show-GitHubChanges {
@@ -394,7 +478,9 @@ function Show-GitHubChanges {
             OSVersion = [Environment]::OSVersion.VersionString
             PSVersion = $PSVersionTable.PSVersion.ToString()
         }
-    }    # Convert to machine-readable format
+    }
+
+    # Convert to machine-readable format
     if ($Detailed) {
         $jsonOutput = $comprehensiveMetrics | ConvertTo-Json -Depth 5
     } else {
@@ -488,122 +574,6 @@ function Show-GitHubChanges {
     Write-Host "$modCount" -ForegroundColor $(if ($modCount -gt 0) { "Yellow" } else { "White" })
     Write-Host "Files Deleted: " -NoNewline
     Write-Host "$delCount" -ForegroundColor $(if ($delCount -gt 0) { "Red" } else { "White" })
-}
-
-function Get-DirectoryMetrics {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Path
-    )
-
-    # Initialize script-scoped variables to track metrics
-    $script:totalFiles = 0
-    $script:totalSizeBytes = 0
-    $script:totalDirectories = 1  # Start with 1 for the root directory
-    $script:filesByType = @{}
-
-    # Function to process a directory recursively
-    function Invoke-DirectoryProcessing {
-        param (
-            [string]$DirPath,
-            [string]$RelativePath,
-            [hashtable]$Tree
-        )
-
-        $dirInfo = @{
-            Path = $RelativePath
-            Files = @()
-            Directories = @{}
-            FileCount = 0
-            TotalSizeKB = 0
-        }
-
-        # Process files in this directory
-        $files = Get-ChildItem -Path $DirPath -File
-        foreach ($file in $files) {
-            $script:totalFiles++
-            $script:totalSizeBytes += $file.Length
-
-            # Track files by extension
-            $extension = if ([string]::IsNullOrEmpty($file.Extension)) { "(no extension)" } else { $file.Extension }
-            if (-not $script:filesByType.ContainsKey($extension)) {
-                $script:filesByType[$extension] = 0
-            }
-            $script:filesByType[$extension]++
-
-            # Add file to directory info
-            $dirInfo.Files += @{
-                Name = $file.Name
-                SizeKB = [Math]::Round($file.Length / 1KB, 2)
-                Extension = $extension
-                LastModified = $file.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss")
-            }
-
-            $dirInfo.FileCount++
-            $dirInfo.TotalSizeKB += ($file.Length / 1KB)
-        }
-
-        # Process subdirectories
-        $subdirs = Get-ChildItem -Path $DirPath -Directory
-        foreach ($subdir in $subdirs) {
-            $script:totalDirectories++
-            $subRelPath = if ($RelativePath) { "$RelativePath/$($subdir.Name)" } else { $subdir.Name }
-            $dirInfo.Directories[$subdir.Name] = @{}
-            Invoke-DirectoryProcessing -DirPath $subdir.FullName -RelativePath $subRelPath -Tree $dirInfo.Directories[$subdir.Name]
-        }
-
-        # Update tree with directory info
-        foreach ($key in $dirInfo.Keys) {
-            $Tree[$key] = $dirInfo[$key]
-        }
-    }
-      # Process root directory
-    $rootTree = @{}
-    Invoke-DirectoryProcessing -DirPath $Path -RelativePath (Split-Path -Leaf $Path) -Tree $rootTree
-
-    # Convert file type counts to array for easier JSON processing
-    $fileTypeStats = @()
-    foreach ($ext in $script:filesByType.Keys) {
-        $fileTypeStats += @{
-            Extension = $ext
-            Count = $script:filesByType[$ext]
-        }
-    }
-
-    # Create metrics object with proper scoping
-    $metrics = [PSCustomObject]@{
-        RootPath = $Path
-        TotalFiles = $script:totalFiles
-        TotalDirectories = $script:totalDirectories
-        TotalSizeKB = [Math]::Round($script:totalSizeBytes / 1KB, 2)
-        FileTypes = $fileTypeStats
-        DirectoryTree = $rootTree
-    }
-
-    return $metrics
-}
-
-    # Convert file type counts to array for easier JSON processing
-    $fileTypeStats = @()
-    foreach ($ext in $script:filesByType.Keys) {
-        $fileTypeStats += @{
-            Extension = $ext
-            Count = $script:filesByType[$ext]
-        }
-    }
-
-    # Create metrics object with proper scoping
-    $metrics = [PSCustomObject]@{
-        RootPath = $Path
-        TotalFiles = $script:totalFiles
-        TotalDirectories = $script:totalDirectories
-        TotalSizeKB = [Math]::Round($script:totalSizeBytes / 1KB, 2)
-        FileTypes = $fileTypeStats
-        DirectoryTree = $rootTree
-    }
-
-    return $metrics
 }
 
 # Main execution
