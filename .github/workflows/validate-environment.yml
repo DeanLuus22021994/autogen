@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, develop, master]
   pull_request:
-    branches: [main, master]
+    branches: [main, develop, master]
   workflow_dispatch:
 
 jobs:
@@ -182,7 +182,8 @@ jobs:
         run: |
           # Create a fixed mypy.ini if it doesn't exist
           if [ ! -f "mypy.ini" ] || grep -q "parsing errors" "mypy.ini"; then
-            echo "[mypy]
+            cat > mypy.ini << 'EOF'
+[mypy]
 disallow_untyped_defs = True
 disallow_incomplete_defs = True
 check_untyped_defs = True
@@ -222,7 +223,8 @@ ignore_missing_imports = True
 ignore_missing_imports = True
 
 [mypy-torch]
-ignore_missing_imports = True" > mypy.ini
+ignore_missing_imports = True
+EOF
           fi
 
           # Run mypy on Python code
@@ -267,7 +269,7 @@ ignore_missing_imports = True" > mypy.ini
           fi
 
           # Ensure environment variable references use the correct format
-          if grep -q '.vscode/mcp.json' 2>/dev/null && ! grep -q 'GITHUB_PERSONAL_ACCESS_TOKEN.*=.*\"\$\{env:' .vscode/mcp.json 2>/dev/null; then
+          if [ -f .vscode/mcp.json ] && ! grep -q 'GITHUB_PERSONAL_ACCESS_TOKEN.*=.*\"\$\{env:' .vscode/mcp.json 2>/dev/null; then
             echo "::warning::mcp.json should use \${env:VARIABLE_NAME} syntax for environment variables"
           fi
 
@@ -293,7 +295,7 @@ ignore_missing_imports = True" > mypy.ini
 
           if (-not (Test-Path $dictionaryPath)) {
             Write-Host "Creating custom dictionary for spellchecking..."
-            @"
+            @'
 # AutoGen Custom Dictionary
 autogen
 mcp
@@ -335,7 +337,7 @@ ruff
 flake8
 azdure
 esrp
-"@ | Out-File -FilePath $dictionaryPath -Encoding utf8
+'@ | Out-File -FilePath $dictionaryPath -Encoding utf8
             Write-Host "Created custom dictionary at $dictionaryPath"
           } else {
             Write-Host "Custom dictionary exists at $dictionaryPath"

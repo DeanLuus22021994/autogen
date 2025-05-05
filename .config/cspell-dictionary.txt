@@ -80,15 +80,26 @@ uuids
 
 # Other Technical Terms
 additonal
+aiohttp
 akka
+azdure
 docfx
+fastapi
 gatewway
 heirarchy
 iclude
+keras
 kubernetes
+matplotlib
 meai
 micrososft
+numpy
 perameters
+pypi
+scikit
+seaborn
+sklearn
 toml
 toplevel
+uvicorn
 yaml
