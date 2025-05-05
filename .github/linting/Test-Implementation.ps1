@@ -84,17 +84,25 @@ function Test-MarkdownlintInstalled {
 
 # Check if Docker is available
 try {
-    $dockerVersion = docker --version
+    $dockerVersion = docker --version 2>&1
     Write-Host "✅ Docker command available: $dockerVersion" -ForegroundColor Green
 
     # Check if Docker daemon is actually working
-    if (Test-DockerWorking) {
-        Write-Host "✅ Docker daemon is responding" -ForegroundColor Green
-        $dockerWorking = $true
+    try {
+        $null = docker info 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "✅ Docker daemon is responding" -ForegroundColor Green
+            $dockerWorking = $true
+        }
+        else {
+            Write-Host "⚠️ Docker daemon is not responding" -ForegroundColor Yellow
+            Write-Host "   This could be due to Docker Desktop not running or connection issues" -ForegroundColor Yellow
+            Write-Host "   Falling back to local testing..." -ForegroundColor Yellow
+            $dockerWorking = $false
+        }
     }
-    else {
-        Write-Host "⚠️ Docker command available but daemon is not responding" -ForegroundColor Yellow
-        Write-Host "   This could be due to Docker Desktop not running or connection issues" -ForegroundColor Yellow
+    catch {
+        Write-Host "⚠️ Docker daemon is not responding: $_" -ForegroundColor Yellow
         Write-Host "   Falling back to local testing..." -ForegroundColor Yellow
         $dockerWorking = $false
     }
@@ -130,15 +138,14 @@ if (-not $dockerWorking) {
     exit 1
 }
 
-# Build the Docker container
+# Build the Docker container if Docker is working
 if ($dockerWorking) {
     Write-Host "`n📦 Building Docker container for markdown linting..." -ForegroundColor Cyan
     try {
         Push-Location $dockerDir
         docker build -t autogen-markdown-lint -f $dockerFile .
         if ($LASTEXITCODE -ne 0) {
-            Write-Error "❌ Failed to build Docker container"
-            Write-Host "⚠️ Falling back to local testing..." -ForegroundColor Yellow
+            Write-Warning "Failed to build Docker container, falling back to local testing..."
             $dockerWorking = $false
         }
         else {
@@ -147,7 +154,7 @@ if ($dockerWorking) {
         Pop-Location
     }
     catch {
-        Write-Error "❌ Error building Docker container: $_"
+        Write-Warning "Error building Docker container: $_"
         Write-Host "⚠️ Falling back to local testing..." -ForegroundColor Yellow
         $dockerWorking = $false
         if ($null -ne (Get-Location).Path) {
@@ -156,7 +163,7 @@ if ($dockerWorking) {
     }
 }
 else {
-    Write-Host "`n⚠️ Docker is not working, skipping container build" -ForegroundColor Yellow
+    Write-Host "`n⚠️ Docker is not working, using local testing..." -ForegroundColor Yellow
 }
 
 # Test the rule execution
