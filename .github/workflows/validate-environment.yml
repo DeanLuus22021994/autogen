@@ -81,6 +81,56 @@ jobs:
             echo "::warning::mcp.json should use \${env:FORK_AUTOGEN_USER_PERSONAL_ACCESS_TOKEN} for GitHub token"
           fi
 
+          # Check all .vscode/*.json files for potential tokens
+          for file in .vscode/*.json; do
+            if [[ -f "$file" ]]; then
+              echo "Checking $file for tokens..."
+              if grep -E 'ghp_[a-zA-Z0-9]{36}|github_pat_[a-zA-Z0-9]{22}_[a-zA-Z0-9]{59}|sk-[a-zA-Z0-9]{48}|key-[a-zA-Z0-9]{24}|xoxb-[a-zA-Z0-9\-]{50,}' "$file"; then
+                echo "::error::Found potential token in $file"
+                exit 1
+              fi
+            fi
+          done
+
           echo "VS Code config files check complete ✅"
+          echo "::endgroup::"
+        shell: bash
+
+  vscode-files-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Validate VS Code configuration files
+        run: |
+          echo "::group::Validating VS Code configuration files"
+
+          # Check if VS Code files exist and are tracked
+          tracked_files=(
+            ".vscode/extensions.json"
+            ".vscode/launch.json"
+            ".vscode/mcp.json"
+            ".vscode/settings.json"
+            ".vscode/tasks.json"
+          )
+
+          for file in "${tracked_files[@]}"; do
+            if [[ -f "$file" ]]; then
+              echo "✅ $file exists"
+
+              # Check if file is tracked by git
+              if git ls-files --error-unmatch "$file" &>/dev/null; then
+                echo "  ✅ $file is tracked by git"
+              else
+                echo "  ❌ $file is not tracked by git"
+                echo "::warning::$file should be tracked in the repository"
+              fi
+            else
+              echo "❓ $file does not exist"
+            fi
+          done
+
+          echo "VS Code configuration files validation complete"
           echo "::endgroup::"
         shell: bash

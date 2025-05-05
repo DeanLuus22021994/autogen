@@ -20,6 +20,80 @@ FORK_HUGGINGFACE_ACCESS_TOKEN=<your-huggingface-token>
 
 We provide several PowerShell scripts to help you set up your environment:
 
+### Setup-GitSecureEnvironment.ps1
+
+This script helps set up a secure Git environment and helps clean sensitive data from the repository.
+
+```powershell
+# Set up Git configuration
+.\Setup-GitSecureEnvironment.ps1 -SetupGit
+
+# Clean repository history of sensitive data
+.\Setup-GitSecureEnvironment.ps1 -CleanHistory
+
+# Configure GitHub CLI
+.\Setup-GitSecureEnvironment.ps1 -ConfigureGitHubCLI
+```
+
+### Validate-EnvSecrets.ps1
+
+This script validates and manages environment variables and secrets for the AutoGen repository.
+
+```powershell
+# Validate environment variables
+.\Validate-EnvSecrets.ps1 -Validate
+
+# Set up missing environment variables
+.\Validate-EnvSecrets.ps1 -Setup
+
+# Fix configuration files to use environment variables
+.\Validate-EnvSecrets.ps1 -Fix
+```
+
+### Commit-SafeVsCodeConfig.ps1
+
+This script safely commits VS Code configuration files after ensuring no tokens are exposed.
+
+```powershell
+# Check VS Code config files for security issues
+.\Commit-SafeVsCodeConfig.ps1
+
+# Force update and commit VS Code config files
+.\Commit-SafeVsCodeConfig.ps1 -Force -Message "update: VS Code configuration"
+```
+
+### Resolve-PushBlockedByToken.ps1
+
+This script helps resolve GitHub push protection issues due to detected tokens.
+
+```powershell
+# Fix token issue in repository
+.\Resolve-PushBlockedByToken.ps1 -Fix
+
+# Unblock a secret (only for revoked tokens)
+.\Resolve-PushBlockedByToken.ps1 -Unblock -UnblockURL 'https://github.com/...'
+```
+
+### Verify-GitHubSecrets.ps1
+
+This script verifies that required secrets are set in GitHub Actions for the repository.
+
+```powershell
+# Verify GitHub secrets
+.\Verify-GitHubSecrets.ps1
+
+# Attempt to set missing secrets
+.\Verify-GitHubSecrets.ps1 -FixMissingSecrets
+```
+
+## Best Practices for Security
+
+1. **Never commit secrets directly**: Always use environment variables
+2. **Use environment variable references**: For VS Code configuration files, use `${env:VARIABLE_NAME}` syntax
+3. **Regularly validate your setup**: Run `Validate-EnvSecrets.ps1 -Validate` before committing
+4. **Use secure commit process**: Use `Commit-SafeVsCodeConfig.ps1` when updating VS Code files
+5. **Check GitHub Actions secrets**: Ensure your repository has the required secrets set
+
 1. `Setup-AutogenEnvironment.ps1` - Master script that orchestrates the complete setup
 2. `Validate-EnvSecrets.ps1` - Validates and sets up environment variables and secrets
 3. `Setup-GitSecureEnvironment.ps1` - Configures Git for secure development
