@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<docker_documentation>
+  <metadata>
+    <updated>2025-05-06T00:35:00Z</updated>
+    <version>1.0.0</version>
+    <description>
+      Centralized repository of Docker documentation links for AI-related features.
+      Used for dynamic referencing throughout the codebase.
+    </description>
+  </metadata>
+
+  <categories>
+    <category id="general">
+      <name>General Docker Documentation</name>
+      <description>Main Docker documentation resources</description>
+      <links>
+        <link id="docker_main">
+          <url>https://docs.docker.com/</url>
+          <title>Docker Documentation</title>
+          <description>Main Docker documentation hub</description>
+          <last_validated>2025-05-06T00:35:00Z</last_validated>
+        </link>
+      </links>
+    </category>
+
+    <category id="ai_gordon">
+      <name>Docker Gordon</name>
+      <description>Docker's AI orchestration tool</description>
+      <links>
+        <link id="gordon_main">
+          <url>https://docs.docker.com/ai/gordon/</url>
+          <title>Docker Gordon</title>
+          <description>Gordon AI tool documentation</description>
+          <last_validated>2025-05-06T00:35:00Z</last_validated>
+        </link>
+        <link id="gordon_mcp">
+          <url>https://docs.docker.com/ai/gordon/mcp/</url>
+          <title>Gordon MCP</title>
+          <description>Model Control Plane for Gordon</description>
+          <last_validated>2025-05-06T00:35:00Z</last_validated>
+        </link>
+        <link id="gordon_tools">
+          <url>https://docs.docker.com/ai/gordon/mcp/built-in-tools/</url>
+          <title>Gordon Built-in Tools</title>
+          <description>Built-in tools available in Gordon</description>
+          <last_validated>2025-05-06T00:35:00Z</last_validated>
+        </link>
+        <link id="gordon_server">
+          <url>https://docs.docker.com/ai/gordon/mcp/gordon-mcp-server/</url>
+          <title>Gordon MCP Server</title>
+          <description>Gordon MCP server configuration</description>
+          <last_validated>2025-05-06T00:35:00Z</last_validated>
+        </link>
+        <link id="gordon_yaml">
+          <url>https://docs.docker.com/ai/gordon/mcp/yaml/</url>
+          <title>Gordon YAML Configuration</title>
+          <description>YAML configuration for Gordon</description>
+          <last_validated>2025-05-06T00:35:00Z</last_validated>
+        </link>
+      </links>
+    </category>
+
+    <category id="model_runner">
+      <name>Docker Model Runner</name>
+      <description>Docker's built-in AI model runner</description>
+      <links>
+        <link id="model_runner_main">
+          <url>https://docs.docker.com/model-runner/</url>
+          <title>Docker Model Runner</title>
+          <description>Run AI models directly in Docker</description>
+          <last_validated>2025-05-06T00:35:00Z</last_validated>
+        </link>
+      </links>
+    </category>
+
+    <category id="mcp_toolkit">
+      <name>MCP Catalog and Toolkit</name>
+      <description>Model Control Plane tools and catalog</description>
+      <links>
+        <link id="mcp_toolkit_main">
+          <url>https://docs.docker.com/ai/mcp-catalog-and-toolkit/</url>
+          <title>MCP Catalog and Toolkit</title>
+          <description>Overview of MCP Catalog and Toolkit</description>
+          <last_validated>2025-05-06T00:35:00Z</last_validated>
+        </link>
+        <link id="mcp_catalog">
+          <url>https://docs.docker.com/ai/mcp-catalog-and-toolkit/catalog/</url>
+          <title>MCP Catalog</title>
+          <description>Model catalog for Docker MCP</description>
+          <last_validated>2025-05-06T00:35:00Z</last_validated>
+        </link>
+        <link id="mcp_toolkit">
+          <url>https://docs.docker.com/ai/mcp-catalog-and-toolkit/toolkit/</url>
+          <title>MCP Toolkit</title>
+          <description>Tools for working with Docker MCP</description>
+          <last_validated>2025-05-06T00:35:00Z</last_validated>
+        </link>
+      </links>
+    </category>
+
+    <category id="docker_copilot">
+      <name>Docker Copilot</name>
+      <description>Docker's AI assistant for development</description>
+      <links>
+        <link id="copilot_main">
+          <url>https://docs.docker.com/copilot/</url>
+          <title>Docker Copilot</title>
+          <description>Docker's AI-powered assistant</description>
+          <last_validated>2025-05-06T00:35:00Z</last_validated>
+        </link>
+        <link id="copilot_install">
+          <url>https://docs.docker.com/copilot/install/</url>
+          <title>Installing Docker Copilot</title>
+          <description>Installation guide for Docker Copilot</description>
+          <last_validated>2025-05-06T00:35:00Z</last_validated>
+        </link>
+        <link id="copilot_usage">
+          <url>https://docs.docker.com/copilot/usage/</url>
+          <title>Using Docker Copilot</title>
+          <description>Usage instructions for Docker Copilot</description>
+          <last_validated>2025-05-06T00:35:00Z</last_validated>
+        </link>
+        <link id="copilot_examples">
+          <url>https://docs.docker.com/copilot/examples/</url>
+          <title>Docker Copilot Examples</title>
+          <description>Example use cases for Docker Copilot</description>
+          <last_validated>2025-05-06T00:35:00Z</last_validated>
+        </link>
+      </links>
+    </category>
+  </categories>
+
+  <tags>
+    <tag name="ai">
+      <link_ref>gordon_main</link_ref>
+      <link_ref>gordon_mcp</link_ref>
+      <link_ref>gordon_tools</link_ref>
+      <link_ref>gordon_server</link_ref>
+      <link_ref>gordon_yaml</link_ref>
+      <link_ref>model_runner_main</link_ref>
+      <link_ref>mcp_toolkit_main</link_ref>
+      <link_ref>mcp_catalog</link_ref>
+      <link_ref>mcp_toolkit</link_ref>
+      <link_ref>copilot_main</link_ref>
+    </tag>
+    <tag name="model-runner">
+      <link_ref>model_runner_main</link_ref>
+    </tag>
+    <tag name="gordon">
+      <link_ref>gordon_main</link_ref>
+      <link_ref>gordon_mcp</link_ref>
+      <link_ref>gordon_tools</link_ref>
+      <link_ref>gordon_server</link_ref>
+      <link_ref>gordon_yaml</link_ref>
+    </tag>
+    <tag name="mcp">
+      <link_ref>gordon_mcp</link_ref>
+      <link_ref>gordon_server</link_ref>
+      <link_ref>mcp_toolkit_main</link_ref>
+      <link_ref>mcp_catalog</link_ref>
+      <link_ref>mcp_toolkit</link_ref>
+    </tag>
+    <tag name="copilot">
+      <link_ref>copilot_main</link_ref>
+      <link_ref>copilot_install</link_ref>
+      <link_ref>copilot_usage</link_ref>
+      <link_ref>copilot_examples</link_ref>
+    </tag>
+  </tags>
+</docker_documentation>
