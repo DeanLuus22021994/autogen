@@ -52,6 +52,7 @@ jobs:
           echo "::endgroup::"
         env:
           # Note: In a production environment, ensure these secrets are properly configured
+          # VS Code may show warnings for these, but they will work correctly on GitHub when properly configured
           SECRETS_FORK_AUTOGEN_USER_PERSONAL_ACCESS_TOKEN: ${{ secrets.FORK_AUTOGEN_USER_PERSONAL_ACCESS_TOKEN }}
           SECRETS_FORK_HUGGINGFACE_ACCESS_TOKEN: ${{ secrets.FORK_HUGGINGFACE_ACCESS_TOKEN }}
           SECRETS_FORK_USER_DOCKER_ACCESS_TOKEN: ${{ secrets.FORK_USER_DOCKER_ACCESS_TOKEN }}
