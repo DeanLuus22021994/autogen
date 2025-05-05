@@ -50,6 +50,10 @@ jobs:
           Write-Host "All required secrets are set! ✅"
           echo "::endgroup::"
         shell: pwsh
+        env:
+          SECRETS_FORK_AUTOGEN_USER_PERSONAL_ACCESS_TOKEN: ${{ secrets.FORK_AUTOGEN_USER_PERSONAL_ACCESS_TOKEN }}
+          SECRETS_FORK_HUGGINGFACE_ACCESS_TOKEN: ${{ secrets.FORK_HUGGINGFACE_ACCESS_TOKEN }}
+          SECRETS_FORK_USER_DOCKER_ACCESS_TOKEN: ${{ secrets.FORK_USER_DOCKER_ACCESS_TOKEN }}
 
       - name: Check Security Configuration
         run: |
@@ -59,7 +63,7 @@ jobs:
           Import-Module "$modulePath/Common.psm1" -Force
           Import-Module "$modulePath/Security.psm1" -Force
 
-          Write-SectionHeader "Security Configuration Check"
+          Write-Host "## Security Configuration Check"
 
           # Check VS Code configuration for security issues
           $vsCodeDir = Join-Path $PWD ".vscode"
@@ -68,29 +72,31 @@ jobs:
             $issues = Find-ExposedTokens -FilePaths $vsCodeFiles
 
             if ($issues.Count -gt 0) {
-              Write-StatusMessage "Found potential security issues in VS Code configuration" "Error" 0
+              Write-Host "Found potential security issues in VS Code configuration"
               foreach ($issue in $issues) {
-                Write-StatusMessage "$($issue.File): $($issue.Issue)" "Error" 1
+                Write-Host "$($issue.File): $($issue.Issue)"
               }
               exit 1
             } else {
-              Write-StatusMessage "No security issues found in VS Code configuration" "Success" 0
+              Write-Host "No security issues found in VS Code configuration"
             }
           } else {
-            Write-StatusMessage "VS Code configuration directory not found" "Warning" 0
+            Write-Host "VS Code configuration directory not found"
           }
         shell: pwsh
+
   scan-for-secrets:
     runs-on: ubuntu-latest
-    steps:      - name: Checkout repository
+    steps:
+      - name: Checkout repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 0  # Fetch all history for scanning
 
-      - name: Set up PowerShell
+      - name: Install PowerShell
         uses: PowerShell/PowerShell-action@v1
         with:
-          pwsh-version: '7.2'
+          shell-version: '7.2'
 
       - name: Scan for exposed secrets
         run: |
@@ -100,7 +106,7 @@ jobs:
           Import-Module "$modulePath/Common.psm1" -Force
           Import-Module "$modulePath/Security.psm1" -Force
 
-          Write-SectionHeader "Repository Security Scan"
+          Write-Host "## Repository Security Scan"
 
           # File types to scan for tokens
           $fileTypes = @("*.ps1", "*.py", "*.js", "*.ts", "*.json", "*.md", "*.ipynb")
@@ -114,7 +120,7 @@ jobs:
 
           # Limit to recently changed files in PRs to speed up checks
           if ("${{ github.event_name }}" -eq "pull_request") {
-            Write-StatusMessage "Scanning only changed files in PR" "Info" 0
+            Write-Host "Scanning only changed files in PR"
             $changedFiles = git diff --name-only HEAD~1 HEAD
             $filesToScan = $filesToScan | Where-Object { $changedFiles -contains ($_ -replace [regex]::Escape($PWD.ToString() + "/"), "") }
           }
@@ -122,15 +128,16 @@ jobs:
           $exposedTokens = Find-ExposedTokens -FilePaths $filesToScan
 
           if ($exposedTokens.Count -gt 0) {
-            Write-StatusMessage "Found potential exposed tokens in $($exposedTokens.Count) files:" "Error" 0
+            Write-Host "Found potential exposed tokens in $($exposedTokens.Count) files:"
             foreach ($issue in $exposedTokens) {
-              Write-StatusMessage "$($issue.File): $($issue.Issue)" "Error" 1
+              Write-Host "$($issue.File): $($issue.Issue)"
             }
             exit 1
           } else {
-            Write-StatusMessage "No exposed tokens found in scanned files" "Success" 0
+            Write-Host "No exposed tokens found in scanned files"
           }
         shell: pwsh
+
   validate-dotnet:
     runs-on: ubuntu-latest
     steps:
@@ -169,13 +176,6 @@ jobs:
       - name: Validate Python configuration
         run: |
           python -c "import autogen; print(f'AutoGen version: {autogen.__version__}')"
-          fetch-depth: 0
-
-      - name: Set up Git Secret Scanner
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
   lint-configs:
     runs-on: ubuntu-latest

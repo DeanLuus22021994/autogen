@@ -89,16 +89,14 @@ This script verifies that required secrets are set in GitHub Actions for the rep
 
 ## Best Practices for Security
 
-1. **Never commit secrets directly**: Always use environment variables
-2. **Use environment variable references**: For VS Code configuration files, use `${env:VARIABLE_NAME}` syntax
-3. **Regularly validate your setup**: Run `Validate-EnvSecrets.ps1 -Validate` before committing
-4. **Use secure commit process**: Use `Commit-SafeVsCodeConfig.ps1` when updating VS Code files
-5. **Check GitHub Actions secrets**: Ensure your repository has the required secrets set
+## Classic Scripts
 
-1. `Setup-AutogenEnvironment.ps1` - Master script that orchestrates the complete setup
-2. `Validate-EnvSecrets.ps1` - Validates and sets up environment variables and secrets
-3. `Setup-GitSecureEnvironment.ps1` - Configures Git for secure development
-4. `Resolve-PushBlockedByToken.ps1` - Helps resolve GitHub push protection issues
+AutoGen provides several classic PowerShell scripts to help with environment setup:
+
+- `Setup-AutogenEnvironment.ps1` - Master script that orchestrates the complete setup
+- `Validate-EnvSecrets.ps1` - Validates and sets up environment variables and secrets
+- `Setup-GitSecureEnvironment.ps1` - Configures Git for secure development
+- `Resolve-PushBlockedByToken.ps1` - Helps resolve GitHub push protection issues
 
 To set up your environment, you can use the master script:
 
