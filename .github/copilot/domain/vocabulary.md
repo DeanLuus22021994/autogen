@@ -23,6 +23,10 @@ This document establishes a consistent terminology for AutoGen development to en
 | **Action** | A task that an agent performs | Agent behavior |
 | **Planning** | The process of determining a sequence of actions to achieve a goal | Agent cognitive model |
 | **Reasoning** | The process of drawing conclusions from observations | Agent cognitive model |
+| **DIR.TAG** | A machine-readable file for tracking development debt and implementation status in a directory | Configuration management |
+| **XML Configuration** | Structured XML files used for project configuration instead of INI or plaintext | Configuration standard |
+| **Development Debt** | Outstanding implementation tasks or issues tracked via DIR.TAG files | Project management |
+| **Config Propagation** | Automated process of updating and ensuring consistency across configuration files | Automation workflow |
 
 ## IDE Problem References
 
