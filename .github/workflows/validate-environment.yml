@@ -94,11 +94,10 @@ jobs:
         with:
           fetch-depth: 0  # Fetch all history for scanning
 
-      - name: Setup PowerShell Core
-        uses: PowerShell/PowerShell-action@v1
-        with:
-          shell: pwsh
-          pwsh-version: '7.3'
+      # Use the pre-installed PowerShell instead of an external action
+      - name: Setup PowerShell
+        shell: bash
+        run: pwsh --version
 
       - name: Scan for exposed secrets
         shell: pwsh
