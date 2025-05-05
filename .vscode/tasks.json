@@ -1,0 +1,140 @@
+{
+    "version": "2.0.0",    "tasks": [
+        {
+            "label": "Spell Check Workspace",
+            "type": "shell",
+            "command": "${workspaceFolder}/.devcontainer/spell-check.sh",
+            "args": [
+                "--verbose"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new",
+                "focus": true
+            },
+            "problemMatcher": {
+                "owner": "cspell",
+                "fileLocation": ["relative", "${workspaceFolder}"],
+                "pattern": {
+                    "regexp": "^(.*):(\\d+):(\\d+) - (Unknown word) \\((.*)\\) (.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "message": 6,
+                    "code": 5
+                }
+            },
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "Spell Check Current File",
+            "type": "shell",
+            "command": "${workspaceFolder}/.devcontainer/spell-check.sh",
+            "args": [
+                "--path",
+                "${relativeFile}",
+                "--verbose"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "focus": true
+            },
+            "problemMatcher": {
+                "owner": "cspell",
+                "fileLocation": ["relative", "${workspaceFolder}"],
+                "pattern": {
+                    "regexp": "^(.*):(\\d+):(\\d+) - (Unknown word) \\((.*)\\) (.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "message": 6,
+                    "code": 5
+                }
+            }
+        },        {
+            "label": "Generate Unknown Words List",
+            "type": "shell",
+            "command": "${workspaceFolder}/.devcontainer/spell-check.sh",
+            "args": [
+                "--fix",
+                "--verbose"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "focus": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Add Words to Dictionary",
+            "type": "shell",
+            "command": "${workspaceFolder}/.devcontainer/manage-dictionary.sh",
+            "args": [
+                "add-words"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "focus": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Synchronize Dictionary with IDE",
+            "type": "shell",
+            "command": "${workspaceFolder}/.devcontainer/manage-dictionary.sh",
+            "args": [
+                "sync"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "focus": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "build",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/dotnet/AutoGen.sln",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary;ForceNoAlign"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "publish",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "publish",
+                "${workspaceFolder}/dotnet/AutoGen.sln",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary;ForceNoAlign"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "watch",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "watch",
+                "run",
+                "--project",
+                "${workspaceFolder}/dotnet/AutoGen.sln"
+            ],
+            "problemMatcher": "$msCompile"
+        }
+    ]
+}

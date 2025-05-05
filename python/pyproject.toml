@@ -2,7 +2,7 @@
 dev = [
     "pyright==1.1.389",
     "mypy==1.13.0",
-    "ruff==0.4.8",
+    "ruff==0.5.3",
     "pytest",
     "pytest-asyncio",
     "pytest-cov",
@@ -77,9 +77,17 @@ disallow_incomplete_defs = true
 disallow_untyped_decorators = true
 disallow_any_unimported = true
 
+# Exclude cookiecutter templates
+exclude = [
+    "templates/",
+    "templates/new-package/{{cookiecutter.*}}",
+    "**/{{cookiecutter.*}}/**/*.py",
+    "**/*cookiecutter*/**"
+]
+
 [tool.pyright]
 include = ["src", "tests", "samples"]
-exclude = ["samples/core_xlang_hello_python_agent/protos"]
+exclude = ["samples/core_xlang_hello_python_agent/protos", "templates/"]
 typeCheckingMode = "strict"
 reportUnnecessaryIsInstance = false
 reportMissingTypeStubs = false

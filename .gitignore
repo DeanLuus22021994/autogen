@@ -5,7 +5,13 @@ node_modules/
 # Visual Studio 2015/2017 cache/options directory
 .vs/
 
-.vscode
+# VS Code - track specific files, ignore the rest
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/mcp.json
+!.vscode/settings.json
+!.vscode/tasks.json
 
 # Log files
 *.log

@@ -1,0 +1,32 @@
+{
+	"servers": {
+		"sequential-thinking": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@modelcontextprotocol/server-sequential-thinking"
+			]
+		},
+		"github": {
+			"command": "uv",
+			"args": [
+				"run",
+				"-i",
+				"--rm",
+				"-e",
+				"GITHUB_PERSONAL_ACCESS_TOKEN",
+				"mcp/github"
+			],
+			"env": {
+				"GITHUB_PERSONAL_ACCESS_TOKEN": "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"
+			}
+		},
+		"playwright": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@playwright/mcp"
+			]
+		}
+	}
+}
