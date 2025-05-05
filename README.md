@@ -21,6 +21,36 @@ pip install -U "autogen-agentchat" "autogen-ext[openai]"
 
 ## Troubleshooting
 
+### Environment and Security Setup
+
+To properly set up your development environment with secure handling of tokens and credentials:
+
+1. Run the Environment Validation task:
+
+   ```powershell
+   # Check environment variables
+   .\Validate-EnvSecrets.ps1 -Validate
+
+   # Set up environment variables interactively
+   .\Validate-EnvSecrets.ps1 -Setup
+   ```
+
+2. Set up Git with secure configurations:
+
+   ```powershell
+   .\Setup-GitSecureEnvironment.ps1 -SetupGit
+   ```
+
+3. Fix token issues in the repository:
+
+   ```powershell
+   .\Resolve-PushBlockedByToken.ps1 -Fix
+   ```
+
+You can also run these tasks from the VS Code tasks menu (Ctrl+Shift+P, then "Tasks: Run Task").
+
+See [Environment Setup Guide](docs/ENVIRONMENT_SETUP.md) for detailed instructions.
+
 ### Fixing Git Authentication Issues
 
 If you encounter Git authentication errors like `Permission denied (publickey)` when pulling from or pushing to GitHub, you can use our quick-fix scripts:

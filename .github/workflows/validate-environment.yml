@@ -1,0 +1,86 @@
+name: Validate Environment and Secrets
+
+on:
+  push:
+    branches: [ main, DeanDev ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  validate-environment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Validate Required Secrets
+        run: |
+          echo "::group::Validating Required Secrets"
+          missing=0
+
+          required_secrets=(
+            "FORK_AUTOGEN_USER_PERSONAL_ACCESS_TOKEN"
+            "FORK_USER_DOCKER_ACCESS_TOKEN"
+            "FORK_HUGGINGFACE_ACCESS_TOKEN"
+          )
+
+          for secret in "${required_secrets[@]}"; do
+            if [ -n "${{ secrets[format('{0}', secret)] }}" ]; then
+              echo "✅ Secret $secret is set"
+            else
+              echo "❌ Secret $secret is not set"
+              missing=1
+            fi
+          done
+
+          if [ $missing -eq 1 ]; then
+            echo "::error::Some required secrets are missing. Please add them in your repository settings."
+            exit 1
+          fi
+
+          echo "All required secrets are set! ✅"
+          echo "::endgroup::"
+        shell: bash
+
+  scan-for-secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Git Secret Scanner
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  lint-configs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Check VS Code config files for tokens
+        run: |
+          echo "::group::Checking VS Code config files"
+
+          # Check mcp.json for directly embedded tokens
+          if grep -q 'GITHUB_PERSONAL_ACCESS_TOKEN.*=.*\"ghp_' .vscode/mcp.json 2>/dev/null; then
+            echo "::error::Found hardcoded token in .vscode/mcp.json"
+            exit 1
+          elif grep -q 'GITHUB_PERSONAL_ACCESS_TOKEN.*=.*\"github_pat_' .vscode/mcp.json 2>/dev/null; then
+            echo "::error::Found hardcoded token in .vscode/mcp.json"
+            exit 1
+          fi
+
+          # Ensure environment variable references use the correct format
+          if ! grep -q 'GITHUB_PERSONAL_ACCESS_TOKEN.*=.*\"\$\{env:FORK_AUTOGEN_USER_PERSONAL_ACCESS_TOKEN\}\"' .vscode/mcp.json 2>/dev/null; then
+            echo "::warning::mcp.json should use \${env:FORK_AUTOGEN_USER_PERSONAL_ACCESS_TOKEN} for GitHub token"
+          fi
+
+          echo "VS Code config files check complete ✅"
+          echo "::endgroup::"
+        shell: bash
