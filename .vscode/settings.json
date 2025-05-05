@@ -7,6 +7,21 @@
 	"python.linting.mypyEnabled": true,
 	"python.analysis.typeCheckingMode": "basic",	"ruff.path": ["c:\\Projects\\autogen\\.venv\\Scripts\\ruff.exe"],
 	"ruff.interpreter": ["c:\\Projects\\autogen\\.venv\\Scripts\\python.exe"],
+	"cSpell.customDictionaries": {
+		"autogen-dictionary": {
+			"name": "AutoGen Custom Dictionary",
+			"path": "${workspaceFolder}/.config/cspell-dictionary.txt",
+			"description": "Custom dictionary for AutoGen project terms",
+			"addWords": true
+		},
+		"project-words": true
+	},
+	"cSpell.dictionaryDefinitions": [
+		{
+			"name": "autogen-dictionary",
+			"path": "${workspaceFolder}/.config/cspell-dictionary.txt"
+		}
+	],
 	"cSpell.words": [
 		"accessibilities",
 		"addbuildtag",

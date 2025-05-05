@@ -1,363 +1,304 @@
-# Update-SpellCheck.ps1
-# Updates the custom spell-checking dictionary and runs a spell check on documentation
+# SpellCheck.psm1
+# Provides spell checking functionality for the AutoGen project
 
 #Requires -Version 7.0
 
-# Import required modules
+# Import dependencies
 $scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
-$rootPath = Split-Path -Parent (Split-Path -Parent $scriptPath)
-$modulesPath = Join-Path $rootPath "github"
+$rootPath = Join-Path (Split-Path -Parent (Split-Path -Parent $scriptPath)) "github"
+Import-Module "$rootPath\Common.psm1" -Force
 
-# Import all modules
-Import-Module "$modulesPath\Common.psm1" -Force
+# Default paths
+$defaultDictionaryPath = ".config/cspell-dictionary.txt"
+$defaultSettingsPath = ".vscode/settings.json"
+$defaultDocsPath = "docs"
 
-function Update-SpellCheckDictionary {
+# Technical terms to include in dictionary
+$technicalTerms = @(
+    # Development tools and frameworks
+    "docfx",
+    "vscode",
+    "pylance",
+    # Technical terms
+    "agenthost",
+    "appsettings",
+    "websocket",
+    "Akka",
+    "Gatewway",
+    "perameters",
+    "davidanson",
+    "iclude",
+    "powershell",
+    "pwsh",
+    # Microsoft terms
+    "Micrososft",
+    "MEAI",
+    "azureml",
+    # Common misspellings found in the codebase
+    "additonal",
+    "heirarchy"
+)
+
+function Invoke-SpellCheckOnWorkspace {
+    <#
+    .SYNOPSIS
+        Runs spell check on the entire workspace.
+    .DESCRIPTION
+        Executes CSpell on all relevant files in the workspace.
+    .PARAMETER Verbose
+        Show detailed output.
+    .EXAMPLE
+        Invoke-SpellCheckOnWorkspace -Verbose
+    #>
     [CmdletBinding()]
-    param (
-        [Parameter()]
-        [string]$DictionaryPath = ".vscode/cspell-custom-dictionary.txt",
+    param()
 
-        [Parameter()]
-        [string]$DocumentationPath = "docs",
-
-        [Parameter()]
-        [switch]$RunSpellCheck,
-
-        [Parameter()]
-        [switch]$Synchronize
-    )
-
-    Write-Host ""
-    Write-SectionHeader "Spell Check Dictionary Update"
-
-    # Ensure dictionary file exists
-    if (-not (Test-Path $DictionaryPath)) {
-        Write-StatusMessage "Dictionary file not found. Creating new dictionary file." "Warning" 0
-
-        $defaultDictContent = @"
-# Additional words for spell checking
-# Words in this file will be recognized as correctly spelled
-
-# Technical terms
-docfx
-pwsh
-pylance
-gitignore
-agenthost
-appsettings
-ruff
-Akka
-Gatewway
-perameters
-davidanson
-iclude
-markdownlint
-notmatch
-
-# Company and product names
-Micrososft
-MEAI
-
-# Spelling variants & international words
-additonal
-heirarchy
-"@
-
-        New-Item -Path $DictionaryPath -ItemType File -Force | Out-Null
-        Set-Content -Path $DictionaryPath -Value $defaultDictContent
-        Write-StatusMessage "Created dictionary file at: $DictionaryPath" "Success" 1
-    }
-
-    # Check if cspell tool is installed
-    $cspellInstalled = $null
     try {
-        $cspellInstalled = Get-Command npx -ErrorAction SilentlyContinue
+        Write-SectionHeader "Workspace Spell Check"
+
+        # Check if npx/cspell is available
+        $cspellPath = Get-Command "npx" -ErrorAction SilentlyContinue
+        if (-not $cspellPath) {
+            Write-StatusMessage "CSpell not found. Please install Node.js and CSpell." "Error" 0
+            return
+        }
+
+        # Run cspell on the workspace
+        Write-StatusMessage "Running spell check on workspace..." "Info" 0
+        $result = npx cspell "**/*.{md,ps1,py,js,ts,cs,json,ipynb}" --no-progress
+
+        Write-StatusMessage "Spell check complete!" "Success" 0
     }
     catch {
-        $cspellInstalled = $null
+        Write-StatusMessage "An error occurred: $_" "Error" 0
     }
-
-    if (-not $cspellInstalled) {
-        Write-StatusMessage "npx not found. Please install Node.js to use cspell." "Warning" 0
-        Write-StatusMessage "Skipping spell check operation." "Warning" 0
-        return
-    }
-
-    # Run spell check if requested
-    if ($RunSpellCheck) {
-        Write-StatusMessage "Running spell check on documentation..." "Info" 0
-
-        try {
-            # Run cspell on documentation
-            $result = npx cspell "$DocumentationPath/**/*.md" --config .vscode/cspell.json
-            Write-StatusMessage "Spell check completed successfully" "Success" 0
-        }
-        catch {
-            Write-StatusMessage "Spell check encountered issues" "Warning" 0
-            Write-StatusMessage "Consider adding unknown words to the dictionary" "Info" 1
-
-            # Get all unknown words
-            $unknownWords = @()
-            $output = npx cspell "$DocumentationPath/**/*.md" --config .vscode/cspell.json --no-progress 2>&1
-
-            foreach ($line in $output) {
-                if ($line -match "Unknown word \(([^)]+)\)") {
-                    $word = $Matches[1]
-                    if ($unknownWords -notcontains $word) {
-                        $unknownWords += $word
-                    }
-                }
-            }
-
-            if ($unknownWords.Count -gt 0) {
-                Write-StatusMessage "Unknown words found:" "Info" 0
-                foreach ($word in $unknownWords) {
-                    Write-StatusMessage "  $word" "Info" 1
-                }
-
-                $addWords = Read-Host "Would you like to add these words to the dictionary? (Y/N)"
-                if ($addWords -eq "Y" -or $addWords -eq "y") {
-                    # Get current dictionary content
-                    $dictionaryContent = Get-Content $DictionaryPath -Raw
-
-                    # Add new section for detected words
-                    $newWords = "`n# Detected words`n"
-                    foreach ($word in $unknownWords) {
-                        $newWords += "$word`n"
-                    }
-
-                    # Update dictionary
-                    $dictionaryContent += $newWords
-                    Set-Content -Path $DictionaryPath -Value $dictionaryContent
-
-                    Write-StatusMessage "Added ${unknownWords.Count} words to dictionary" "Success" 0
-                    Write-StatusMessage "Dictionary updated at: $DictionaryPath" "Success" 0
-
-                    # Synchronize dictionary with VS Code settings
-                    if ($Synchronize) {
-                        Update-VsCodeDictionarySettings -DictionaryPath $DictionaryPath
-                    }
-                }
-            }
-        }
-    }
-    else {
-        Write-StatusMessage "Spell check skipped. Use -RunSpellCheck to perform spell check." "Info" 0
-    }
-
-    # Synchronize with VS Code settings if requested
-    if ($Synchronize) {
-        Update-VsCodeDictionarySettings -DictionaryPath $DictionaryPath
-    }
-
-    Write-StatusMessage "Spell check dictionary update complete" "Success" 0
 }
 
-function Update-VsCodeDictionarySettings {
+function Invoke-SpellCheckOnPath {
+    <#
+    .SYNOPSIS
+        Runs spell check on a specific path.
+    .DESCRIPTION
+        Executes CSpell on files in the specified path.
+    .PARAMETER Path
+        The path to check.
+    .PARAMETER Verbose
+        Show detailed output.
+    .EXAMPLE
+        Invoke-SpellCheckOnPath -Path "docs" -Verbose
+    #>
     [CmdletBinding()]
-    param (
+    param(
         [Parameter(Mandatory=$true)]
-        [string]$DictionaryPath
+        [string]$Path
     )
 
-    Write-StatusMessage "Updating VS Code settings for dictionary integration..." "Info" 0
+    try {
+        Write-SectionHeader "Spell Check on $Path"
 
-    # Update VS Code settings to use the dictionary
-    $settingsPath = ".vscode/settings.json"
-    if (Test-Path $settingsPath) {
-        try {
-            $settingsContent = Get-Content $settingsPath -Raw
-            $settings = ConvertFrom-Json $settingsContent -AsHashtable -ErrorAction Stop
-        }
-        catch {
-            Write-StatusMessage "Failed to parse VS Code settings. Using default empty object." "Warning" 0
-            $settings = @{}
+        # Check if path exists
+        if (-not (Test-Path $Path)) {
+            Write-StatusMessage "Path not found: $Path" "Error" 0
+            return
         }
 
-        # Ensure cSpell.words array exists
-        if (-not $settings.ContainsKey("cSpell.words")) {
-            $settings["cSpell.words"] = @()
+        # Check if npx/cspell is available
+        $cspellPath = Get-Command "npx" -ErrorAction SilentlyContinue
+        if (-not $cspellPath) {
+            Write-StatusMessage "CSpell not found. Please install Node.js and CSpell." "Error" 0
+            return
         }
 
-        # Ensure customDictionaries section exists
-        if (-not $settings.ContainsKey("cSpell.customDictionaries")) {
-            $settings["cSpell.customDictionaries"] = @{
-                "custom-dictionary" = @{
-                    "path" = '${workspaceRoot}/' + $DictionaryPath
-                    "addWords" = $true
-                    "scope" = "workspace"
-                }
-            }
+        # Run cspell on the specified path
+        Write-StatusMessage "Running spell check on $Path..." "Info" 0
+        $result = npx cspell "$Path/**/*.{md,ps1,py,js,ts,cs,json,ipynb}" --no-progress
 
-            # Convert back to JSON with proper formatting
-            $settingsJson = ConvertTo-Json $settings -Depth 10
-
-            # Prevent Write-Output from writing to output
-            $null = Set-Content -Path $settingsPath -Value $settingsJson
-
-            Write-StatusMessage "Updated VS Code settings to use custom dictionary" "Success" 0
-        }
-
-        # Add words from dictionary to cSpell.words if they're not already there
-        if (Test-Path $DictionaryPath) {
-            $dictionaryWords = Get-Content $DictionaryPath | Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and -not $_.StartsWith("#") }
-
-            $wordList = [System.Collections.ArrayList]($settings["cSpell.words"])
-            $updatedCount = 0
-
-            foreach ($word in $dictionaryWords) {
-                if (-not $wordList.Contains($word)) {
-                    $wordList.Add($word) | Out-Null
-                    $updatedCount++
-                }
-            }
-
-            if ($updatedCount -gt 0) {
-                $settings["cSpell.words"] = $wordList
-
-                # Convert back to JSON with proper formatting
-                $settingsJson = ConvertTo-Json $settings -Depth 10
-
-                # Prevent Set-Content from writing to output
-                $null = Set-Content -Path $settingsPath -Value $settingsJson
-
-                Write-StatusMessage "Added $updatedCount words to VS Code spell checker" "Success" 0
-            }
-            else {
-                Write-StatusMessage "All dictionary words already in VS Code settings" "Info" 0
-            }
-        }
+        Write-StatusMessage "Spell check complete!" "Success" 0
     }
-    else {
-        Write-StatusMessage "VS Code settings file not found at: $settingsPath" "Warning" 0
-
-        # Create minimal settings file with dictionary configuration
-        $settings = @{
-            "cSpell.customDictionaries" = @{
-                "custom-dictionary" = @{
-                    "path" = '${workspaceRoot}/' + $DictionaryPath
-                    "addWords" = $true
-                    "scope" = "workspace"
-                }
-            }
-            "cSpell.words" = @()
-        }
-
-        # Convert to JSON with proper formatting
-        $settingsJson = ConvertTo-Json $settings -Depth 10
-
-        # Create the .vscode directory if it doesn't exist
-        $vscodePath = Split-Path -Parent $settingsPath
-        if (-not (Test-Path $vscodePath)) {
-            New-Item -Path $vscodePath -ItemType Directory -Force | Out-Null
-        }
-
-        # Create the settings file
-        New-Item -Path $settingsPath -ItemType File -Force | Out-Null
-        Set-Content -Path $settingsPath -Value $settingsJson
-
-        Write-StatusMessage "Created new VS Code settings file with dictionary configuration" "Success" 0
+    catch {
+        Write-StatusMessage "An error occurred: $_" "Error" 0
     }
 }
 
-function Merge-DictionaryFiles {
+function Update-SpellCheckDictionary {
+    <#
+    .SYNOPSIS
+        Updates the custom spell check dictionary.
+    .DESCRIPTION
+        Adds technical terms to the custom dictionary and updates VS Code settings.
+    .PARAMETER DictionaryPath
+        Path to the custom dictionary file.
+    .PARAMETER Verbose
+        Show detailed output.
+    .EXAMPLE
+        Update-SpellCheckDictionary -Verbose
+    #>
     [CmdletBinding()]
-    param (
-        [Parameter(Mandatory=$true)]
-        [string]$PrimaryDictionaryPath,
-
-        [Parameter(Mandatory=$true)]
-        [string[]]$SecondaryDictionaryPaths,
-
-        [Parameter()]
-        [switch]$Overwrite
+    param(
+        [Parameter(Mandatory=$false)]
+        [string]$DictionaryPath = $defaultDictionaryPath
     )
 
-    Write-SectionHeader "Dictionary Files Merge"
+    try {
+        Write-SectionHeader "Dictionary Update"
 
-    # Ensure primary dictionary exists
-    if (-not (Test-Path $PrimaryDictionaryPath)) {
-        Write-StatusMessage "Primary dictionary not found at: $PrimaryDictionaryPath" "Error" 0
-        return $false
-    }
+        # Ensure dictionary file exists
+        if (-not (Test-Path $DictionaryPath)) {
+            Write-StatusMessage "Dictionary file not found. Creating new dictionary file at $DictionaryPath" "Info" 0
+            New-Item -Path $DictionaryPath -ItemType File -Force | Out-Null
+            Add-Content -Path $DictionaryPath -Value "# AutoGen Custom Dictionary`n# Add technical terms, abbreviations, and custom words here`n"
+        }
 
-    # Read primary dictionary
-    $primaryWords = Get-Content $PrimaryDictionaryPath |
-                    Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and -not $_.StartsWith("#") }
+        # Read existing dictionary
+        $dictionaryContent = Get-Content -Path $DictionaryPath -Raw
+        $termsAdded = 0
 
-    $mergedWords = [System.Collections.ArrayList]::new($primaryWords)
-    $addedCount = 0
-
-    # Process each secondary dictionary
-    foreach ($secondaryPath in $SecondaryDictionaryPaths) {
-        if (Test-Path $secondaryPath) {
-            Write-StatusMessage "Processing secondary dictionary: $secondaryPath" "Info" 0
-
-            $secondaryWords = Get-Content $secondaryPath |
-                             Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and -not $_.StartsWith("#") }
-
-            foreach ($word in $secondaryWords) {
-                if (-not $mergedWords.Contains($word)) {
-                    $mergedWords.Add($word) | Out-Null
-                    $addedCount++
-                }
+        # Add technical terms if they don't exist
+        foreach ($term in $technicalTerms) {
+            if (-not ($dictionaryContent -match "\b$term\b")) {
+                Add-Content -Path $DictionaryPath -Value $term
+                $termsAdded++
+                Write-StatusMessage "Added term: $term" "Info" 1
             }
         }
-        else {
-            Write-StatusMessage "Secondary dictionary not found at: $secondaryPath" "Warning" 0
+
+        if ($termsAdded -gt 0) {
+            Write-StatusMessage "Added $termsAdded new terms to the dictionary." "Success" 0
+        } else {
+            Write-StatusMessage "No new terms were added to the dictionary." "Info" 0
         }
+
+        # Sort dictionary entries alphabetically (excluding comments)
+        $dictionaryLines = Get-Content -Path $DictionaryPath
+        $comments = $dictionaryLines | Where-Object { $_ -match "^#" }
+        $terms = $dictionaryLines | Where-Object { $_ -notmatch "^#" -and $_ -match "\S" } | Sort-Object
+
+        $sortedDictionary = $comments + $terms
+        Set-Content -Path $DictionaryPath -Value $sortedDictionary
+
+        Write-StatusMessage "Dictionary has been sorted alphabetically." "Success" 0
     }
-
-    # If words were added, update the primary dictionary
-    if ($addedCount -gt 0) {
-        if ($Overwrite) {
-            # Create header for the new merged dictionary
-            $newDictionary = @"
-# Merged Dictionary File
-# Generated on $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
-# Contains words from:
-# - $PrimaryDictionaryPath
-$(foreach ($path in $SecondaryDictionaryPaths) { "# - $path" })
-
-"@
-
-            # Add all words
-            foreach ($word in $mergedWords) {
-                $newDictionary += "$word`n"
-            }
-
-            # Save the merged dictionary
-            Set-Content -Path $PrimaryDictionaryPath -Value $newDictionary
-
-            Write-StatusMessage "Added $addedCount words to primary dictionary" "Success" 0
-            Write-StatusMessage "Updated primary dictionary at: $PrimaryDictionaryPath" "Success" 0
-        }
-        else {
-            # Get the current content to preserve comments and structure
-            $currentContent = Get-Content $PrimaryDictionaryPath -Raw
-
-            # Add a new section for merged words
-            $newSection = @"
-
-# Merged from secondary dictionaries on $(Get-Date -Format "yyyy-MM-dd")
-$(foreach ($word in ($mergedWords | Where-Object { -not $primaryWords.Contains($_) })) { "$word" })
-"@
-
-            # Append the new section
-            $updatedContent = $currentContent + $newSection
-            Set-Content -Path $PrimaryDictionaryPath -Value $updatedContent
-
-            Write-StatusMessage "Added $addedCount words to primary dictionary" "Success" 0
-            Write-StatusMessage "Updated primary dictionary at: $PrimaryDictionaryPath" "Success" 0
-        }
-
-        return $true
-    }
-    else {
-        Write-StatusMessage "No new words to add to the primary dictionary" "Info" 0
-        return $false
+    catch {
+        Write-StatusMessage "An error occurred: $_" "Error" 0
     }
 }
 
-# Export the functions
-Export-ModuleMember -Function Update-SpellCheckDictionary, Update-VsCodeDictionarySettings, Merge-DictionaryFiles
+function Sync-SpellCheckConfiguration {
+    <#
+    .SYNOPSIS
+        Synchronizes the spell check configuration with VS Code settings.
+    .DESCRIPTION
+        Updates VS Code settings to use the custom dictionary.
+    .PARAMETER DictionaryPath
+        Path to the custom dictionary file.
+    .PARAMETER SettingsPath
+        Path to the VS Code settings file.
+    .PARAMETER Verbose
+        Show detailed output.
+    .EXAMPLE
+        Sync-SpellCheckConfiguration -Verbose
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$false)]
+        [string]$DictionaryPath = $defaultDictionaryPath,
+
+        [Parameter(Mandatory=$false)]
+        [string]$SettingsPath = $defaultSettingsPath
+    )
+
+    try {
+        Write-SectionHeader "Spell Check Configuration Sync"
+
+        # Ensure settings file exists
+        if (-not (Test-Path $SettingsPath)) {
+            Write-StatusMessage "VS Code settings file not found at $SettingsPath" "Error" 0
+            return
+        }
+
+        # Read VS Code settings
+        $settingsContent = Get-Content -Path $SettingsPath -Raw | ConvertFrom-Json -AsHashtable
+
+        # Update dictionary configuration
+        if (-not $settingsContent.ContainsKey("cSpell.customDictionaries")) {
+            $settingsContent["cSpell.customDictionaries"] = @{
+                "autogen-dictionary" = @{
+                    "name" = "AutoGen Custom Dictionary"
+                    "path" = "`${workspaceFolder}/$DictionaryPath"
+                    "description" = "Custom dictionary for AutoGen project terms"
+                    "addWords" = $true
+                }
+                "project-words" = $true
+            }
+
+            Write-StatusMessage "Added custom dictionary configuration" "Info" 0
+        }
+
+        # Update dictionary definitions
+        if (-not $settingsContent.ContainsKey("cSpell.dictionaryDefinitions")) {
+            $settingsContent["cSpell.dictionaryDefinitions"] = @(
+                @{
+                    "name" = "autogen-dictionary"
+                    "path" = "`${workspaceFolder}/$DictionaryPath"
+                }
+            )
+
+            Write-StatusMessage "Added dictionary definition" "Info" 0
+        }
+
+        # Write updated settings
+        $settingsContent | ConvertTo-Json -Depth 10 | Set-Content -Path $SettingsPath
+
+        Write-StatusMessage "VS Code settings updated successfully!" "Success" 0
+    }
+    catch {
+        Write-StatusMessage "An error occurred: $_" "Error" 0
+    }
+}
+
+function Get-SpellCheckStatus {
+    <#
+    .SYNOPSIS
+        Gets the status of spell check configuration.
+    .DESCRIPTION
+        Checks if spell check is properly configured in the workspace.
+    .PARAMETER Verbose
+        Show detailed output.
+    .EXAMPLE
+        Get-SpellCheckStatus -Verbose
+    #>
+    [CmdletBinding()]
+    param()
+
+    try {
+        Write-SectionHeader "Spell Check Status"
+
+        $dictionaryExists = Test-Path $defaultDictionaryPath
+        $settingsExist = Test-Path $defaultSettingsPath
+
+        Write-StatusMessage "Dictionary file: $(if ($dictionaryExists) { "✅ Exists" } else { "❌ Missing" })" "Info" 0
+        Write-StatusMessage "VS Code settings: $(if ($settingsExist) { "✅ Exists" } else { "❌ Missing" })" "Info" 0
+
+        if ($settingsExist) {
+            $settingsContent = Get-Content -Path $defaultSettingsPath -Raw | ConvertFrom-Json -AsHashtable
+            $hasDictionaryConfig = $settingsContent.ContainsKey("cSpell.customDictionaries")
+
+            Write-StatusMessage "Dictionary configuration: $(if ($hasDictionaryConfig) { "✅ Configured" } else { "❌ Not configured" })" "Info" 0
+        }
+
+        if ($dictionaryExists) {
+            $wordCount = (Get-Content -Path $defaultDictionaryPath | Where-Object { $_ -notmatch "^#" -and $_ -match "\S" }).Count
+            Write-StatusMessage "Dictionary contains $wordCount words" "Info" 0
+        }
+    }
+    catch {
+        Write-StatusMessage "An error occurred: $_" "Error" 0
+    }
+}
+
+# Export module functions
+Export-ModuleMember -Function Invoke-SpellCheckOnWorkspace
+Export-ModuleMember -Function Invoke-SpellCheckOnPath
+Export-ModuleMember -Function Update-SpellCheckDictionary
+Export-ModuleMember -Function Sync-SpellCheckConfiguration
+Export-ModuleMember -Function Get-SpellCheckStatus

@@ -1,6 +1,21 @@
 # Invoke-SpellCheck.ps1
 # Frontend script for running the spell check utility
 
+param (
+    [Parameter(Mandatory=$false)]
+    [ValidateSet("Check", "Update", "Sync")]
+    [string]$Action = "Check",
+
+    [Parameter(Mandatory=$false)]
+    [string]$Path,
+
+    [Parameter(Mandatory=$false)]
+    [string]$DictionaryPath = ".config/cspell-dictionary.txt",
+
+    [Parameter(Mandatory=$false)]
+    [switch]$Verbose
+)
+
 #Requires -Version 7.0
 
 # Get the directory of this script
@@ -9,16 +24,6 @@ $modulePath = Join-Path $scriptDir "SpellCheck.psm1"
 
 # Import the SpellCheck module
 Import-Module $modulePath -Force
-
-# Parse command line arguments
-param (
-    [switch]$RunSpellCheck,
-    [switch]$Synchronize,
-    [string]$DictionaryPath = ".vscode/cspell-custom-dictionary.txt",
-    [string]$DocumentationPath = "docs",
-    [switch]$MergeDictionaries,
-    [string[]]$SecondaryDictionaries = @(".config/host/dictionary_additions.txt"),
-    [switch]$Help
 )
 
 # Show help if requested

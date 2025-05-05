@@ -209,7 +209,7 @@ function Add-GitHubSecrets {
     }
 }
 
-function Clean-GitHistory {
+function Remove-GitHistory {
     Write-ColorMessage "Checking git history for sensitive information..." $colors.Info
 
     # Check if BFG Repo Cleaner is installed
@@ -218,9 +218,7 @@ function Clean-GitHistory {
     if (-not $bfgExists) {
         Write-ColorMessage "Java is required for BFG Repo Cleaner. Please install Java and try again." $colors.Error
         return
-    }
-
-    # Download BFG if not already present
+    }    # Download BFG if not already present
     $bfgPath = Join-Path $pwd "bfg.jar"
     if (-not (Test-Path $bfgPath)) {
         $bfgUrl = "https://repo1.maven.org/maven2/com/madgag/bfg/1.14.0/bfg-1.14.0.jar"
@@ -268,6 +266,72 @@ ghp_=>***REMOVED***
     }
 }
 
+function Test-DevelopmentConfiguration {
+    <#
+    .SYNOPSIS
+        Tests the development environment configuration.
+    .DESCRIPTION
+        Checks for required configuration files and tools for development.
+    .EXAMPLE
+        Test-DevelopmentConfiguration
+    #>
+    [CmdletBinding()]
+    param()
+
+    Write-ColorMessage "Validating development environment configuration..." $colors.Info
+    $issues = @()
+
+    # Check for VS Code configuration
+    if (Test-Path ".vscode") {
+        Write-ColorMessage "  ✅ VS Code configuration folder exists" $colors.Success
+
+        # Check for essential VS Code files
+        $vsCodeFiles = @(
+            ".vscode/settings.json",
+            ".vscode/tasks.json",
+            ".vscode/launch.json"
+        )
+
+        foreach ($file in $vsCodeFiles) {
+            if (Test-Path $file) {
+                Write-ColorMessage "    ✅ $file exists" $colors.Success
+            } else {
+                Write-ColorMessage "    ❌ $file is missing" $colors.Warning
+                $issues += "Missing VS Code configuration file: $file"
+            }
+        }
+    } else {
+        Write-ColorMessage "  ❌ VS Code configuration folder is missing" $colors.Warning
+        $issues += "Missing VS Code configuration folder"
+    }
+
+    # Check for spell check configuration
+    $spellCheckFiles = @(
+        ".config/cspell-dictionary.txt",
+        ".devcontainer/spell-check.sh",
+        ".devcontainer/manage-dictionary.sh"
+    )
+
+    foreach ($file in $spellCheckFiles) {
+        if (Test-Path $file) {
+            Write-ColorMessage "  ✅ $file exists" $colors.Success
+        } else {
+            Write-ColorMessage "  ❌ $file is missing" $colors.Warning
+            $issues += "Missing spell check configuration file: $file"
+        }
+    }
+
+    # Check for PowerShell modules
+    if (Test-Path ".scripts/automation/github") {
+        Write-ColorMessage "  ✅ PowerShell automation modules exist" $colors.Success
+    } else {
+        Write-ColorMessage "  ❌ PowerShell automation modules are missing" $colors.Warning
+        $issues += "Missing PowerShell automation modules"
+    }
+
+    return $issues
+}
+
 # Main script execution
 if ($Setup) {
     Write-ColorMessage "Setting up environment for AutoGen development..." $colors.Info
@@ -278,9 +342,25 @@ if ($Setup) {
         if ($setupVars -eq "Y") {
             Set-EnvironmentVariablesPermanently -Variables $missingVars
         }
-    }
+    }    Update-ConfigFiles
 
-    Update-ConfigFiles
+    # Check development configuration
+    $devConfigIssues = Test-DevelopmentConfiguration
+    if ($devConfigIssues.Count -gt 0) {
+        $fixDevConfig = Read-Host "Do you want to fix development configuration issues? (Y/N)"
+        if ($fixDevConfig -eq "Y") {
+            Write-ColorMessage "Setting up development configuration..." $colors.Info
+
+            # Import Sync-ConfigurationFiles.ps1 if it exists
+            $syncConfigPath = ".scripts/automation/config/Sync-ConfigurationFiles.ps1"
+            if (Test-Path $syncConfigPath) {
+                & $syncConfigPath -SyncAll -Force
+                Write-ColorMessage "Development configuration updated!" $colors.Success
+            } else {
+                Write-ColorMessage "Could not find Sync-ConfigurationFiles.ps1. Please run it manually." $colors.Error
+            }
+        }
+    }
 
     $checkSecrets = Read-Host "Do you want to check GitHub repository secrets? (Y/N)"
     if ($checkSecrets -eq "Y") {
@@ -308,6 +388,17 @@ if ($Setup) {
         Write-ColorMessage "All required GitHub secrets are set." $colors.Success
     } else {
         Write-ColorMessage "Missing GitHub secrets detected. Run with -Setup to configure them." $colors.Error
+    }
+
+    $devIssues = Test-DevelopmentConfiguration
+    if ($devIssues.Count -eq 0) {
+        Write-ColorMessage "Development environment configuration is complete." $colors.Success
+    } else {
+        Write-ColorMessage "Issues detected in development environment configuration:" $colors.Warning
+        foreach ($issue in $devIssues) {
+            Write-ColorMessage "  - $issue" $colors.Warning
+        }
+        Write-ColorMessage "Review and fix the above issues, then re-run the validation." $colors.Warning
     }
 } elseif ($Fix) {
     Clean-GitHistory

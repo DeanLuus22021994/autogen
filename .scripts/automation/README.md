@@ -8,7 +8,7 @@ This repository contains a comprehensive automation system for the AutoGen proje
 
 The automation system uses a modular PowerShell-based architecture:
 
-```
+```powershell
 .scripts/
   └── automation/
       └── github/
@@ -42,7 +42,7 @@ The automation system uses a modular PowerShell-based architecture:
 pwsh -File .\.scripts\automation\github\orchestration\Validate-Environment.ps1
 ```
 
-4. Use VS Code tasks to access common operations:
+1. Use VS Code tasks to access common operations:
    - `Validate Environment Variables`
    - `Fix Security Issues`
    - `Commit VS Code Config`
@@ -58,6 +58,7 @@ pwsh -File .\.scripts\automation\github\orchestration\Validate-Environment.ps1
 ## Documentation
 
 Comprehensive documentation is available in:
+
 - README.md files in each module directory
 - Function documentation in module files
 - docs/ENVIRONMENT_SETUP.md

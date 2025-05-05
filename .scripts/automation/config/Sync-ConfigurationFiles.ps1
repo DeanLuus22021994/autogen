@@ -253,14 +253,67 @@ function Sync-ConfigFiles {
                 Set-Content -Path $tagFile -Value "#TODO"
             }
         }
-    }
-
-    # Sync dictionary files if requested
+    }    # Sync dictionary files if requested
     if ($IncludeDictionary) {
         Sync-DictionaryFiles -CreateDefaultDictionary -UpdateVsCodeSettings
+
+        # Also sync the new spell check configurations
+        $spellCheckSettings = @{
+            SpellCheck = @{
+                DictionaryPath = ".config/cspell-dictionary.txt"
+            }
+            Documentation = @{
+                Path = "docs"
+            }
+        }
+        Sync-SpellCheckConfigurations -Settings $spellCheckSettings
     }
 
     Write-TaskInfo "Configuration file synchronization complete" "Success"
+}
+
+function Sync-SpellCheckConfigurations {
+    <#
+    .SYNOPSIS
+        Synchronizes spell checking configurations across the repository.
+    .DESCRIPTION
+        Updates the custom dictionary, settings file, and ensures consistency.
+    .PARAMETER Settings
+        Configuration settings for the synchronization.
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [hashtable]$Settings
+    )
+
+    $defaultDictionaryPath = ".config/cspell-dictionary.txt"
+    $customDictionaryPath = $Settings.SpellCheck.DictionaryPath -or $defaultDictionaryPath
+    $docsPath = $Settings.Documentation.Path -or "docs"
+
+    Write-TaskInfo "Synchronizing spell check configurations..." "Info"
+
+    # Update the dictionary with standard terms
+    Update-SpellCheckDictionary -DictionaryPath $customDictionaryPath
+    Write-TaskInfo "Updated custom spell check dictionary." "Success"
+
+    # Sync with VS Code settings
+    Sync-SpellCheckConfiguration -DictionaryPath $customDictionaryPath
+    Write-TaskInfo "Synchronized VS Code spell check settings." "Success"
+
+    # Create shell scripts if they don't exist
+    $devContainerPath = ".devcontainer"
+    $spellCheckShellPath = Join-Path $devContainerPath "spell-check.sh"
+    $dictionaryManagerPath = Join-Path $devContainerPath "manage-dictionary.sh"
+
+    if (-not (Test-Path $spellCheckShellPath) -or -not (Test-Path $dictionaryManagerPath)) {
+        Write-TaskInfo "Ensuring shell scripts exist..." "Info"
+
+        # Use the files we've already created
+        chmod +x $spellCheckShellPath
+        chmod +x $dictionaryManagerPath
+        Write-TaskInfo "Made shell scripts executable." "Success"
+    }
 }
 
 # If script is run directly (not imported as a module)

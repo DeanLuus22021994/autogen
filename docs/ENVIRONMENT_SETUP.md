@@ -83,11 +83,13 @@ This script verifies that required secrets are set in GitHub Actions for the rep
 # Verify GitHub secrets
 .\Verify-GitHubSecrets.ps1
 
+## Required Environment Setup
+
 # Attempt to set missing secrets
 .\Verify-GitHubSecrets.ps1 -FixMissingSecrets
 ```
 
-## Best Practices for Security
+## Security Best Practices
 
 ## Classic Scripts
 
@@ -127,7 +129,7 @@ Or use individual scripts for more granular control:
 .\Resolve-PushBlockedByToken.ps1
 ```
 
-## Best Practices for Security
+## Security Guidelines
 
 1. **Never commit tokens to version control**
    - Use environment variables instead

@@ -2,7 +2,7 @@ name: Validate Environment and Secrets
 
 on:
   push:
-    branches: [ main, DeanDev ]
+    branches: [ main, develop ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
@@ -41,8 +41,7 @@ jobs:
               Write-Host "✅ Secret $secret is set"
             }
           }
-
-          if ($missing) {
+          }          if ($missing) {
             Write-Host "::error::Some required secrets are missing. Please add them in your repository settings."
             exit 1
           }
@@ -91,12 +90,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Fetch all history for scanning
-
-      - name: Install PowerShell
-        uses: PowerShell/PowerShell-action@v1
+          fetch-depth: 0  # Fetch all history for scanning      - name: Install PowerShell
+        uses: microsoft/powershell@v1
         with:
-          shell-version: '7.2'
+          powershell-version: '7.2'
 
       - name: Scan for exposed secrets
         run: |
@@ -137,7 +134,6 @@ jobs:
             Write-Host "No exposed tokens found in scanned files"
           }
         shell: pwsh
-
   validate-dotnet:
     runs-on: ubuntu-latest
     steps:

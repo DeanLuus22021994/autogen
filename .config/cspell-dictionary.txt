@@ -1,0 +1,94 @@
+# Custom spell check dictionary for AutoGen
+# Add technical terms, abbreviations, and custom words here
+
+# Python/IDE Related
+conda
+davidanson
+mypy
+pwsh
+pyenv
+pylance
+pylint
+repr
+urllib
+venv
+
+# Programming Terms
+async
+codebase
+dataclass
+dataclasses
+docstring
+docstrings
+middleware
+multiline
+multipart
+multiprompt
+serializable
+serializer
+subclass
+subclasses
+tokenization
+tokenizer
+webhook
+webhooks
+websocket
+websockets
+
+# AI/ML Terms
+anthropic
+autogen
+chatbot
+chatbots
+chatgpt
+embeddings
+gemini
+gpt4
+huggingface
+langchain
+llm
+llms
+mistral
+mixtral
+ollama
+openai
+
+# Microsoft/Azure Terms
+agenthost
+apikey
+appsettings
+azurecr
+azureml
+msft
+
+# Common Abbreviations
+backend
+bfloat
+config
+configs
+dotnet
+env
+envs
+frontend
+img
+imgs
+notmatch
+repos
+sdk
+uuid
+uuids
+
+# Other Technical Terms
+additonal
+akka
+docfx
+gatewway
+heirarchy
+iclude
+kubernetes
+meai
+micrososft
+perameters
+toml
+toplevel
+yaml
