@@ -1,8 +1,3 @@
-GitHub Copilot
-
-Below is a consolidated version of the PowerShell script with a completed cleanup block and final closing bracket. This file includes all the elements shown in your snippet plus an example of redirect content placed into .markdownlintrc.js under the CleanupRoot section so that a proper redirect is created. The script ends with a completion message:
-
---------------------------------------------------------------------------------
 param(
     [switch]$Force,
     [switch]$Validate,
@@ -296,7 +291,7 @@ exit $LASTEXITCODE
 '@
 
 # This base64 block decodes a small bash script for Unix-like systems
-$encodedRunMarkdownLintSh = 'IyEgL2Jpbi9iYXNoCiMgU2NyaXB0IHRvIHJ1biBtYXJrZG93biBsaW50aW5nIG9uIHRoZSByZXBvc2l0b3J5CgpzZXQgLWUKCkNPTkZJR19QQVRIPSIuZ2l0aHViL2xpbnRpbmcvLm1hcmtkb3dubGluZC1jbGkyLmpzb25jIgpUQVJHRVRfUEFUSFM9Ii5naXRodWIvKi8qKi5tZCIKRklYPXRydWUKd2hpbGUgWyAkIyAtZ3QgMCAkXmRvIF07IGRvCiAgY2FzZSAiJDEiIGluCiAgICAtLWNvbmZpZykKICAgICAgQ09ORklHX1BBVEg9IiQyIgogICAgICBzaGlmdCAyCiAgICAtLXRhcmdldCkKICAgICAgVEFSR0VUX1BBVEhTPSIkMiIKICAgICAgc2hpZnQgMgogICAgICBzbGlmdCBgCiAgICAtLWZpeCkKICAgICAgRklYPXRydWUKICAgICAgc2hpZnQgMQogICAgICBzbGlmdCBgCiAgICAtLWhlbHApCiAgICAgIGVjaG8gIlVzYWdlOiAuL3J1bi1tYXJrZG93bi1saW50LnNoIFstLWNvbmZpZyA8cGF0aD5dIFstLXRhcmdldCA8Z2xvYl0gXVsKICAgICAgZWNobyAiIgogICAgICBlY2hvICJPcHRpb25zOiIKICAgICAgZWNobyAiICAtLWNvbmZpZyA8cGF0aD4gICBQYXRoIHRvIGNvbmZpZyBmaWxlIChkZWZhdWx0OiAuZ2l0aHViL2xpbnRpbmcvLm1hcmtkb3dubGluZC1jbGkyLmpzb25jKSIKICAgICAgZWNobyAiICAtLXRhcmdldCA8Z2xvYj4gICBHbG9iIHBhdHRlcm4gZm9yIGZpbGVzIHRvIGxpbnQgKGRlZmF1bHQ6IC5naXRodWIvKi8qKi5tZCkiCiAgICAgIGVjaG8gIiAgLS1maXggICAgICAgICAgRml4IGxpbnRpbmcgaXNzdWVzIHdoZXJlIHBvc3NpYmxlIgogICAgICBlY2hvICIgIC0taGVscCAgICAgICAgICAgIFNob3cgdGhpcyBoZWxwIG1lc3NhZ2UiCiAgICAgIGV4aXQgMCAKICAgICAgOzsKICAgICopCiAgICAgIHNoaWZ0IDIKICAgICAgOzsKICAgIGVzYWMKZG9uZQplY2hvICJSdW5uaW5nIG1hcmtkb3duIGxpbnRpbmcgd2l0aCBjb25maWc6ICRDT05GSUdfUEFUSCIKZWNobyAiVGFyZ2V0IHBhdGhzOiAkVEFSR0VUX1BBVEhzIgoKifsgIiRGSVgiID0gdHJ1ZSBdOyB0aGVuCiAgbnB4IG1hcmtkb3dubGludC1jbGkyICIkVEFSR0VUX1BBVEhzIiAtLWNvbmZpZyAiJENPTkZJR19QQVRIIiAtLWZpeAplbHNlCiAgbnB4IG1hcmtkb3dubGludC1jbGkyICIkVEFSR0VUX1BBVEhzIiAtLWNvbmZpZyAiJENPTkZJR19QQVRIIgpmaQp4aXQgMCAgCg=='
+$encodedRunMarkdownLintSh = 'IyEgL2Jpbi9iYXNoCiMgU2NyaXB0IHRvIHJ1biBtYXJrZG93biBsaW50aW5nIG9uIHRoZSByZXBvc2l0b3J5CgpzZXQgLWUKCkNPTkZJR19QQVRIPSIuZ2l0aHViL2xpbnRpbmcvLm1hcmtkb3dubGluZC1jbGkyLmpzb25jIgpUQVJHRVRfUEFUSFM9Ii5naXRodWIvKi8qKi5tZCIKRklYPXRydWUKd2hpbGUgWyAkIyAtZ3QgMCAkXmRvIF07IGRvCiAgY2FzZSAiJDEiIGluCiAgICAtLWNvbmZpZykKICAgICAgQ09ORklHX1BBVEg9IiQyIgogICAgICBzaGlmdCAyCiAgICAtLXRhcmdldCkKICAgICAgVEFSR0VUX1BBVEhTPSIkMiIKICAgICAgc2hpZnQgMgogICAgICBzbGlmdCBgCiAgICAtLWZpeCkKICAgICAgRklYPXRydWUKICAgICAgc2hpZnQgMQogICAgICBzbGlmdCBgCiAgICAtLWhlbHApCiAgICAg IGVjaG8gIlVzYWdlOiAuL3J1bi1tYXJrZG93bi1saW50LnNo IFstLWNvbmZpZyA8cGF0aD5d IFstLXRhcmdldCA8Z2xvYl0gXVsKICAgICAgZWNobyAiIgogICAgICBlY2hvICJPcHRpb25zOiIKICAgICAgZWNobyAiICAtLWNvbmZpZyA8cGF0aD4gICBQYXRoIHRvIGNvbmZpZyBmaWxlIChkZWZhdWx0OiAuZ2l0aHViL2xpbnRpbmcvLm1hcmtkb3dubGluZC1jbGkyLmpzb25jKSIKICAgICAgZWNobyAiICAtLXRhcmdldCA8Z2xvYj4gICBHbG9iIHBhdHRlcm4gZm9yIGZpbGVzIHRvIGxpbnQgKGRlZmF1bHQ6 IC5naXRodWIvKi8qKi5tZCkiCiAgICAgIGVjaG8gIiAgLS1maXggICAgICAgICAgRml4IGxpbnRpbmcgaXNzdWVzIHdoZXJlIHBvc3NpYmxlIgogICAgICBlY2hvICIgIC0taGVscCAgICAgICAgICAgIFNob3cgdGhpcyBoZWxwIG1lc3NhZ2UiCiAgICAg IGV4aXQgMCAKICAgICAgOzsKICAgICopCiAgICAg IHNoaWZ0IDIKICAgICAgOzsKICAgIGVzYWMKZG9uZQplY2hvICJSdW5uaW5nIG1hcmtkb3duIGxpbnRpbmcgd2l0aCBjb25maWc6ICRDT05GSUdfUEFUSCIKZWNobyAiVGFyZ2V0IHBhdGhzOiAkVEFSR0VUX1BBVEhzIgoKifsgIiRGSVgi ID0gdHJ1ZSBdOyB0aGVuCiAgbnB4IG1hcmtkb3dubGludC1jbGky ICIkVEFSR0VUX1BBVEhzIi AtLWNvbmZpZy AiJENPTkZJR19QQVRIIi AtLWZpeAplbHNlCiAgbnB4IG1hcmtkb3dubGludC1jbGky ICIkVEFSR0VUX1BBVEhzIi AtLWNvbmZpZy AiJENPTkZJR19QQVRIIgpmaQp4aXQgMCAgCg=='
 $runMarkdownLintShContent = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($encodedRunMarkdownLintSh))
 
 $runLintCheckContent = @'
@@ -669,6 +664,3 @@ module.exports = require("./.github/linting/.markdownlintrc");
 }
 
 Write-Host "All tasks completed successfully." -ForegroundColor Green
---------------------------------------------------------------------------------
-
-This final script should remedy the previously seen truncation (where the cleanup block ended prematurely) and ensure a valid redirect file is created if you run with -CleanupRoot.
