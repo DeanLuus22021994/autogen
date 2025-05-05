@@ -325,9 +325,10 @@ function Get-GitHubDirectoryChanges {
     }
 }
 
-function Compare-GitHubDirectory {
+function Show-GitHubChanges {
     [CmdletBinding()]
     param(
+        [Parameter(Mandatory = $false)]
         [switch]$Detailed
     )
 
@@ -351,40 +352,127 @@ function Show-GitHubChanges {
 
     Write-Host "Comparing local .github directory with origin..." -ForegroundColor Cyan
 
-    $changes = Get-GitHubDirectoryChanges -Path $repoRoot -Detailed:$Detailed
-
-    if ($null -eq $changes) {
-        Write-Host "No comparison data available." -ForegroundColor Yellow
-        return
-    }
-
-    # Generate metrics for .github directory structure
+    # Generate metrics for .github directory structure first
     $dirMetrics = Get-DirectoryMetrics -Path $githubPath
 
-    # Display metrics in a condensed, machine-readable format
-    Write-Host "`n----- Directory Structure Metrics -----" -ForegroundColor Cyan
+    # Get Git changes data second
+    $changes = Get-GitHubDirectoryChanges -Path $repoRoot -Detailed:$Detailed
 
-    # Convert to JSON for machine readability
-    $jsonMetrics = $dirMetrics | ConvertTo-Json -Depth 5 -Compress
+    # Create comprehensive metrics object that combines directory metrics and git changes
+    $comprehensiveMetrics = [PSCustomObject]@{
+        DirectoryMetrics = [PSCustomObject]@{
+            TotalDirectories = $dirMetrics.TotalDirectories
+            TotalFiles = $dirMetrics.TotalFiles
+            TotalSizeKB = [Math]::Round($dirMetrics.TotalSizeKB, 2)
+            FileExtensionBreakdown = $dirMetrics.FileTypes | Sort-Object -Property Count -Descending
+        }
+        GitChanges = if ($null -eq $changes) {
+            [PSCustomObject]@{
+                Status = "No Git comparison data available"
+            }
+        } else {
+            [PSCustomObject]@{
+                Branch = $changes.Branch
+                TotalChanges = $changes.Changes.Count
+                Added = ($changes.Changes | Where-Object { $_.ChangeType -eq "Added" }).Count
+                Modified = ($changes.Changes | Where-Object { $_.ChangeType -eq "Modified" }).Count
+                Deleted = ($changes.Changes | Where-Object { $_.ChangeType -eq "Deleted" }).Count
+                ChangedFiles = @($changes.Changes | ForEach-Object {
+                    [PSCustomObject]@{
+                        Type = $_.ChangeType
+                        Path = $_.FilePath
+                        RelativePath = $_.RelativePath
+                    }
+                })
+                Summary = $changes.Summary
+            }
+        }
+        Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+        ExecutionInfo = [PSCustomObject]@{
+            User = [Environment]::UserName
+            Computer = [Environment]::MachineName
+            OSVersion = [Environment]::OSVersion.VersionString
+            PSVersion = $PSVersionTable.PSVersion.ToString()
+        }
+    }
+      # Convert to machine-readable format
+    if ($Detailed) {
+        $jsonOutput = $comprehensiveMetrics | ConvertTo-Json -Depth 5
+    } else {
+        # Create a simplified view for non-detailed mode
+        $simplifiedMetrics = [PSCustomObject]@{
+            DirectoryMetrics = $comprehensiveMetrics.DirectoryMetrics
+            GitChanges = if ($comprehensiveMetrics.GitChanges.Status) {
+                $comprehensiveMetrics.GitChanges.Status
+            } else {
+                [PSCustomObject]@{
+                    Branch = $comprehensiveMetrics.GitChanges.Branch
+                    TotalChanges = $comprehensiveMetrics.GitChanges.TotalChanges
+                    Added = $comprehensiveMetrics.GitChanges.Added
+                    Modified = $comprehensiveMetrics.GitChanges.Modified
+                    Deleted = $comprehensiveMetrics.GitChanges.Deleted
+                }
+            }
+            Timestamp = $comprehensiveMetrics.Timestamp
+        }
+        $jsonOutput = $simplifiedMetrics | ConvertTo-Json -Depth 3 -Compress
+    }
 
-    # Display condensed format
+    # Display machine-readable metrics
+    Write-Host "`n----- Machine-Readable Directory Metrics and Git Changes -----" -ForegroundColor Cyan
     Write-Host "MACHINE_READABLE_METRICS_START" -ForegroundColor DarkGray
-    Write-Host $jsonMetrics -ForegroundColor White
+    Write-Host $jsonOutput -ForegroundColor White
+    Write-Host "MACHINE_READABLE_METRICS_END" -ForegroundColor DarkGray
+        # Create a simplified view for non-detailed mode
+        $simplifiedMetrics = [PSCustomObject]@{
+            DirectoryMetrics = $comprehensiveMetrics.DirectoryMetrics
+            GitChanges = if ($comprehensiveMetrics.GitChanges.Status) {
+                $comprehensiveMetrics.GitChanges.Status
+            } else {
+                [PSCustomObject]@{
+                    Branch = $comprehensiveMetrics.GitChanges.Branch
+                    TotalChanges = $comprehensiveMetrics.GitChanges.TotalChanges
+                    Added = $comprehensiveMetrics.GitChanges.Added
+                    Modified = $comprehensiveMetrics.GitChanges.Modified
+                    Deleted = $comprehensiveMetrics.GitChanges.Deleted
+                }
+            }
+            Timestamp = $comprehensiveMetrics.Timestamp
+        }
+        $jsonOutput = $simplifiedMetrics | ConvertTo-Json -Depth 3 -Compress
+    }
+
+    # Display machine-readable metrics
+    Write-Host "`n----- Machine-Readable Directory Metrics and Git Changes -----" -ForegroundColor Cyan
+    Write-Host "MACHINE_READABLE_METRICS_START" -ForegroundColor DarkGray
+    Write-Host $jsonOutput -ForegroundColor White
     Write-Host "MACHINE_READABLE_METRICS_END" -ForegroundColor DarkGray
 
-    # Display human-readable summary
-    Write-Host "`n----- Summary Statistics -----" -ForegroundColor Cyan
+    # Display human-readable summary of directory metrics
+    Write-Host "`n----- Directory Statistics -----" -ForegroundColor Cyan
     Write-Host "Total directories: $($dirMetrics.TotalDirectories)" -ForegroundColor White
     Write-Host "Total files: $($dirMetrics.TotalFiles)" -ForegroundColor White
     Write-Host "Total size: $([Math]::Round($dirMetrics.TotalSizeKB, 2)) KB" -ForegroundColor White
+
+    # Display file extension breakdown
+    Write-Host "`n----- File Extension Breakdown -----" -ForegroundColor Cyan
+    $dirMetrics.FileTypes | Sort-Object -Property Count -Descending | ForEach-Object {
+        Write-Host "$($_.Extension): $($_.Count) files" -ForegroundColor White
+    }
+
+    # If there are no changes, display appropriate message and exit
+    if ($null -eq $changes) {
+        Write-Host "`nNo Git comparison data available." -ForegroundColor Yellow
+        return
+    }
 
     if ($changes.Changes.Count -eq 0) {
         Write-Host "`nNo differences found between local and origin for .github directory." -ForegroundColor Green
         return
     }
 
-    # Display summary of changes
-    Write-Host "`n----- Change Summary -----" -ForegroundColor Cyan
+    # Display git change summary
+    Write-Host "`n----- Git Change Summary -----" -ForegroundColor Cyan
     if ([string]::IsNullOrWhiteSpace($changes.Summary)) {
         Write-Host "No summary statistics available." -ForegroundColor Yellow
     } else {
@@ -405,13 +493,13 @@ function Show-GitHubChanges {
         Write-Host "$($_.FilePath)" -ForegroundColor White
     }
 
-    # Display detailed stats if requested
+    # Display detailed git statistics if requested
     if ($Detailed -and -not [string]::IsNullOrWhiteSpace($changes.DetailedStats)) {
-        Write-Host "`n----- Detailed Statistics -----" -ForegroundColor Cyan
+        Write-Host "`n----- Detailed Git Statistics -----" -ForegroundColor Cyan
         Write-Host $changes.DetailedStats -ForegroundColor White
     }
 
-    # Display metrics to help implementation
+    # Display implementation metrics
     $addCount = ($changes.Changes | Where-Object { $_.ChangeType -eq "Added" }).Count
     $modCount = ($changes.Changes | Where-Object { $_.ChangeType -eq "Modified" }).Count
     $delCount = ($changes.Changes | Where-Object { $_.ChangeType -eq "Deleted" }).Count
@@ -434,28 +522,24 @@ function Get-DirectoryMetrics {
         [string]$Path
     )
 
-    $totalFiles = 0
-    $totalSizeBytes = 0
-    $totalDirectories = 0
-    $filesByType = @{
-    }
-    $directoryTree = @{
-    }
+    # Initialize script-scoped variables to track metrics
+    $script:totalFiles = 0
+    $script:totalSizeBytes = 0
+    $script:totalDirectories = 1  # Start with 1 for the root directory
+    $script:filesByType = @{}
 
     # Function to process a directory recursively
-    function Process-Directory {
+    function Invoke-DirectoryProcessing {
         param (
             [string]$DirPath,
             [string]$RelativePath,
             [hashtable]$Tree
         )
 
-        $totalDirectories++
         $dirInfo = @{
             Path = $RelativePath
             Files = @()
-            Directories = @{
-            }
+            Directories = @{}
             FileCount = 0
             TotalSizeKB = 0
         }
@@ -463,15 +547,15 @@ function Get-DirectoryMetrics {
         # Process files in this directory
         $files = Get-ChildItem -Path $DirPath -File
         foreach ($file in $files) {
-            $totalFiles++
-            $totalSizeBytes += $file.Length
+            $script:totalFiles++
+            $script:totalSizeBytes += $file.Length
 
             # Track files by extension
             $extension = if ([string]::IsNullOrEmpty($file.Extension)) { "(no extension)" } else { $file.Extension }
-            if (-not $filesByType.ContainsKey($extension)) {
-                $filesByType[$extension] = 0
+            if (-not $script:filesByType.ContainsKey($extension)) {
+                $script:filesByType[$extension] = 0
             }
-            $filesByType[$extension]++
+            $script:filesByType[$extension]++
 
             # Add file to directory info
             $dirInfo.Files += @{
@@ -488,19 +572,42 @@ function Get-DirectoryMetrics {
         # Process subdirectories
         $subdirs = Get-ChildItem -Path $DirPath -Directory
         foreach ($subdir in $subdirs) {
+            $script:totalDirectories++
             $subRelPath = if ($RelativePath) { "$RelativePath/$($subdir.Name)" } else { $subdir.Name }
-            $dirInfo.Directories[$subdir.Name] = @{
-            }
-            Process-Directory -DirPath $subdir.FullName -RelativePath $subRelPath -Tree $dirInfo.Directories[$subdir.Name]
+            $dirInfo.Directories[$subdir.Name] = @{}
+            Invoke-DirectoryProcessing -DirPath $subdir.FullName -RelativePath $subRelPath -Tree $dirInfo.Directories[$subdir.Name]
         }
 
         # Update tree with directory info
         foreach ($key in $dirInfo.Keys) {
             $Tree[$key] = $dirInfo[$key]
         }
-    }    # Process root directory
+    }
+      # Process root directory
     $rootTree = @{}
     Invoke-DirectoryProcessing -DirPath $Path -RelativePath (Split-Path -Leaf $Path) -Tree $rootTree
+
+    # Convert file type counts to array for easier JSON processing
+    $fileTypeStats = @()
+    foreach ($ext in $script:filesByType.Keys) {
+        $fileTypeStats += @{
+            Extension = $ext
+            Count = $script:filesByType[$ext]
+        }
+    }
+
+    # Create metrics object with proper scoping
+    $metrics = [PSCustomObject]@{
+        RootPath = $Path
+        TotalFiles = $script:totalFiles
+        TotalDirectories = $script:totalDirectories
+        TotalSizeKB = [Math]::Round($script:totalSizeBytes / 1KB, 2)
+        FileTypes = $fileTypeStats
+        DirectoryTree = $rootTree
+    }
+
+    return $metrics
+}
 
     # Convert file type counts to array for easier JSON processing
     $fileTypeStats = @()
