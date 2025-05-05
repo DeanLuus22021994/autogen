@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<gpuSettings>
-  <primaryGpu>
+<gpu_settings>
+  <primary_gpu>
     <model>NVIDIA RTX 3050</model>
     <vram>6GB</vram>
-    <driverVersion>572.16</driverVersion>
-  </primaryGpu>
-  <secondaryGpu>
+    <driver_version>572.16</driver_version>
+  </primary_gpu>
+  <secondary_gpu>
     <model>Intel UHD Graphics</model>
-    <vramShared>1GB</vramShared>
-  </secondaryGpu>
+    <vram_shared>1GB</vram_shared>
+  </secondary_gpu>
   <acceleration>
-    <nvidiaSmiVersion>572.16</nvidiaSmiVersion>
-    <cudaVersion>12.8</cudaVersion>
-    <busId>00000000:01:00.0</busId>
-    <displayEnabled>true</displayEnabled>
-    <temperatureCelsius>60</temperatureCelsius>
-    <performanceLevel>P0</performanceLevel>
-    <powerUsageWatts>61</powerUsageWatts>
-    <vramUsageMib>6144</vramUsageMib>
-    <computeMode>Default</computeMode>
-    <migMode>N/A</migMode>
+    <nvidia_smi_version>572.16</nvidia_smi_version>
+    <cuda_version>12.8</cuda_version>
+    <bus_id>00000000:01:00.0</bus_id>
+    <display_enabled>true</display_enabled>
+    <temperature_celsius>60</temperature_celsius>
+    <performance_level>P0</performance_level>
+    <power_usage_watts>61</power_usage_watts>
+    <vram_usage_mib>6144</vram_usage_mib>
+    <compute_mode>Default</compute_mode>
+    <mig_mode>N/A</mig_mode>
   </acceleration>
-</gpuSettings>
+</gpu_settings>
 <?xml version="1.0" encoding="UTF-8"?>
 <gpu_settings>
   <primary_gpu>

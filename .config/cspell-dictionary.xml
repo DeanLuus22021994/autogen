@@ -1,7 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<cspellDictionary>
-  <!-- Add your cspell dictionary words here -->
-</cspellDictionary>
+<cspell_dictionary>
+  <term>additonal</term>
+  <term>agenthost</term>
+  <term>aiohttp</term>
+  <term>akka</term>
+  <term>anthropic</term>
+  <term>apikey</term>
+  <term>appsettings</term>
+  <term>async</term>
+  <term>autogen</term>
+  <term>callables</term>
+  <term>codeblock</term>
+  <term>datetime</term>
+  <term>dotnetcore</term>
+  <term>grpc</term>
+  <term>ipynb</term>
+  <term>jsonl</term>
+  <term>keystroke</term>
+  <term>llm</term>
+  <term>multimodal</term>
+  <term>openai</term>
+  <term>ollama</term>
+</cspell_dictionary>
 <?xml version="1.0" encoding="UTF-8"?>
 <cspell_dictionary>
   <term>additonal</term>

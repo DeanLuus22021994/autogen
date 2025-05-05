@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<softwareVersions>
-  <!-- Add your software version details here -->
-</softwareVersions>
+<software_versions>
+  <python_version>3.13.2</python_version>
+  <powershell_version>7.5.0</powershell_version>
+</software_versions>
 <?xml version="1.0" encoding="UTF-8"?>
 <software_versions>
   <python_version>3.13.2</python_version>
