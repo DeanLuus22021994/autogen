@@ -358,12 +358,32 @@ function Show-GitHubChanges {
         return
     }
 
+    # Generate metrics for .github directory structure
+    $dirMetrics = Get-DirectoryMetrics -Path $githubPath
+
+    # Display metrics in a condensed, machine-readable format
+    Write-Host "`n----- Directory Structure Metrics -----" -ForegroundColor Cyan
+
+    # Convert to JSON for machine readability
+    $jsonMetrics = $dirMetrics | ConvertTo-Json -Depth 5 -Compress
+
+    # Display condensed format
+    Write-Host "MACHINE_READABLE_METRICS_START" -ForegroundColor DarkGray
+    Write-Host $jsonMetrics -ForegroundColor White
+    Write-Host "MACHINE_READABLE_METRICS_END" -ForegroundColor DarkGray
+
+    # Display human-readable summary
+    Write-Host "`n----- Summary Statistics -----" -ForegroundColor Cyan
+    Write-Host "Total directories: $($dirMetrics.TotalDirectories)" -ForegroundColor White
+    Write-Host "Total files: $($dirMetrics.TotalFiles)" -ForegroundColor White
+    Write-Host "Total size: $([Math]::Round($dirMetrics.TotalSizeKB, 2)) KB" -ForegroundColor White
+
     if ($changes.Changes.Count -eq 0) {
-        Write-Host "No differences found between local and origin for .github directory." -ForegroundColor Green
+        Write-Host "`nNo differences found between local and origin for .github directory." -ForegroundColor Green
         return
     }
 
-    # Display summary
+    # Display summary of changes
     Write-Host "`n----- Change Summary -----" -ForegroundColor Cyan
     if ([string]::IsNullOrWhiteSpace($changes.Summary)) {
         Write-Host "No summary statistics available." -ForegroundColor Yellow
@@ -407,6 +427,106 @@ function Show-GitHubChanges {
     Write-Host "$delCount" -ForegroundColor $(if ($delCount -gt 0) { "Red" } else { "White" })
 }
 
+function Get-DirectoryMetrics {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    $totalFiles = 0
+    $totalSizeBytes = 0
+    $totalDirectories = 0
+    $filesByType = @{
+    }
+    $directoryTree = @{
+    }
+
+    # Function to process a directory recursively
+    function Process-Directory {
+        param (
+            [string]$DirPath,
+            [string]$RelativePath,
+            [hashtable]$Tree
+        )
+
+        $totalDirectories++
+        $dirInfo = @{
+            Path = $RelativePath
+            Files = @()
+            Directories = @{
+            }
+            FileCount = 0
+            TotalSizeKB = 0
+        }
+
+        # Process files in this directory
+        $files = Get-ChildItem -Path $DirPath -File
+        foreach ($file in $files) {
+            $totalFiles++
+            $totalSizeBytes += $file.Length
+
+            # Track files by extension
+            $extension = if ([string]::IsNullOrEmpty($file.Extension)) { "(no extension)" } else { $file.Extension }
+            if (-not $filesByType.ContainsKey($extension)) {
+                $filesByType[$extension] = 0
+            }
+            $filesByType[$extension]++
+
+            # Add file to directory info
+            $dirInfo.Files += @{
+                Name = $file.Name
+                SizeKB = [Math]::Round($file.Length / 1KB, 2)
+                Extension = $extension
+                LastModified = $file.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss")
+            }
+
+            $dirInfo.FileCount++
+            $dirInfo.TotalSizeKB += ($file.Length / 1KB)
+        }
+
+        # Process subdirectories
+        $subdirs = Get-ChildItem -Path $DirPath -Directory
+        foreach ($subdir in $subdirs) {
+            $subRelPath = if ($RelativePath) { "$RelativePath/$($subdir.Name)" } else { $subdir.Name }
+            $dirInfo.Directories[$subdir.Name] = @{
+            }
+            Process-Directory -DirPath $subdir.FullName -RelativePath $subRelPath -Tree $dirInfo.Directories[$subdir.Name]
+        }
+
+        # Update tree with directory info
+        foreach ($key in $dirInfo.Keys) {
+            $Tree[$key] = $dirInfo[$key]
+        }
+    }
+
+    # Process root directory
+    $rootTree = @{
+    }
+    Process-Directory -DirPath $Path -RelativePath (Split-Path -Leaf $Path) -Tree $rootTree
+
+    # Convert file type counts to array for easier JSON processing
+    $fileTypeStats = @()
+    foreach ($ext in $filesByType.Keys) {
+        $fileTypeStats += @{
+            Extension = $ext
+            Count = $filesByType[$ext]
+        }
+    }
+
+    # Create metrics object
+    $metrics = [PSCustomObject]@{
+        RootPath = $Path
+        TotalFiles = $totalFiles
+        TotalDirectories = $totalDirectories
+        TotalSizeKB = [Math]::Round($totalSizeBytes / 1KB, 2)
+        FileTypes = $fileTypeStats
+        DirectoryTree = $rootTree
+    }
+
+    return $metrics
+}
+
 # Main execution
 try {
     if ($Status) {
@@ -427,10 +547,10 @@ try {
         Show-LintingStatus
     }
     elseif ($Compare) {
-        Compare-GitHubDirectory -Detailed:$Detailed
+        Show-GitHubChanges -Detailed:$Detailed
     }
     else {
-        # No parameter specified, toggle current state
+        # No parameter specified, toggle current status
         $currentStatus = Get-LintingStatus
         $newState = -not $currentStatus.Enabled
         $result = Set-LintingStatus -Enabled $newState
