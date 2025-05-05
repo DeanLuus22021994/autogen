@@ -1,10 +1,11 @@
 #INDEX: .config/github-runner
-#TODO: NOT_STARTED
 #TODO:
-  - Ensure runner configuration is XML only [DONE]
-  - Add .gitkeep for directory tracking [DONE]
-  - Integrate runner config with local Docker images [OUTSTANDING]
-status: PARTIALLY_COMPLETE
-updated: 2025-05-06T00:00:00Z
+  - Set up GitHub Actions runner configuration [OUTSTANDING]
+  - Implement Docker integration for runners [OUTSTANDING]
+  - Create documentation for runner setup [OUTSTANDING]
+  - Add CI/CD pipeline configurations [OUTSTANDING]
+status: NOT_STARTED
+updated: 2025-05-06T00:30:00Z
 description: |
-  Runner config is XML and tracked. Integration with Docker images is pending.
+  GitHub Actions runner configuration and setup scripts.
+  Enables self-hosted CI/CD for improved performance and custom tools.

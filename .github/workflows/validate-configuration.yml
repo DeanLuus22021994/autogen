@@ -1,0 +1,65 @@
+name: Validate Configuration
+
+on:
+  push:
+    paths:
+      - '.config/**/*.xml'
+      - '.github/linting/**'
+      - '.devcontainer/docker/**'
+  pull_request:
+    paths:
+      - '.config/**/*.xml'
+      - '.github/linting/**'
+      - '.devcontainer/docker/**'
+  workflow_dispatch:
+
+jobs:
+  validate-xml:
+    name: Validate XML Configurations
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install xmllint
+        run: sudo apt-get install -y libxml2-utils
+
+      - name: Validate XML files
+        run: |
+          find .config -name "*.xml" -type f -exec xmllint --noout {} \;
+
+  validate-docker:
+    name: Validate Docker Configurations
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Docker Compose
+        run: |
+          sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+
+      - name: Validate Docker Compose files
+        run: |
+          find .devcontainer -name "*.yml" -type f -exec docker-compose -f {} config \;
+
+  validate-markdown-config:
+    name: Validate Markdown Linting Configuration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: Install markdownlint-cli2
+        run: npm install -g markdownlint-cli2
+
+      - name: Validate markdownlint configuration
+        run: markdownlint-cli2-config .github/linting/.markdownlint-cli2.jsonc

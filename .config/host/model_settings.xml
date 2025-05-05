@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model_settings>
+  <docker_model_runner>
+    <enabled>true</enabled>
+    <version>beta</version>
+    <docker_desktop_version>4.40+</docker_desktop_version>
+    <supported_platforms>
+      <platform>Docker Desktop for Mac with Apple Silicon</platform>
+      <platform>Docker Desktop for Windows with NVIDIA GPUs</platform>
+    </supported_platforms>
+  </docker_model_runner>
+  <models>
+    <model>
+      <name>ai/mistral-nemo</name>
+      <description>Mistral with NeMo framework for inference</description>
+      <use_case>General text generation and conversation</use_case>
+      <url>https://hub.docker.com/r/ai/mistral-nemo</url>
+    </model>
+    <model>
+      <name>ai/mxbai-embed-large</name>
+      <description>Large embedding model for text embeddings</description>
+      <use_case>Text embeddings and semantic search</use_case>
+      <url>https://hub.docker.com/r/ai/mxbai-embed-large</url>
+    </model>
+    <model>
+      <name>ai/smollm2</name>
+      <description>Small LLM optimized for low resources</description>
+      <use_case>Lightweight inference on limited hardware</use_case>
+      <url>https://hub.docker.com/r/ai/smollm2</url>
+    </model>
+    <model>
+      <name>ai/mistral</name>
+      <description>Base Mistral model for inference</description>
+      <use_case>General text generation and conversation</use_case>
+      <url>https://hub.docker.com/r/ai/mistral</url>
+    </model>
+    <model>
+      <name>ai/qwen2.5-coder:7b</name>
+      <description>Qwen2.5 model optimized for code generation</description>
+      <use_case>Code generation and completion</use_case>
+      <url>https://hub.docker.com/r/ai/qwen2.5-coder</url>
+    </model>
+  </models>
+  <api_endpoints>
+    <container_endpoint>http://model-runner.docker.internal/engines/v1/chat/completions</container_endpoint>
+    <unix_socket_endpoint>/var/run/docker.sock</unix_socket_endpoint>
+    <tcp_endpoint>http://localhost:12434/engines/v1/chat/completions</tcp_endpoint>
+  </api_endpoints>
+</model_settings>

@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "VS Code Tool Definitions",
+  "description": "Schema for defining VS Code tools and their parameters",
+  "type": "object",
+  "properties": {
+    "tools": {
+      "type": "array",
+      "description": "List of available tools for VS Code",
+      "items": {
+        "type": "object",
+        "required": ["id", "description"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the tool"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of what the tool does"
+          },
+          "parameters": {
+            "type": "object",
+            "description": "Parameters accepted by the tool",
+            "additionalProperties": {
+              "type": "object",
+              "required": ["type", "description"],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "Data type of the parameter",
+                  "enum": ["string", "number", "boolean", "object", "array"]
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Description of the parameter's purpose"
+                },
+                "default": {
+                  "description": "Default value for the parameter"
+                },
+                "enum": {
+                  "type": "array",
+                  "description": "List of allowed values"
+                },
+                "format": {
+                  "type": "string",
+                  "description": "Format specification for string values"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -3,12 +3,25 @@
     "default": true,
     "MD013": { "line_length": 120 },
     "MD033": false,
-    "MD041": false
+    "MD041": false,
+    // Additional rules for stricter linting
+    "MD003": { "style": "atx" },        // Heading style
+    "MD004": { "style": "dash" },       // Unordered list style
+    "MD007": { "indent": 2 },           // Unordered list indentation
+    "MD012": { "maximum": 1 },          // Multiple consecutive blank lines
+    "MD024": { "allow_different_nesting": true }, // Multiple headings with same content
+    "MD026": { "punctuation": ".,;:!" }, // Trailing punctuation in heading
+    "MD040": true                        // Fenced code blocks should have language
   },
   "ignores": [
     "node_modules",
     ".git",
     ".github/ISSUE_TEMPLATE",
     ".github/PULL_REQUEST_TEMPLATE.md"
-  ]
+  ],
+  "customRules": [
+    ".github/linting/rules/*.js"
+  ],
+  // Add schema definition to fix validation issues
+  "$schema": "https://raw.githubusercontent.com/DavidAnson/markdownlint/main/schema/markdownlint-config-schema.json"
 }

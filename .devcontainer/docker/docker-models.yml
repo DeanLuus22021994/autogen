@@ -1,0 +1,38 @@
+# Docker Model Runner configuration - does not require Ollama
+# For use with Docker Desktop 4.40+ with Model Runner enabled
+
+version: '3.8'
+
+services:
+  # Development tooling services that interact with Docker Model Runner
+  autogen-dev:
+    image: mcr.microsoft.com/devcontainers/python:3.10
+    container_name: autogen-dev
+    volumes:
+      - ../../:/workspace
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - MODEL_RUNNER_ENDPOINT=http://model-runner.docker.internal/engines/v1/chat/completions
+    ports:
+      - "8000:8000"
+    command: ["sleep", "infinity"]
+
+  # Sidecar containers
+  markdown-lint:
+    image: davidanson/markdownlint-cli2:latest
+    container_name: autogen-markdownlint
+    volumes:
+      - ../../:/workspace
+    command: ["sleep", "infinity"]
+
+  build-tools:
+    image: mcr.microsoft.com/devcontainers/base:ubuntu
+    container_name: autogen-build-tools
+    volumes:
+      - ../../:/workspace
+    command: ["sleep", "infinity"]
+
+# Note: AI models are managed by Docker Model Runner
+# Access models using:
+#   docker model pull ai/model-name
+#   docker model run ai/model-name

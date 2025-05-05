@@ -1,14 +1,11 @@
 #INDEX: .config/tasks
 #TODO:
-  - Define and document all VS Code and CI/CD tasks [OUTSTANDING]
-  - Integrate task automation with DIR.TAG propagation [OUTSTANDING]
-  - Ensure all tasks are machine-readable and versioned [OUTSTANDING]
+  - Define standard development tasks [OUTSTANDING]
+  - Implement task automation scripts [OUTSTANDING]
+  - Create task documentation [OUTSTANDING]
+  - Setup VS Code task integration [OUTSTANDING]
 status: NOT_STARTED
-updated: 2025-05-06T00:10:00Z
+updated: 2025-05-06T00:30:00Z
 description: |
-  Task configuration directory for AutoGen project.
-  Outstanding: Define, document, and automate all project tasks.
-updated: 2025-05-06T00:00:00Z
-description: |
-  Task configuration directory for AutoGen project.
-  Outstanding: Define, document, and automate all project tasks.
+  Task definitions and automation scripts for common development activities.
+  Standardizes workflows and improves productivity.
