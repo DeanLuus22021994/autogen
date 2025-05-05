@@ -127,14 +127,74 @@
         {
             "label": "watch",
             "command": "dotnet",
-            "type": "process",
-            "args": [
+            "type": "process",            "args": [
                 "watch",
                 "run",
                 "--project",
                 "${workspaceFolder}/dotnet/AutoGen.sln"
             ],
             "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Validate Environment Variables",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "${workspaceFolder}/.scripts/automation/github/orchestration/Validate-Environment.ps1"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new",
+                "focus": true
+            },
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Fix Security Issues",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "${workspaceFolder}/.scripts/automation/github/orchestration/Repair-SecurityIssues.ps1"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Commit VS Code Config",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "${workspaceFolder}/.scripts/automation/github/orchestration/Commit-VSCodeConfig.ps1"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Verify GitHub Setup",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "${workspaceFolder}/.scripts/automation/github/orchestration/Verify-GitHubSetup.ps1"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
         }
     ]
 }

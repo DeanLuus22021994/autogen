@@ -14,41 +14,161 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Set up PowerShell
+        uses: actions/setup-powershell@v1
+        with:
+          powershell-version: '7.2'
+
       - name: Validate Required Secrets
         run: |
           echo "::group::Validating Required Secrets"
-          missing=0
-
-          required_secrets=(
-            "FORK_AUTOGEN_USER_PERSONAL_ACCESS_TOKEN"
+          $requiredSecrets = @(
+            "FORK_AUTOGEN_USER_PERSONAL_ACCESS_TOKEN",
+            "FORK_HUGGINGFACE_ACCESS_TOKEN",
             "FORK_USER_DOCKER_ACCESS_TOKEN"
-            "FORK_HUGGINGFACE_ACCESS_TOKEN"
           )
 
-          for secret in "${required_secrets[@]}"; do
-            if [ -n "${{ secrets[format('{0}', secret)] }}" ]; then
-              echo "✅ Secret $secret is set"
-            else
-              echo "❌ Secret $secret is not set"
-              missing=1
-            fi
-          done
+          $missing = $false
+          foreach ($secret in $requiredSecrets) {
+            # Use reflection to dynamically access the secrets context
+            $secretValue = "${{ secrets[format('{0}', secret)] }}"
+            if ([string]::IsNullOrEmpty($secretValue)) {
+              Write-Host "❌ Secret $secret is not set"
+              $missing = $true
+            } else {
+              Write-Host "✅ Secret $secret is set"
+            }
+          }
 
-          if [ $missing -eq 1 ]; then
-            echo "::error::Some required secrets are missing. Please add them in your repository settings."
+          if ($missing) {
+            Write-Host "::error::Some required secrets are missing. Please add them in your repository settings."
             exit 1
-          fi
+          }
 
-          echo "All required secrets are set! ✅"
+          Write-Host "All required secrets are set! ✅"
           echo "::endgroup::"
-        shell: bash
+        shell: pwsh
 
+      - name: Check Security Configuration
+        run: |
+          $ErrorActionPreference = "Stop"
+          # Import modules from automation directory
+          $modulePath = "./.scripts/automation/github"
+          Import-Module "$modulePath/Common.psm1" -Force
+          Import-Module "$modulePath/Security.psm1" -Force
+
+          Write-SectionHeader "Security Configuration Check"
+
+          # Check VS Code configuration for security issues
+          $vsCodeDir = Join-Path $PWD ".vscode"
+          if (Test-Path $vsCodeDir) {
+            $vsCodeFiles = Get-ChildItem -Path $vsCodeDir -Filter "*.json" | Select-Object -ExpandProperty FullName
+            $issues = Find-ExposedTokens -FilePaths $vsCodeFiles
+
+            if ($issues.Count -gt 0) {
+              Write-StatusMessage "Found potential security issues in VS Code configuration" "Error" 0
+              foreach ($issue in $issues) {
+                Write-StatusMessage "$($issue.File): $($issue.Issue)" "Error" 1
+              }
+              exit 1
+            } else {
+              Write-StatusMessage "No security issues found in VS Code configuration" "Success" 0
+            }
+          } else {
+            Write-StatusMessage "VS Code configuration directory not found" "Warning" 0
+          }
+        shell: pwsh
   scan-for-secrets:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
+          fetch-depth: 0  # Fetch all history for scanning
+
+      - name: Set up PowerShell
+        uses: actions/setup-powershell@v1
+        with:
+          powershell-version: '7.2'
+
+      - name: Scan for exposed secrets
+        run: |
+          $ErrorActionPreference = "Stop"
+          # Import modules from automation directory
+          $modulePath = "./.scripts/automation/github"
+          Import-Module "$modulePath/Common.psm1" -Force
+          Import-Module "$modulePath/Security.psm1" -Force
+
+          Write-SectionHeader "Repository Security Scan"
+
+          # File types to scan for tokens
+          $fileTypes = @("*.ps1", "*.py", "*.js", "*.ts", "*.json", "*.md", "*.ipynb")
+          $filesToScan = @()
+
+          foreach ($type in $fileTypes) {
+            $files = Get-ChildItem -Path $PWD -Filter $type -Recurse -File -ErrorAction SilentlyContinue |
+                    Where-Object { $_.FullName -notmatch "\\node_modules\\" -and $_.FullName -notmatch "\\.git\\" }
+            $filesToScan += $files.FullName
+          }
+
+          # Limit to recently changed files in PRs to speed up checks
+          if ("${{ github.event_name }}" -eq "pull_request") {
+            Write-StatusMessage "Scanning only changed files in PR" "Info" 0
+            $changedFiles = git diff --name-only HEAD~1 HEAD
+            $filesToScan = $filesToScan | Where-Object { $changedFiles -contains ($_ -replace [regex]::Escape($PWD.ToString() + "/"), "") }
+          }
+
+          $exposedTokens = Find-ExposedTokens -FilePaths $filesToScan
+
+          if ($exposedTokens.Count -gt 0) {
+            Write-StatusMessage "Found potential exposed tokens in $($exposedTokens.Count) files:" "Error" 0
+            foreach ($issue in $exposedTokens) {
+              Write-StatusMessage "$($issue.File): $($issue.Issue)" "Error" 1
+            }
+            exit 1
+          } else {
+            Write-StatusMessage "No exposed tokens found in scanned files" "Success" 0
+          }
+        shell: pwsh
+
+  validate-dotnet:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore ./dotnet/AutoGen.sln
+
+      - name: Build
+        run: dotnet build ./dotnet/AutoGen.sln --no-restore
+
+  validate-python:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest mypy ruff
+          pip install -e "./python/[dev]"
+
+      - name: Validate Python configuration
+        run: |
+          python -c "import autogen; print(f'AutoGen version: {autogen.__version__}')"
           fetch-depth: 0
 
       - name: Set up Git Secret Scanner

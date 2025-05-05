@@ -1,24 +1,25 @@
 # Environment Setup Guide for Contributors
 
-This guide explains how to set up your environment for contributing to the AutoGen project, including handling secrets and environment variables properly.
+This document explains how to set up your development environment for contributing to AutoGen. The setup includes configuring Git, environment variables, and VS Code.
 
-## Required Environment Variables
+## Prerequisites
 
-The following environment variables are required for development:
+- [PowerShell 7.0+](https://github.com/PowerShell/PowerShell)
+- [Git](https://git-scm.com/)
+- [Python 3.8+](https://www.python.org/)
+- [Visual Studio Code](https://code.visualstudio.com/)
 
-```
-REPO_PATH="autogen"
-FORK_AUTOGEN_OWNER=<your-github-username>
-FORK_AUTOGEN_SSH_REPO_URL=<your-fork-repo-url>
-FORK_AUTOGEN_USER_PERSONAL_ACCESS_TOKEN=<your-github-pat>
-FORK_AUTOGEN_USER_DOCKER_USERNAME=<your-docker-username>
-FORK_USER_DOCKER_ACCESS_TOKEN=<your-docker-token>
-FORK_HUGGINGFACE_ACCESS_TOKEN=<your-huggingface-token>
-```
+## Recommended VS Code Extensions
 
-## Automated Setup
+The following extensions are recommended for AutoGen development:
 
-We provide several PowerShell scripts to help you set up your environment:
+- `charliermarsh.ruff`: Python linter
+- `matangover.mypy`: Type checking for Python
+- `ms-python.python`: Python language support
+- `ms-python.vscode-pylance`: Python language server
+- `github.vscode-github-actions`: GitHub Actions support
+- `davidanson.vscode-markdownlint`: Markdown linting
+- `redhat.vscode-yaml`: YAML support
 
 ### Setup-GitSecureEnvironment.ps1
 

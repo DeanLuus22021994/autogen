@@ -13,6 +13,11 @@ node_modules/
 !.vscode/settings.json
 !.vscode/tasks.json
 
+# Automation script temporary files
+.scripts/automation/github/temp/
+.scripts/automation/github/**/.gitkeep
+!.scripts/automation/github/**/DIR.TAG
+
 # Log files
 *.log
 
