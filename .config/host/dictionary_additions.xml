@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<dictionaryAdditions>
+  <!-- Add your dictionary additions here -->
+</dictionaryAdditions>
+<?xml version="1.0" encoding="UTF-8"?>
 <dictionary_additions>
   <word>autogen</word>
   <word>agentchat</word>

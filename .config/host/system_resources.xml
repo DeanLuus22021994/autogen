@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<systemResources>
+  <!-- Add your system resource details here -->
+</systemResources>
+<?xml version="1.0" encoding="UTF-8"?>
 <system_resources>
   <machine>
     <model>MSI Katana 15 B13UDXK (GF family)</model>
