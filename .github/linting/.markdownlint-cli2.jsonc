@@ -1,47 +1,22 @@
+// .github/linting/.markdownlint-cli2.jsonc
 {
+  "$schema": "https://raw.githubusercontent.com/DavidAnson/markdownlint/main/schema/markdownlint-config-schema.json",
   "config": {
     "default": true,
-    "MD013": false,
-    "MD022": false,
-    "MD025": false,
-    "MD031": false,
-    "MD032": false,
-    "MD034": false,
-    "MD055": false,
-    "MD056": false
+    "MD013": { "line_length": 120 },
+    "MD024": { "allow_different_nesting": true },
+    "MD033": { "allowed_elements": ["br", "img", "a"] },
+    "MD041": false
   },
-  "customizationRules": [
-    {
-      "glob": ".github/**/*.md",
-      "config": {
-        "default": true,
-        "MD013": { "line_length": 100 },
-        "MD022": true,
-        "MD025": true,
-        "MD031": true,
-        "MD032": true,
-        "MD034": true,
-        "MD041": true,
-        "MD042": true,
-        "MD043": true,
-        "MD044": true,
-        "MD046": { "style": "consistent" },
-        "MD048": { "style": "backtick" }
-      }
-    }
-  ],
   "ignores": [
-    "README.md",
     "node_modules/**",
-    "**/package.json",
-    "**/package-lock.json"
+    ".git/**",
+    "**/*.svg"
   ],
-  "noProgress": true,
+  "customRules": [
+    ".github/linting/rules/**/*.js"
+  ],
   "outputFormatters": [
-    [
-      "markdownlint-cli2-formatter-default"
-    ]
-  ],
-  "fix": false,
-  "gitignore": true
+    ["markdownlint-cli2-formatter-pretty", { "appendLink": true }]
+  ]
 }

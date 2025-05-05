@@ -1,9 +1,23 @@
-README.md
+# Node modules
 node_modules/
-**/package.json
-**/package-lock.json
-SECURITY.md
-CONTRIBUTING.md
-CODE_OF_CONDUCT.md
-SUPPORT.md
-FAQ.md
+
+# Git directories
+.git/
+
+# Build outputs
+dist/
+build/
+
+# Images and binary files
+**/*.svg
+**/*.png
+**/*.jpg
+**/*.jpeg
+**/*.gif
+**/*.ico
+
+# Generated documentation
+docs/generated/
+
+# Third-party markdown
+vendor/
