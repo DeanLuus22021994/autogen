@@ -29,6 +29,7 @@ This framework establishes a structured approach to AI-assisted development, ena
 - 🔹 **Architectural Integrity**: Every generated file or method adheres to SOLID principles
 - 🔹 **Iterability First**: Design data structures with iteration patterns appropriate to language
 - 🔹 **Runtime Consideration**: Explicitly account for error handling, edge cases and performance characteristics
+- 🔹 **Configuration Consistency**: Follow established patterns for DIR.TAG files and XML configurations
 
 ---
 
@@ -52,7 +53,7 @@ When requesting implementations, follow this pattern:
 
 Expected response format:
 
-```markdownmarkdown
+```markdown
 ### 🧩 Implementation Plan
 
 1. **Task Decomposition**:
@@ -85,7 +86,7 @@ Expected response format:
 - Unit tests for [specific behaviors]
 - Integration tests for [specific integrations]
 - Potential edge cases: [list]
-```markdown
+```
 
 ---
 
@@ -124,7 +125,7 @@ Document reusable patterns for the assistant to reference:
 **Key considerations**:
 - [Important note 1]
 - [Important note 2]
-```markdown
+```
 
 ### `./.github/copilot/workflows/[workflow-name].md`
 
@@ -145,6 +146,66 @@ Define repeatable processes:
 **Expected outputs**:
 - [Output 1]
 - [Output 2]
+```
+
+---
+
+## 📁 Configuration Files Structure
+
+Maintain these configuration patterns for consistency:
+
+### DIR.TAG Files
+
+Use standardized DIR.TAG format for tracking development status and debt:
+
+```plaintext
+#INDEX: [directory-path]
+#TODO:
+  - [Task description] [STATUS]
+  - [Task description] [STATUS]
+  - ...
+status: [OVERALL_STATUS]
+updated: [YYYY-MM-DDThh:mm:ssZ]
+description: |
+  [Detailed description of the directory purpose]
+  [Additional context and information]
+```
+
+Status values: `NOT_STARTED`, `PARTIALLY_COMPLETE`, `DONE`, `OUTSTANDING`
+
+### XML Configuration Files
+
+Use standardized XML for configuration:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<root_element>
+  <section>
+    <property>value</property>
+    <nested_section>
+      <nested_property>value</nested_property>
+    </nested_section>
+  </section>
+</root_element>
+```
+
+### Docker Model Runner Integration
+
+Configure Docker Model Runner according to this pattern:
+
+```markdown
+# Docker Model Integration
+
+The following Docker images are used via Docker Model Runner:
+- ai/mistral-nemo
+- ai/mxbai-embed-large
+- ai/smollm2
+- ai/mistral
+
+## Usage
+1. Ensure Docker Desktop 4.40+ is installed
+2. Enable Docker Model Runner in Docker Desktop settings
+3. Use the CLI: `docker model pull/run ai/model-name`
 ```
 
 ---
@@ -221,159 +282,65 @@ Enable these integrations where applicable:
 - **Package managers**: Proper dependency specification
 - **Build systems**: Integration with build pipeline
 - **CI/CD**: Considerations for automated testing
+- **Docker Model Runner**: Integration with local AI models
+- **XML Validation**: Schema validation for configuration files
 
 ---
-```markdown
 
-## Modular Components for Enhanced Implementation
+## 📋 Project-Specific Components
 
-Additionally, here are the first key modular component files you should create to maximize the effectiveness of this framework:
+### 1. DIR.TAG Structure
 
-### 1. `.github/copilot/domain/vocabulary.md`
+```plaintext
+# filepath: [path/to/directory]/DIR.TAG
+#INDEX: [directory-path]
+#TODO:
+  - [Task description] [STATUS]
+  - [Task description] [STATUS]
+status: [OVERALL_STATUS]
+updated: [YYYY-MM-DDThh:mm:ssZ]
+description: |
+  [Detailed description]
+```
 
-```markdown
-# AutoGen Project Domain Vocabulary
+### 2. DevContainer Integration
+
+```yaml
+# Docker Model Runner configuration
+version: '3.8'
+
+services:
+  # Development tooling services
+  autogen-dev:
+    image: mcr.microsoft.com/devcontainers/python:3.10
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - MODEL_RUNNER_ENDPOINT=http://model-runner.docker.internal/engines/v1/chat/completions
+```
+
+### 3. XML Configuration
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<model_settings>
+  <docker_model_runner>
+    <enabled>true</enabled>
+    <version>beta</version>
+  </docker_model_runner>
+  <models>
+    <model>
+      <name>ai/model-name</name>
+      <description>Model description</description>
+    </model>
+  </models>
+</model_settings>
+```
+
+### 4. Key Domain Vocabulary
 
 | Term | Definition | Usage Context |
 |------|------------|---------------|
-| **Agent** | An autonomous entity that can interact with other agents, perform tasks, and respond to messages | Core component of the agent architecture |
-| **Conversation** | A sequence of messages between agents | Primary interaction model |
-| **LLM** | Large Language Model, the foundation model used by agents | Used in reference to external model integration |
-| **Orchestration** | The process of coordinating multiple agents to achieve a task | System architecture level |
-| **Prompt** | The input text provided to an LLM to generate a response | Agent configuration |
-| **Workflow** | A sequence of operations performed by multiple agents | Higher-level automation concept |
-| **Function Calling** | The ability of an agent to call and utilize external functions | Agent capability extension |
-```
-
-### 2. `.github/copilot/patterns/agent-definition.md`
-
-```markdown
-# Pattern: Agent Definition
-
-**Purpose**: Define a new agent with specific capabilities and behaviors
-
-**When to use**: When creating a new agent type or specialization
-
-**Implementation template**:
-
-```python
-from autogen import Agent
-
-class CustomAgent(Agent):
-    """
-    A specialized agent that handles [specific domain] tasks.
-
-    This agent implements [specific capabilities] and is designed
-    to interact with [specific other agents or systems].
-    """
-
-    def __init__(self, name, **kwargs):
-        """
-        Initialize the CustomAgent.
-
-        Args:
-            name (str): The name of the agent
-            **kwargs: Additional configuration parameters
-        """
-        super().__init__(name=name, **kwargs)
-        self.capabilities = []
-        # Additional initialization
-
-    def handle_message(self, message, sender):
-        """
-        Process incoming messages and generate responses.
-
-        Args:
-            message (str): The received message
-            sender (Agent): The agent that sent the message
-
-        Returns:
-            str: The response message
-        """
-        # Message handling logic
-        response = self._process_message(message)
-        return response
-
-    def _process_message(self, message):
-        """
-        Internal method to process message content.
-
-        Args:
-            message (str): The message to process
-
-        Returns:
-            str: Processed response
-        """
-        # Implementation details
-        pass
-```
-
-**Key considerations**:
-- Agents should have a single clear responsibility
-- Implement proper error handling and logging
-- Consider message format compatibility with other agents
-- Design for extensibility through composition rather than inheritance where possible
-```markdown
-
-### 3. `.github/copilot/workflows/agent-interaction-testing.md`
-
-```markdown
-# Workflow: Agent Interaction Testing
-
-**Purpose**: Validate that agents can correctly interact with each other in a conversation
-
-**Steps**:
-1. Define test agents with controlled behaviors
-2. Set up a conversation between agents
-3. Inject test messages and prompts
-4. Verify message handling and responses
-5. Assert on conversation outcomes
-
-**Inputs required**:
-- Agent definitions
-- Test conversation scenarios
-- Expected message patterns
-- Success criteria
-
-**Implementation template**:
-
-```python
-import unittest
-from autogen import Agent, Conversation
-
-class TestAgentInteraction(unittest.TestCase):
-    def setUp(self):
-        # Create test agents
-        self.agent1 = Agent(name="agent1", ...)
-        self.agent2 = Agent(name="agent2", ...)
-
-        # Set up conversation
-        self.conversation = Conversation(agents=[self.agent1, self.agent2])
-
-    def test_basic_interaction(self):
-        # Initialize conversation with a message
-        initial_message = "Hello, can you help me with a task?"
-        response = self.conversation.initiate(
-            sender=self.agent1,
-            recipient=self.agent2,
-            message=initial_message
-        )
-
-        # Verify the interaction
-        self.assertIn("I can help", response)
-        self.assertEqual(len(self.conversation.messages), 2)
-
-    def test_complex_workflow(self):
-        # Test a multi-step interaction with expected outcomes
-        # ...
-
-    def tearDown(self):
-        # Clean up resources
-        pass
-```
-
-**Expected outcomes**:
-- Verified agent responses match expectations
-- Conversation flow proceeds as designed
-- Error conditions are properly handled
-- Performance metrics are within acceptable ranges
+| **DIR.TAG** | Special file used to track development status and debt in directories | Used for maintaining development traceability |
+| **Docker Model Runner** | Docker feature for running AI models locally | Used for local development with minimal API usage |
+| **XML Configuration** | Standardized XML format for configuration files | Used in `.config/host/*.xml` for system configuration |
