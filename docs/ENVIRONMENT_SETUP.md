@@ -20,11 +20,28 @@ FORK_HUGGINGFACE_ACCESS_TOKEN=<your-huggingface-token>
 
 We provide several PowerShell scripts to help you set up your environment:
 
-1. `Validate-EnvSecrets.ps1` - Validates and sets up environment variables and secrets
-2. `Setup-GitSecureEnvironment.ps1` - Configures Git for secure development
-3. `Resolve-PushBlockedByToken.ps1` - Helps resolve GitHub push protection issues
+1. `Setup-AutogenEnvironment.ps1` - Master script that orchestrates the complete setup
+2. `Validate-EnvSecrets.ps1` - Validates and sets up environment variables and secrets
+3. `Setup-GitSecureEnvironment.ps1` - Configures Git for secure development
+4. `Resolve-PushBlockedByToken.ps1` - Helps resolve GitHub push protection issues
 
-To set up your environment, run:
+To set up your environment, you can use the master script:
+
+```powershell
+# Complete setup and validation
+.\Setup-AutogenEnvironment.ps1 -All
+
+# Just initialize the environment
+.\Setup-AutogenEnvironment.ps1 -Initialize
+
+# Just validate the environment
+.\Setup-AutogenEnvironment.ps1 -Validate
+
+# Fix token issues
+.\Setup-AutogenEnvironment.ps1 -FixTokens
+```
+
+Or use individual scripts for more granular control:
 
 ```powershell
 # Set up environment variables and GitHub secrets
