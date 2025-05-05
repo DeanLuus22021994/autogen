@@ -1,4 +1,3 @@
-#TODO
 # Development Status: PARTIALLY IMPLEMENTED
 
 ## Overview
@@ -13,12 +12,16 @@ for AutoGen.
   - Management scripts and orchestration
   - Build caching and pre-warmed environments
   - VS Code integration
+  - GitHub Actions workflow for periodic container rebuilding
 
 ## Development Debt
 
 - Complete integration with the main devcontainer environment
-- Standardized health checks and monitoring
+- Standardized health checks and monitoring dashboard
 - Comprehensive documentation for all swarm components
 - Performance optimization for resource allocation
 - Integration with CI/CD beyond the current container refresh workflow
 - Fully automated developer onboarding experience
+- Add cross-platform compatibility (Windows, macOS, Linux)
+- Create dynamic resource allocation based on workload
+- Implement performance testing and benchmarking suite
