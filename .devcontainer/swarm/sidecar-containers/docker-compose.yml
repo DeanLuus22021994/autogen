@@ -1,0 +1,75 @@
+# Docker Compose configuration for AutoGen sidecar containers
+# This setup provides instant-start development containers that provide
+# various services to accelerate the development workflow
+
+version: '3.8'
+
+services:
+  # Markdown linting sidecar container
+  markdown-lint:
+    build:
+      context: ./markdown-lint
+      dockerfile: Dockerfile
+    container_name: autogen-markdown-lint
+    volumes:
+      - ../../../:/workspace:ro
+    environment:
+      - WATCH_PATHS=/workspace
+      - LINT_CONFIG_PATH=/workspace/.github/linting/.markdownlint-cli2.jsonc
+      - CUSTOM_RULES_PATH=/workspace/.github/linting/rules
+    healthcheck:
+      test: ["CMD", "node", "-e", "console.log('Markdown lint container is healthy')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    command: ["/app/scripts/lint-watch.sh", "--all"]
+
+  # Build cache sidecar container
+  build-cache:
+    build:
+      context: ./build-cache
+      dockerfile: Dockerfile
+    container_name: autogen-build-cache
+    volumes:
+      - cache-volume:/cache
+      - ../../../:/workspace
+    environment:
+      - CACHE_BASE=/cache
+      - WORKSPACE_PATH=/workspace
+    healthcheck:
+      test: ["CMD", "ls", "/cache"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    command: ["tail", "-f", "/dev/null"]
+
+  # Build tools sidecar container
+  build-tools:
+    build:
+      context: ./build-tools
+      dockerfile: Dockerfile
+    container_name: autogen-build-tools
+    volumes:
+      - cache-volume:/cache
+      - ../../../:/workspace
+    environment:
+      - DOTNET_CLI_HOME=/cache/dotnet
+      - NUGET_PACKAGES=/cache/dotnet/nuget
+      - PYTHONUSERBASE=/cache/python
+      - PIP_CACHE_DIR=/cache/python/pip
+      - UV_CACHE_DIR=/cache/python/uv
+      - npm_config_cache=/cache/npm
+      - NPM_CONFIG_CACHE=/cache/npm
+    healthcheck:
+      test: ["CMD", "dotnet", "--info"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    command: ["tail", "-f", "/dev/null"]
+
+volumes:
+  cache-volume:
+    name: autogen-cache
