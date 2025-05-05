@@ -6,7 +6,7 @@ applyTo: '**/*.md'
 
 Use this template when requesting documentation:
 
-### 🔍 DOCUMENTATION REQUEST
+## 🔍 DOCUMENTATION REQUEST
 
 **Doc Type**: [API Reference/Tutorial/Guide/README]
 **Component**: [Component being documented]

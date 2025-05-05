@@ -4,8 +4,8 @@ applyTo: '**'
 
 # 🔧 GitHub Copilot / Chat – Enhanced Prompt Engineering Framework
 # Location: `.github/copilot/framework.yaml`
-# Purpose: Define standardized AI-assisted development patterns, decomposition strategies,
-# and quality protocols for consistent, maintainable code generation.
+# Purpose: Define standardized AI-assisted development patterns, decomposition strategies
+# and quality protocols for consistent, maintainable code generation
 
 ---
 
@@ -52,7 +52,7 @@ When requesting implementations, follow this pattern:
 
 Expected response format:
 
-```markdown
+```markdownmarkdown
 ### 🧩 Implementation Plan
 
 1. **Task Decomposition**:
@@ -85,7 +85,7 @@ Expected response format:
 - Unit tests for [specific behaviors]
 - Integration tests for [specific integrations]
 - Potential edge cases: [list]
-```
+```markdown
 
 ---
 
@@ -124,7 +124,7 @@ Document reusable patterns for the assistant to reference:
 **Key considerations**:
 - [Important note 1]
 - [Important note 2]
-```
+```markdown
 
 ### `./.github/copilot/workflows/[workflow-name].md`
 
@@ -223,7 +223,7 @@ Enable these integrations where applicable:
 - **CI/CD**: Considerations for automated testing
 
 ---
-```
+```markdown
 
 ## Modular Components for Enhanced Implementation
 
@@ -313,7 +313,7 @@ class CustomAgent(Agent):
 - Implement proper error handling and logging
 - Consider message format compatibility with other agents
 - Design for extensibility through composition rather than inheritance where possible
-```
+```markdown
 
 ### 3. `.github/copilot/workflows/agent-interaction-testing.md`
 

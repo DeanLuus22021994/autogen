@@ -6,7 +6,7 @@ applyTo: '**/agents/*.py'
 
 Use this template when requesting a new agent implementation:
 
-### 🔍 AGENT IMPLEMENTATION REQUEST
+## 🔍 AGENT IMPLEMENTATION REQUEST
 
 **Agent Name**: [Name of the agent]
 **Purpose**: [What this agent should accomplish]
@@ -24,7 +24,7 @@ Use this template when requesting a new agent implementation:
 
 ## Example Request
 
-### 🔍 AGENT IMPLEMENTATION REQUEST
+### 🔍 AGENT IMPLEMENTATION EXAMPLE
 
 **Agent Name**: ResearchAgent
 **Purpose**: Conduct research on specific topics and provide comprehensive summaries

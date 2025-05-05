@@ -6,7 +6,7 @@ applyTo: '**/tests/*.py'
 
 Use this template when requesting test implementations:
 
-### 🔍 TEST IMPLEMENTATION REQUEST
+## 🔍 TEST IMPLEMENTATION REQUEST
 
 **Component to Test**: [Component name]
 **Test Scope**: [Unit/Integration/System]

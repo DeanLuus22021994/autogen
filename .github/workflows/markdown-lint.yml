@@ -1,0 +1,39 @@
+name: Markdown Linting
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '**/*.md'
+      - '.github/linting/**'
+      - '.github/workflows/markdown-lint.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '**/*.md'
+      - '.github/linting/**'
+      - '.github/workflows/markdown-lint.yml'
+  workflow_dispatch:
+
+jobs:
+  lint-markdown:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install markdownlint-cli2
+        run: npm install -g markdownlint-cli2
+
+      - name: Run lint check on GitHub markdown files
+        run: markdownlint-cli2 .github/**/*.md --config .github/linting/.markdownlint-cli2.jsonc
+
+      - name: Run lint check on documentation
+        run: markdownlint-cli2 docs/**/*.md --config .github/linting/.markdownlint-cli2.jsonc
+
+      - name: Run lint check on root markdown files
+        run: markdownlint-cli2 *.md --config .github/linting/.markdownlint-cli2.jsonc

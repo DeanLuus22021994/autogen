@@ -1,5 +1,6 @@
 {
-    "version": "2.0.0",    "tasks": [
+    "version": "2.0.0",
+    "tasks": [
         {
             "label": "Spell Check Workspace",
             "type": "shell",
@@ -175,8 +176,7 @@
             "args": [
                 "-File",
                 "${workspaceFolder}/.scripts/automation/github/orchestration/Commit-VSCodeConfig.ps1"
-            ],
-            "presentation": {
+            ],            "presentation": {
                 "reveal": "always",
                 "panel": "new"
             },
@@ -190,6 +190,61 @@
                 "-File",
                 "${workspaceFolder}/.scripts/automation/github/orchestration/Verify-GitHubSetup.ps1"
             ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Markdown Lint Check",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "${workspaceFolder}/.github/linting/run-markdown-lint.ps1"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Markdown Fix Issues",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "${workspaceFolder}/.github/linting/run-markdown-lint.ps1",
+                "-Fix"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Validate Linting Configuration",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "${workspaceFolder}/.github/linting/run-lint-check.ps1"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            },
             "presentation": {
                 "reveal": "always",
                 "panel": "new"
