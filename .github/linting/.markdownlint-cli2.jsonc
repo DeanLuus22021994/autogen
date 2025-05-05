@@ -1,6 +1,4 @@
-// .github/linting/.markdownlint-cli2.jsonc
 {
-  "$schema": "https://raw.githubusercontent.com/DavidAnson/markdownlint/main/schema/markdownlint-config-schema.json",
   "config": {
     "default": true,
     "MD013": false,
@@ -23,7 +21,9 @@
   ],
   "noProgress": true,
   "outputFormatters": [
-    ["markdownlint-cli2-formatter-default"]
+    [
+      "markdownlint-cli2-formatter-default"
+    ]
   ],
   "fix": false,
   "gitignore": true

@@ -185,7 +185,7 @@ function Update-VsCodeSettings {
             "markdownlint",
             "markdownlintrc",
             "markdownlintignore",
-            "esac"
+            "esac"  # cSpell:ignore esac - This is a valid bash keyword (case spelled backwards, used to end case statements)
         )
     }
 
