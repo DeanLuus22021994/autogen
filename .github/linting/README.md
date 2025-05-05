@@ -1,63 +1,87 @@
 # Markdown Linting Tools
 
-This directory contains tools and configurations for enforcing consistent markdown formatting across the repository.
+This directory contains the configuration and tools for markdown linting in the AutoGen project.
 
 ## Overview
 
 The markdown linting system provides:
 
-- Standardized rules for all markdown documents
-- Automated validation and fixing of common issues
-- Integration with VS Code and other editors
-- Custom rules specific to the project's needs
+- Consistent style enforcement across all markdown documents
+- Automated validation of documentation
+- Integration with VS Code for real-time feedback
+- Command-line tools for CI/CD integration
+- Customizable rules specific to the project's needs
 
 ## Setup
 
 To set up the markdown linting environment:
 
+1. Ensure Node.js is installed (v14+ recommended)
+2. Run the initialization script:
+
 ```powershell
-# From repository root
-./.github/linting/Initialize-MarkdownLinting.ps1
+# From the repository root
+.\.github\linting\Initialize-MarkdownLinting.ps1
 ```
 
-This will ensure all necessary dependencies are installed and configuration files are properly set up.
+This will:
+- Install required npm packages if needed
+- Configure VS Code settings for the workspace
+- Set up tasks for linting operations
 
-## Configuration Files
+## Usage
 
-- `.markdownlint-cli2.jsonc` - Main configuration for markdownlint-cli2
-- `.markdownlintignore` - Patterns for files to exclude from linting
-- `.markdownlintrc` - Legacy configuration for markdownlint compatibility
-- `.markdownlint.json` - Configuration for VS Code extension
-
-## Modules
-
-The linting system is organized into several PowerShell modules:
-
-- `core/MarkdownLintUtilities.psm1` - Common utilities
-- `core/MarkdownLintConfig.psm1` - Configuration management
-- `core/MarkdownLintRules.psm1` - Rules processing
-- `scripts/Invoke-ShellCommand.ps1` - Shell command utilities
-- `scripts/Update-VsCodeConfig.ps1` - VS Code integration
-- `config/DefaultConfigs.psm1` - Configuration templates
-
-## VS Code Integration
+### VS Code Integration
 
 The system automatically configures VS Code tasks for markdown linting:
 
-- **Lint Markdown** - Checks all markdown files for issues
-- **Fix Markdown Issues** - Attempts to automatically fix common issues
-- **Generate Markdown Report** - Creates a report of linting status
+- **Lint Markdown**: Run linting on the current file
+- **Lint All Markdown**: Run linting on all markdown files
+- **Fix Markdown Issues**: Attempt to automatically fix issues
+
+These tasks can be accessed via the Command Palette (Ctrl+Shift+P) by typing "Tasks: Run Task".
+
+### Command Line
+
+```powershell
+# Toggle linting on/off
+.\.github\linting\Toggle-MarkdownLinting.ps1 -Enable
+
+# Run linting on specific files
+.\.github\linting\Invoke-MarkdownLint.ps1 -Path path\to\file.md
+
+# Run linting on all files
+.\.github\linting\Invoke-MarkdownLint.ps1
+```
+
+## Configuration
+
+The configuration files in this directory are the single source of truth for markdown linting:
+
+- .markdownlint-cli2.jsonc: Primary configuration for markdownlint-cli2
+- .markdownlintrc: Alternative configuration format for IDE integration
+- .markdownlint.json: JSON configuration for IDE integration
+- .markdownlintignore: Files to exclude from linting
 
 ## Custom Rules
 
-Custom rules can be added to the `.github/linting/rules/` directory as JavaScript files. These will be automatically loaded by the linting system.
+Custom rules are stored in the `rules` directory. These provide project-specific checks beyond the standard rules.
+
+## Adding Rules
+
+To add a new custom rule:
+
+1. Create a JavaScript file in the `rules` directory
+2. Follow the markdownlint plugin pattern
+3. Test the rule against sample documents
+
+See the README.md file for more details.
 
 ## Troubleshooting
 
-If you encounter issues with the linting system:
+If you encounter issues with markdown linting:
 
-1. Ensure Node.js and npm are installed
-2. Run `npm install -g markdownlint-cli2` to install the linter globally
-3. Check for errors in the configuration files
-
-For more help, see [markdownlint-cli2 documentation](https://github.com/DavidAnson/markdownlint-cli2).
+1. Ensure all dependencies are installed
+2. Check the configuration files for syntax errors
+3. Verify that the rules directory exists and contains valid rule files
+4. Try running the linting tools with the `-Verbose` flag for additional information

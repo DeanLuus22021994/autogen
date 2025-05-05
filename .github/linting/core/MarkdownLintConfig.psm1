@@ -1,4 +1,3 @@
-# .github\linting\core\MarkdownLintConfig.psm1
 # Configuration management for markdown linting
 
 using namespace System.IO

@@ -1,4 +1,3 @@
-# .github/linting/Toggle-MarkdownLinting.ps1
 # Script to quickly toggle markdown linting on/off
 
 using namespace System.Management.Automation
@@ -37,46 +36,66 @@ param(
 # Import the linting loader module
 $loaderPath = Join-Path $PSScriptRoot "core\LintingLoader.ps1"
 
-if (-not (Test-Path $loaderPath)) {
-    Write-Host "Error: Linting loader module not found at $loaderPath" -ForegroundColor Red
-    exit 1
-}
+try {
+    if (-not (Test-Path $loaderPath)) {
+        throw "Linting loader module not found at $loaderPath"
+    }
 
-. $loaderPath
+    . $loaderPath
 
-# Get current configuration
-$currentConfig = Get-LintingConfiguration
+    # Get current configuration
+    $currentConfig = Get-LintingConfiguration
 
-# Determine the new enabled state using PowerShell 7 switch expression
-$newEnabled = switch ($PSCmdlet.ParameterSetName) {
-    'Enable'  { $true }
-    'Disable' { $false }
-    'Toggle'  { -not $currentConfig.Enabled }
-}
+    # Determine the new enabled state using PowerShell 7 switch expression with enhanced fallthrough handling
+    $newEnabled = switch -Exact ($PSCmdlet.ParameterSetName) {
+        'Enable'  { $true }
+        'Disable' { $false }
+        'Toggle'  { -not $currentConfig.Enabled }
+        default   {
+            Write-Warning "Unexpected parameter set: $($PSCmdlet.ParameterSetName)"
+            -not $currentConfig.Enabled
+        }
+    }
 
-# Update the configuration using splatting for cleaner parameter passing
-$params = @{
-    Enabled = $newEnabled
-}
+    # Update the configuration using splatting for cleaner parameter passing
+    $params = @{
+        Enabled = $newEnabled
+    }
 
-# Add IgnoreDuringEditing if specified using null-conditional operator
-if ($null -ne $IgnoreDuringEditing) {
-    $params.IgnoreDuringEditing = $IgnoreDuringEditing
-}
+    # Add IgnoreDuringEditing if specified using null-conditional operator
+    if ($null -ne $IgnoreDuringEditing) {
+        $params.IgnoreDuringEditing = $IgnoreDuringEditing
+    }
 
-# Update configuration and handle result
-$result = Update-LintingConfiguration @params
+    # Update configuration and handle result
+    $result = Update-LintingConfiguration @params
 
-if ($result) {
-    # Use string interpolation for cleaner string formatting
-    $status = if ($newEnabled) { "enabled" } else { "disabled" }
-    Write-Host "Markdown linting is now $status" -ForegroundColor Green
+    # Use command success pipeline instead of if/else for cleaner flow control
+    $result ? {
+        # Use string interpolation for cleaner string formatting
+        $status = $newEnabled ? "enabled" : "disabled"
+        Write-Host "Markdown linting is now $status" -ForegroundColor Green
 
-    # Use PowerShell 7 null-coalescing operator for more concise code
-    if ($newEnabled -and ($params.IgnoreDuringEditing ?? $currentConfig.IgnoreDuringEditing)) {
-        Write-Host "Note: Linting will be ignored during editing" -ForegroundColor Yellow
+        # Check if linting is both enabled and set to be ignored during editing
+        if ($newEnabled -and ($params.IgnoreDuringEditing ?? $currentConfig.IgnoreDuringEditing)) {
+            Write-Host "Note: Linting will be ignored during editing" -ForegroundColor Yellow
+        }
+    } : {
+        # Enhanced error handling with more specific feedback
+        Write-Host "Failed to update linting configuration" -ForegroundColor Red
+        Write-Host "Please check if you have permission to modify the configuration file" -ForegroundColor Red
     }
 }
-else {
-    Write-Host "Failed to update linting configuration" -ForegroundColor Red
+catch {
+    # Advanced error handling with PowerShell 7.5 error variable enhancements
+    $errorDetails = @{
+        Message = $_.Exception.Message
+        Category = $_.CategoryInfo.Category
+        File = $loaderPath
+        LineNumber = $_.InvocationInfo.ScriptLineNumber
+    }
+
+    Write-Host "Error: $($errorDetails.Message)" -ForegroundColor Red
+    Write-Verbose "Error details: $(ConvertTo-Json $errorDetails -Compress)"
+    exit 1
 }
