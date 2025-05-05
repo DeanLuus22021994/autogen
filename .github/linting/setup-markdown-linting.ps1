@@ -27,20 +27,23 @@ if ($repoRoot) {
     exit 1
 }
 
-# Check prerequisites using more robust PowerShell 7.5 functionality
+# Check prerequisites - modified to avoid parallel processing issues
 $prerequisites = @{
     "Node.js" = { Get-Command node -ErrorAction SilentlyContinue }
     "npm"     = { Get-Command npm -ErrorAction SilentlyContinue }
     "npx"     = { Get-Command npx -ErrorAction SilentlyContinue }
 }
 
-# Use PowerShell 7.5 parallel processing for faster checks
-$missingPrerequisites = $prerequisites.Keys | ForEach-Object -Parallel {
-    $check = $using:prerequisites[$_].Invoke()
+# Fixed parallel processing
+$missingPrerequisites = @()
+# Use standard ForEach instead of -Parallel to fix the $using issue
+foreach ($key in $prerequisites.Keys) {
+    $scriptBlock = $prerequisites[$key]
+    $check = & $scriptBlock
     if (-not $check) {
-        $_
+        $missingPrerequisites += $key
     }
-} | Where-Object { $_ }
+}
 
 if ($missingPrerequisites.Count -gt 0) {
     Write-Host "Warning: Missing prerequisites:" -ForegroundColor Yellow
@@ -223,11 +226,11 @@ function Sync-File {
         Write-Host "Copied $Source to $Target (symbolic links not supported)" -ForegroundColor Yellow
     }
 }
-$redirectContent = @'
-// This file redirects to the configuration in .github/linting
-module.exports = require("./.github/linting/.markdownlintrc");
-'@
-Set-Content -Path ".markdownlintrc.js" -Value $redirectContent
+
+$redirectJs = '// This file redirects to the configuration in .github/linting
+module.exports = require("./.github/linting/.markdownlintrc");'
+
+Set-Content -Path ".markdownlintrc.js" -Value $redirectJs
 Write-Host "Created .markdownlintrc.js redirect to .github/linting/.markdownlintrc" -ForegroundColor Green
 foreach ($file in $configFiles) {
     if (Test-Path $file.Source) {
@@ -300,16 +303,60 @@ if ($Fix) {
 exit $LASTEXITCODE
 '@
 
-# Using Base64 encoding for the shell script to prevent any issues with special characters
-$encodedRunMarkdownLintSh = 'IyEgL2Jpbi9iYXNoCiMgU2NyaXB0IHRvIHJ1biBtYXJrZG93biBsaW50aW5nIG9uIHRoZSByZXBvc2l0b3J5CgpzZXQgLWUKCkNPTkZJR19QQVRIPSIuZ2l0aHViL2xpbnRpbmcvLm1hcmtkb3dubGluZC1jbGkyLmpzb25jIgpUQVJHRVRfUEFUSFM9Ii5naXRodWIvKiovKioubWQiCkZJWD1mYWxzZQoKIyBQYXJzZSBjb21tYW5kIGxpbmUgYXJndW1lbnRzCndoaWxlIFsgJCMgLWd0IDAgXTsgZG8KICBjYXNlICIkMSIgaW4KICAgIC0tY29uZmlnKQogICAgICBDT05GSUdfUEFUSD0iJDIiCiAgICAgIHNoaWZ0IDIKICAgICAgOzsKICAgIC0tdGFyZ2V0KQogICAgICBUQVJHRVRfUEFUSFM9IiQyIgogICAgICBzaGlmdCAyCiAgICAgIDs7CiAgICAtLWZpeCkKICAgICAgRklYPXRydWUKICAgICAgc2hpZnQKICAgICAgOzsKICAgIC0taGVscCkKICAgICAgZWNobyAiVXNhZ2U6IC4vcnVuLW1hcmtkb3duLWxpbnQuc2ggWy0tY29uZmlnIDxwYXRoPl0gWy0tdGFyZ2V0IDxnbG9iPl0gWy0tZml4XSBbLS1oZWxwXSIKICAgICAgZWNobyAiIgogICAgICBlY2hvICJPcHRpb25zOiIKICAgICAgZWNobyAiICAtLWNvbmZpZyA8cGF0aD4gICBQYXRoIHRvIGNvbmZpZyBmaWxlIChkZWZhdWx0OiAuZ2l0aHViL2xpbnRpbmcvLm1hcmtkb3dubGluZC1jbGkyLmpzb25jKSIKICAgICAgZWNobyAiICAtLXRhcmdldCA8Z2xvYj4gICBHbG9iIHBhdHRlcm4gZm9yIGZpbGVzIHRvIGxpbnQgKGRlZmF1bHQ6IC5naXRodWIvKiovKioubWQpIgogICAgICBlY2hvICIgIC0tZml4ICAgICAgICAgICAgRml4IGxpbnRpbmcgaXNzdWVzIHdoZXJlIHBvc3NpYmxlIgogICAgICBlY2hvICIgIC0taGVscCAgICAgICAgICAgIFNob3cgdGhpcyBoZWxwIG1lc3NhZ2UiCiAgICAgIGV4aXQgMAogICAgICA7OwogICAgKikKICAgICAgc2hpZnQKICAgICAgOzsKICBlc2FjCmRvbmUKCmVjaG8gIlJ1bm5pbmcgbWFya2Rvd24gbGludGluZyB3aXRoIGNvbmZpZzogJENPTkZJR19QQVRIIgplY2hvICJUYXJnZXQgcGF0aHM6ICRQQVRIRSIKZWN0Im8gIiIKCmlmIFsgIiRGSVgiID0gdHJ1ZSBdOyB0aGVuCiAgbnB4IG1hcmtkb3dubGludC1jbGkyICIkVEFSR0VUX1BBVEhTIiAtLWNvbmZpZyAiJENPTkZJR19QQVRIIiAtLWZpeAplbHNlCiAgbnB4IG1hcmtkb3dubGludC1jbGkyICIkVEFSR0VUX1BBVEhTIiAtLWNvbmZpZyAiJENPTkZJR19QQVRIIgpmaQoKZXhpdCAkPwo='
-# Using PowerShell 7.5 improved error handling with try/catch
-try {
-    $runMarkdownLintShContent = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($encodedRunMarkdownLintSh))
-}
-catch {
-    Write-Error "Failed to decode shell script content: $_"
-    $runMarkdownLintShContent = "#!/bin/bash\necho 'Error: Script could not be properly generated. Please report this issue.'\nexit 1"
-}
+# Fixed the base64 issue by including the shell script directly
+$runMarkdownLintShContent = @'
+#!/bin/bash
+# Script to run markdown linting on the repository
+
+set -e
+
+CONFIG_PATH=".github/linting/.markdownlint-cli2.jsonc"
+TARGET_PATHS=".github/**/*.md"
+FIX=false
+
+# Parse command line arguments
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --config)
+      CONFIG_PATH="$2"
+      shift 2
+      ;;
+    --target)
+      TARGET_PATHS="$2"
+      shift 2
+      ;;
+    --fix)
+      FIX=true
+      shift
+      ;;
+    --help)
+      echo "Usage: ./run-markdown-lint.sh [--config <path>] [--target <glob>] [--fix] [--help]"
+      echo ""
+      echo "Options:"
+      echo "  --config <path>   Path to config file (default: .github/linting/.markdownlint-cli2.jsonc)"
+      echo "  --target <glob>   Glob pattern for files to lint (default: .github/**/*.md)"
+      echo "  --fix             Fix linting issues where possible"
+      echo "  --help            Show this help message"
+      exit 0
+      ;;
+    *)
+      shift
+      ;;
+  esac
+done
+
+echo "Running markdown linting with config: $CONFIG_PATH"
+echo "Target paths: $TARGET_PATHS"
+echo ""
+
+if [ "$FIX" = true ]; then
+  npx markdownlint-cli2 "$TARGET_PATHS" --config "$CONFIG_PATH" --fix
+else
+  npx markdownlint-cli2 "$TARGET_PATHS" --config "$CONFIG_PATH"
+fi
+
+exit $?
+'@
 
 $runLintCheckContent = @'
 # Lint Check Utility Script
@@ -468,13 +515,25 @@ $updateSpellCheckerContent = @'
 # This script updates the CSpell configuration to include linting terminology
 
 # Use PowerShell 7.5 ternary operator for more concise code
-Set-Location (git rev-parse --show-toplevel 2>$null ?? $PWD.Path)
+$repoRoot = git rev-parse --show-toplevel 2>$null
+if ($repoRoot) {
+    Set-Location $repoRoot
+} else {
+    Set-Location $PWD.Path
+}
 
 $settingsPath = ".vscode/settings.json"
-# Use conditional pipeline with null fallback (PowerShell 7.5 feature)
-$settings = (Test-Path $settingsPath) ?
-    (Get-Content -Path $settingsPath -Raw | ConvertFrom-Json) :
-    [PSCustomObject]@{ 'cSpell.words' = @() }
+# Use conditional checks to handle missing files
+if (Test-Path $settingsPath) {
+    $settings = Get-Content -Path $settingsPath -Raw | ConvertFrom-Json
+    $existingWords = $settings.'cSpell.words'
+    if ($null -eq $existingWords) {
+        $existingWords = @()
+    }
+} else {
+    $settings = [PSCustomObject]@{ 'cSpell.words' = @() }
+    $existingWords = @()
+}
 
 # Common linting terminology to add to dictionary
 $lintingWords = @(
@@ -485,7 +544,6 @@ $lintingWords = @(
 )
 
 # Use pipeline filter to find words not already in the dictionary
-$existingWords = $settings.'cSpell.words' ?? @()
 $newWords = $lintingWords | Where-Object { $_ -notin $existingWords }
 
 if ($newWords.Count -gt 0) {
@@ -512,7 +570,7 @@ if ($newWords.Count -gt 0) {
 $dictionaryPath = ".config/cspell-dictionary.txt"
 if (Test-Path $dictionaryPath) {
     $dictionary = Get-Content -Path $dictionaryPath
-    # Use PowerShell 7.5 pipeline to filter for new entries
+    # Use PowerShell pipeline to filter for new entries
     $newDictionaryEntries = $lintingWords | Where-Object { $_ -notin $dictionary }
 
     if ($newDictionaryEntries.Count -gt 0) {
@@ -587,7 +645,7 @@ To update your VS Code settings to use these configurations:
 - `update-spell-checker.ps1` - Updates spell checker with linting terminology
 '@
 
-# Fixed the tasks content here-string properly
+# Fixed JSON content for tasks
 $tasksContent = @'
 {
     "version": "2.0.0",
@@ -651,7 +709,7 @@ $tasksContent = @'
 }
 '@
 
-# Fixed the workflow content with proper steps section
+# Fixed YAML content for workflow
 $workflowContent = @'
 name: Markdown Linting
 
@@ -719,168 +777,183 @@ $configFiles = @(
     @{ Path = ".github/workflows/markdown-lint.yml";     Content = $workflowContent }
 )
 
-# Use PowerShell 7.5's improved error handling with try/catch/finally
-try {
-    # Use parallel processing for file creation (PowerShell 7.5 feature)
-    $configFiles | ForEach-Object -ThrottleLimit 8 -Parallel {
-        $file = $_
-        $Force = $using:Force
-
-        # Using Try/Catch for robust error handling
+# Fixed file processing with proper error handling
+foreach ($file in $configFiles) {
+    # Ensure directory exists
+    $directory = Split-Path -Path $file.Path -Parent
+    if (-not (Test-Path $directory)) {
         try {
-            # Ensure directory exists using current PowerShell 7.5 techniques
-            $directory = Split-Path -Path $file.Path -Parent
-            if (-not (Test-Path $directory)) {
-                New-Item -Path $directory -ItemType Directory -Force -ErrorAction Stop | Out-Null
-                Write-Host "Created directory: $directory" -ForegroundColor Green
-            }
-
-            if (Test-Path $file.Path) {
-                if (-not $Force) {
-                    # Use Read-Host with PowerShell 7.5's -Prompt parameter
-                    $response = Read-Host -Prompt "File $($file.Path) already exists. Overwrite? (y/n)"
-                    if ($response -ne "y") {
-                        Write-Host "Skipping $($file.Path)" -ForegroundColor Yellow
-                        return
-                    }
-                }
-                Write-Host "Overwriting $($file.Path)" -ForegroundColor Yellow
-            } else {
-                Write-Host "Creating $($file.Path)" -ForegroundColor Green
-            }
-
-            # Write file with UTF-8 encoding without BOM - improved error handling
-            [System.IO.File]::WriteAllText($file.Path, $file.Content, [System.Text.UTF8Encoding]::new($false))
-            Write-Host "Successfully wrote $($file.Path)" -ForegroundColor Green
+            New-Item -Path $directory -ItemType Directory -Force -ErrorAction Stop | Out-Null
+            Write-Host "Created directory: $directory" -ForegroundColor Green
         }
         catch {
-            # Enhanced error reporting with PowerShell 7.5's improved error object
-            Write-Host "Error processing $($file.Path): $($_.Exception.Message)" -ForegroundColor Red
+            Write-Host "Error creating directory $directory`: $_" -ForegroundColor Red
+            continue
+        }
+    }
 
-            # Fall back to native PowerShell cmdlet if .NET method fails
+    # Check if file exists and handle overwrite
+    if (Test-Path $file.Path) {
+        if (-not $Force) {
+            $response = Read-Host -Prompt "File $($file.Path) already exists. Overwrite? (y/n)"
+            if ($response -ne "y") {
+                Write-Host "Skipping $($file.Path)" -ForegroundColor Yellow
+                continue
+            }
+        }
+        Write-Host "Overwriting $($file.Path)" -ForegroundColor Yellow
+    } else {
+        Write-Host "Creating $($file.Path)" -ForegroundColor Green
+    }
+
+    # Write the file with error handling
+    try {
+        Set-Content -Path $file.Path -Value $file.Content -Encoding UTF8 -ErrorAction Stop
+        Write-Host "Successfully wrote $($file.Path)" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "Error writing $($file.Path): $_" -ForegroundColor Red
+        # Try alternate method if first fails
+        try {
+            [System.IO.File]::WriteAllText($file.Path, $file.Content)
+            Write-Host "Successfully wrote $($file.Path) using alternate method" -ForegroundColor Green
+        }
+        catch {
+            Write-Host "Critical error: Could not write $($file.Path): $_" -ForegroundColor Red
+        }
+    }
+}
+
+# Make shell script executable
+if (Test-Path "$lintingDir/run-markdown-lint.sh") {
+    Write-Host "Note: If using on Unix/Linux, run chmod +x $lintingDir/run-markdown-lint.sh" -ForegroundColor Yellow
+
+    # Try to set permissions on Unix-like systems
+    if ($IsLinux -or $IsMacOS) {
+        try {
+            & chmod +x "$lintingDir/run-markdown-lint.sh" 2>$null
+            Write-Host "Executable permission set for run-markdown-lint.sh" -ForegroundColor Green
+        }
+        catch {
+            Write-Host "Note: Could not set executable permissions automatically" -ForegroundColor Yellow
+        }
+    }
+}
+
+# ----------------------------------------------------------------
+# Optional cleanup of root configuration files and redirect creation
+# ----------------------------------------------------------------
+if ($CleanupRoot) {
+    Write-Host "`nRemoving root configuration files and creating redirects..." -ForegroundColor Cyan
+
+    $rootFiles = @(
+        ".markdownlint-cli2.jsonc",
+        ".markdownlint.json",
+        ".markdownlintignore",
+        ".markdownlintrc"
+    )
+
+    # Remove root files with proper error handling
+    foreach ($file in $rootFiles) {
+        if (Test-Path $file) {
             try {
-                Set-Content -Path $file.Path -Value $file.Content -Encoding UTF8 -ErrorAction Stop
-                Write-Host "Fallback method succeeded for $($file.Path)" -ForegroundColor Yellow
+                Remove-Item -Path $file -Force -ErrorAction Stop
+                Write-Host "Removed $file from root directory" -ForegroundColor Yellow
             }
             catch {
-                Write-Host "Critical error: Could not write $($file.Path): $($_.Exception.Message)" -ForegroundColor Red
+                Write-Host "Error removing $file`: $_" -ForegroundColor Red
             }
         }
     }
 
-    # Make shell script executable (helpful if used in Unix/Linux)
-    if (Test-Path "$lintingDir/run-markdown-lint.sh") {
-        Write-Host "Note: If using on Unix/Linux, run chmod +x $lintingDir/run-markdown-lint.sh" -ForegroundColor Yellow
-
-        # Check if we're on a Unix-like system and try to set permissions
-        if ($IsLinux -or $IsMacOS) {
-            try {
-                chmod +x "$lintingDir/run-markdown-lint.sh" 2>$null
-                Write-Host "Executable permission set for run-markdown-lint.sh" -ForegroundColor Green
-            }
-            catch {
-                Write-Host "Note: Could not set executable permissions automatically" -ForegroundColor Yellow
-            }
-        }
-    }
-
-    # ----------------------------------------------------------------
-    # Optional cleanup of root configuration files and redirect creation
-    # ----------------------------------------------------------------
-    if ($CleanupRoot) {
-        Write-Host "`nRemoving root configuration files and creating redirects..." -ForegroundColor Cyan
-
-        $rootFiles = @(
-            ".markdownlint-cli2.jsonc",
-            ".markdownlint.json",
-            ".markdownlintignore",
-            ".markdownlintrc"
-        )
-
-        # Use PowerShell 7.5 parallel processing for faster cleanup
-        $rootFiles | ForEach-Object -Parallel {
-            if (Test-Path $_) {
-                Write-Host "Removing $_ from root directory..." -ForegroundColor Yellow
-                Remove-Item -Path $_ -Force
-            }
-        }
-
-        # Redirect content for .markdownlintrc.js
-        $redirectContent = @'
+    # Create redirect file - fixed string content
+    $redirectContent = @"
 // This file redirects to the configuration in .github/linting
 module.exports = require("./.github/linting/.markdownlintrc");
-'@
+"@
 
-        # Create redirect file
-        Set-Content -Path ".markdownlintrc.js" -Value $redirectContent -Encoding UTF8
+    # Create redirect file
+    try {
+        Set-Content -Path ".markdownlintrc.js" -Value $redirectContent -Encoding UTF8 -ErrorAction Stop
         Write-Host "Created .markdownlintrc.js redirect to .github/linting/.markdownlintrc" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "Error creating redirect file: $_" -ForegroundColor Red
+    }
 
-        # Update VS Code settings
-        $vsCodeSettingsPath = ".vscode/settings.json"
-        if (Test-Path $vsCodeSettingsPath) {
+    # Update VS Code settings
+    $vsCodeSettingsPath = ".vscode/settings.json"
+    if (Test-Path $vsCodeSettingsPath) {
+        try {
             $settings = Get-Content -Path $vsCodeSettingsPath -Raw | ConvertFrom-Json
 
-            # Add markdownlint configuration or update existing one using PowerShell 7.5 hashtable merging
-            $settings = $settings | Add-Member -NotePropertyName "markdownlint.config" -NotePropertyValue @{
+            # Add markdownlint configuration using proper PowerShell 7.5 technique
+            $settings | Add-Member -NotePropertyName "markdownlint.config" -NotePropertyValue @{
                 extends = ".github/linting/.markdownlint.json"
-            } -Force -PassThru
+            } -Force
 
             # Save updated settings back to file
-            $settings | ConvertTo-Json -Depth 10 | Set-Content -Path $vsCodeSettingsPath
+            $settings | ConvertTo-Json -Depth 10 | Set-Content -Path $vsCodeSettingsPath -Encoding UTF8
             Write-Host "Updated VS Code settings to use .github/linting configuration directly" -ForegroundColor Green
-        } else {
-            # Create new VS Code settings if they don't exist
+        }
+        catch {
+            Write-Host "Error updating VS Code settings: $_" -ForegroundColor Red
+        }
+    } else {
+        # Create new VS Code settings if they don't exist
+        try {
             $vsCodeDir = ".vscode"
             if (-not (Test-Path $vsCodeDir)) {
-                New-Item -Path $vsCodeDir -ItemType Directory | Out-Null
+                New-Item -Path $vsCodeDir -ItemType Directory -Force | Out-Null
             }
 
-            @{
+            $newSettings = [PSCustomObject]@{
                 "markdownlint.config" = @{
                     extends = ".github/linting/.markdownlint.json"
                 }
-            } | ConvertTo-Json -Depth 10 | Set-Content -Path $vsCodeSettingsPath
+            }
+
+            $newSettings | ConvertTo-Json -Depth 10 | Set-Content -Path $vsCodeSettingsPath -Encoding UTF8
             Write-Host "Created new VS Code settings with markdownlint configuration" -ForegroundColor Green
         }
-
-        Write-Host "Root cleanup and redirects complete." -ForegroundColor Green
-    }
-
-    # Run validation if requested
-    if ($Validate) {
-        Write-Host "`nRunning validation checks..." -ForegroundColor Cyan
-        if (Test-Path "$lintingDir/run-lint-check.ps1") {
-            & "$lintingDir/run-lint-check.ps1"
-        } else {
-            Write-Host "Error: run-lint-check.ps1 not found" -ForegroundColor Red
+        catch {
+            Write-Host "Error creating VS Code settings: $_" -ForegroundColor Red
         }
     }
+
+    Write-Host "Root cleanup and redirects complete." -ForegroundColor Green
 }
-catch {
-    # Centralized error handling with detailed error info
-    Write-Host "A critical error occurred during setup:" -ForegroundColor Red
-    Write-Host "$($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "Error occurred at line: $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Red
-    Write-Host "Error occurred in command: $($_.InvocationInfo.Line)" -ForegroundColor Red
-    exit 1
-}
-finally {
-    # Final completion message with summary
-    Write-Host "`n=== Markdown Linting Configuration Setup Complete ===" -ForegroundColor Green
-    Write-Host "Setup has completed the following tasks:" -ForegroundColor Cyan
-    Write-Host "✅ Created configuration files in .github/linting" -ForegroundColor Green
-    Write-Host "✅ Created workflow file for GitHub Actions" -ForegroundColor Green
-    if ($CleanupRoot) {
-        Write-Host "✅ Created redirects from root to .github/linting" -ForegroundColor Green
+
+# Run validation if requested
+if ($Validate) {
+    Write-Host "`nRunning validation checks..." -ForegroundColor Cyan
+    if (Test-Path "$lintingDir/run-lint-check.ps1") {
+        try {
+            & "$lintingDir/run-lint-check.ps1"
+        }
+        catch {
+            Write-Host "Error during validation: $_" -ForegroundColor Red
+        }
     } else {
-        Write-Host "✅ Synced configuration files to repository root" -ForegroundColor Green
+        Write-Host "Error: run-lint-check.ps1 not found" -ForegroundColor Red
     }
-    if ($Validate) {
-        Write-Host "✅ Validated the configuration" -ForegroundColor Green
-    }
-
-    Write-Host "`nTo run linting on your markdown files:" -ForegroundColor Yellow
-    Write-Host "  pwsh .github/linting/run-markdown-lint.ps1" -ForegroundColor White
-
-    Write-Host "`nAll tasks completed successfully." -ForegroundColor Green
 }
+
+# Final completion message with summary
+Write-Host "`n=== Markdown Linting Configuration Setup Complete ===" -ForegroundColor Green
+Write-Host "Setup has completed the following tasks:" -ForegroundColor Cyan
+Write-Host "✅ Created configuration files in .github/linting" -ForegroundColor Green
+Write-Host "✅ Created workflow file for GitHub Actions" -ForegroundColor Green
+if ($CleanupRoot) {
+    Write-Host "✅ Created redirects from root to .github/linting" -ForegroundColor Green
+} else {
+    Write-Host "✅ Synced configuration files to repository root" -ForegroundColor Green
+}
+if ($Validate) {
+    Write-Host "✅ Validated the configuration" -ForegroundColor Green
+}
+
+Write-Host "`nTo run linting on your markdown files:" -ForegroundColor Yellow
+Write-Host "  pwsh .github/linting/run-markdown-lint.ps1" -ForegroundColor White
+
+Write-Host "`nAll tasks completed successfully." -ForegroundColor Green
