@@ -11,6 +11,8 @@ using namespace System.Management.Automation
     Functions to generate, validate and manage markdown linting configurations.
 #>
 
+# cSpell:ignore hashtables
+
 # Import error handling utilities
 $ErrorHandlingModule = Join-Path -Path $PSScriptRoot -ChildPath '..\utils\ErrorHandling.psm1'
 if (Test-Path -Path $ErrorHandlingModule) {
@@ -245,10 +247,10 @@ function Import-MarkdownLintConfig {
         # Remove comments if JSONC
         if ($Path -match '\.jsonc$') {
             # Remove single-line comments
-            $content = $content -replace '//.*$', '' -replace '(?m)^\s*//.*$', ''
+            $content = $content -replace '//.*$', '' -replace '(?m)^\\s*//.*$', ''
 
             # Remove multi-line comments
-            $content = $content -replace '/\*[\s\S]*?\*/', ''
+            $content = $content -replace '/\\*[\\s\\S]*?\\*/', ''
         }
 
         # Convert to object with enhanced error handling in PowerShell 7.5+
@@ -358,4 +360,4 @@ Export-ModuleMember -Function @(
     'Merge-MarkdownLintConfig',
     'Export-MarkdownLintConfig',
     'Import-MarkdownLintConfig'
-) | ForEach-Object { Export-ModuleMember -Function $_ }
+)

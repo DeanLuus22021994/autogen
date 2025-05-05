@@ -11,6 +11,8 @@ using namespace System.Text.RegularExpressions
     of bash-specific syntax elements.
 #>
 
+# cSpell:ignore esac
+
 function Format-ShellCommand {
     <#
     .SYNOPSIS

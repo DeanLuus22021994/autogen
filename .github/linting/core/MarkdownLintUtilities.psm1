@@ -12,6 +12,8 @@ using namespace System.Management.Automation
     configuration management, and execution.
 #>
 
+# cSpell:ignore esac
+
 # Import error handling utilities
 $ErrorHandlingModule = Join-Path -Path $PSScriptRoot -ChildPath '..\utils\ErrorHandling.psm1'
 if (Test-Path -Path $ErrorHandlingModule) {
@@ -271,4 +273,4 @@ Export-ModuleMember -Function @(
     'Initialize-MarkdownLintConfiguration',
     'Register-MarkdownLintVSCodeTasks',
     'Process-ShellCommands'
-) | ForEach-Object { Export-ModuleMember -Function $_ }
+)

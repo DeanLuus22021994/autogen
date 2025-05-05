@@ -45,7 +45,7 @@ function Process-ShellCommand {
     }
 
     # Handle other shell constructs
-    if ($Command -match "\bif\s+.*;\s*then\b" -or $Command -match "\bfor\s+.*;\s*do\b" -or $Command -match "\bwhile\s+.*;\s*do\b") {
+    if ($Command -match "\bif\s+.*;s*then\b" -or $Command -match "\bfor\s+.*;s*do\b" -or $Command -match "\bwhile\s+.*;s*do\b") {
         # Shell conditional or loop detected
         Write-Verbose "Processing shell conditional or loop"
         return $Command
