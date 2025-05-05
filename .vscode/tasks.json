@@ -240,6 +240,61 @@
             "args": [
                 "-File",
                 "${workspaceFolder}/.github/linting/run-lint-check.ps1"
+            ],            "group": {
+                "kind": "test",
+                "isDefault": false
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Update DIR.TAG Files",
+            "type": "shell",
+            "command": "${workspaceFolder}/.devcontainer/manage-dir-tags.sh",
+            "args": [
+                "--action",
+                "update",
+                "--verbose"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Create New Config Directory",
+            "type": "shell",
+            "command": "${workspaceFolder}/.devcontainer/manage-dir-tags.sh",
+            "args": [
+                "--action",
+                "create",
+                "--dir",
+                "${input:configDirectoryPath}",
+                "--verbose"
+            ],
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Check DIR.TAG Consistency",
+            "type": "shell",
+            "command": "${workspaceFolder}/.devcontainer/manage-dir-tags.sh",
+            "args": [
+                "--action",
+                "check",
+                "--verbose"
             ],
             "group": {
                 "kind": "test",
@@ -250,6 +305,14 @@
                 "panel": "new"
             },
             "problemMatcher": []
+        }
+    ],
+    "inputs": [
+        {
+            "id": "configDirectoryPath",
+            "description": "Path to new config directory (relative to project root)",
+            "default": ".config/newdir",
+            "type": "promptString"
         }
     ]
 }

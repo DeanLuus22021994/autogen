@@ -21,9 +21,24 @@
   <term>multimodal</term>
   <term>openai</term>
   <term>ollama</term>
-</cspell_dictionary>
-<?xml version="1.0" encoding="UTF-8"?>
-<cspell_dictionary>
+  <term>azdure</term>
+  <term>azurecr</term>
+  <term>azureml</term>
+  <term>backend</term>
+  <term>bfloat</term>
+  <term>chatbot</term>
+  <term>chatbots</term>
+  <term>chatgpt</term>
+  <term>codebase</term>
+  <term>conda</term>
+  <term>config</term>
+  <term>configs</term>
+  <term>dataclass</term>
+  <term>dataclasses</term>
+  <term>davidanson</term>
+  <term>docfx</term>
+  <term>docstring</term>
+  <term>docstrings</term>
   <term>additonal</term>
   <term>agenthost</term>
   <term>aiohttp</term>
