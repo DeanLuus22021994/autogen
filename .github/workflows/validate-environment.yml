@@ -178,52 +178,51 @@ jobs:
         run: |
           python -c "import autogen; print(f'AutoGen version: {autogen.__version__}')"
 
-      - name: Create mypy.ini
+      - name: Create mypy configuration
         run: |
-          # Create a fixed mypy.ini if it doesn't exist
-          if [ ! -f "mypy.ini" ] || grep -q "parsing errors" "mypy.ini"; then
-            echo '[mypy]' > mypy.ini
-            echo 'disallow_untyped_defs = True' >> mypy.ini
-            echo 'disallow_incomplete_defs = True' >> mypy.ini
-            echo 'check_untyped_defs = True' >> mypy.ini
-            echo 'disallow_untyped_decorators = True' >> mypy.ini
-            echo 'no_implicit_optional = True' >> mypy.ini
-            echo 'strict_optional = True' >> mypy.ini
-            echo 'warn_redundant_casts = True' >> mypy.ini
-            echo 'warn_return_any = True' >> mypy.ini
-            echo 'warn_unused_ignores = True' >> mypy.ini
-            echo 'warn_unused_configs = True' >> mypy.ini
-            echo '' >> mypy.ini
-            echo '[mypy.plugins.numpy.*]' >> mypy.ini
-            echo 'follow_imports = skip' >> mypy.ini
-            echo '' >> mypy.ini
-            echo '[mypy.plugins.pandas.*]' >> mypy.ini
-            echo 'follow_imports = skip' >> mypy.ini
-            echo '' >> mypy.ini
-            echo '[mypy-numpy]' >> mypy.ini
-            echo 'ignore_missing_imports = True' >> mypy.ini
-            echo '' >> mypy.ini
-            echo '[mypy-pandas]' >> mypy.ini
-            echo 'ignore_missing_imports = True' >> mypy.ini
-            echo '' >> mypy.ini
-            echo '[mypy-matplotlib]' >> mypy.ini
-            echo 'ignore_missing_imports = True' >> mypy.ini
-            echo '' >> mypy.ini
-            echo '[mypy-seaborn]' >> mypy.ini
-            echo 'ignore_missing_imports = True' >> mypy.ini
-            echo '' >> mypy.ini
-            echo '[mypy-scipy]' >> mypy.ini
-            echo 'ignore_missing_imports = True' >> mypy.ini
-            echo '' >> mypy.ini
-            echo '[mypy-sklearn]' >> mypy.ini
-            echo 'ignore_missing_imports = True' >> mypy.ini
-            echo '' >> mypy.ini
-            echo '[mypy-transformers]' >> mypy.ini
-            echo 'ignore_missing_imports = True' >> mypy.ini
-            echo '' >> mypy.ini
-            echo '[mypy-torch]' >> mypy.ini
-            echo 'ignore_missing_imports = True' >> mypy.ini
-          fi
+          cat > mypy.ini << 'EOF'
+[mypy]
+disallow_untyped_defs = True
+disallow_incomplete_defs = True
+check_untyped_defs = True
+disallow_untyped_decorators = True
+no_implicit_optional = True
+strict_optional = True
+warn_redundant_casts = True
+warn_return_any = True
+warn_unused_ignores = True
+warn_unused_configs = True
+
+[mypy.plugins.numpy.*]
+follow_imports = skip
+
+[mypy.plugins.pandas.*]
+follow_imports = skip
+
+[mypy-numpy]
+ignore_missing_imports = True
+
+[mypy-pandas]
+ignore_missing_imports = True
+
+[mypy-matplotlib]
+ignore_missing_imports = True
+
+[mypy-seaborn]
+ignore_missing_imports = True
+
+[mypy-scipy]
+ignore_missing_imports = True
+
+[mypy-sklearn]
+ignore_missing_imports = True
+
+[mypy-transformers]
+ignore_missing_imports = True
+
+[mypy-torch]
+ignore_missing_imports = True
+EOF
 
       - name: Run mypy validation
         run: mypy ./python/autogen
@@ -240,10 +239,10 @@ jobs:
           echo "::group::Checking VS Code config files"
 
           # Check mcp.json for directly embedded tokens
-          if grep -q 'GITHUB_PERSONAL_ACCESS_TOKEN.*=.*\"ghp_' .vscode/mcp.json 2>/dev/null; then
+          if grep -q 'GITHUB_PERSONAL_ACCESS_TOKEN.*=.*"ghp_' .vscode/mcp.json 2>/dev/null; then
             echo "::error::Found hardcoded token in .vscode/mcp.json"
             exit 1
-          elif grep -q 'GITHUB_PERSONAL_ACCESS_TOKEN.*=.*\"github_pat_' .vscode/mcp.json 2>/dev/null; then
+          elif grep -q 'GITHUB_PERSONAL_ACCESS_TOKEN.*=.*"github_pat_' .vscode/mcp.json 2>/dev/null; then
             echo "::error::Found hardcoded token in .vscode/mcp.json"
             exit 1
           fi
@@ -267,7 +266,7 @@ jobs:
           fi
 
           # Ensure environment variable references use the correct format
-          if [ -f .vscode/mcp.json ] && ! grep -q 'GITHUB_PERSONAL_ACCESS_TOKEN.*=.*\"\$\{env:' .vscode/mcp.json 2>/dev/null; then
+          if [ -f .vscode/mcp.json ] && ! grep -q 'GITHUB_PERSONAL_ACCESS_TOKEN.*=.*"\${env:' .vscode/mcp.json 2>/dev/null; then
             echo "::warning::mcp.json should use \${env:VARIABLE_NAME} syntax for environment variables"
           fi
 
@@ -285,7 +284,7 @@ jobs:
             Write-Host "Environment validation script not found, skipping this check"
           }
 
-      - name: Create dictionary file
+      - name: Create Custom Dictionary
         shell: pwsh
         run: |
           $ErrorActionPreference = "Continue"
@@ -293,6 +292,7 @@ jobs:
 
           if (-not (Test-Path $dictionaryPath)) {
             Write-Host "Creating custom dictionary for spellchecking..."
+
             $dictionaryContent = @"
 # AutoGen Custom Dictionary
 autogen
@@ -336,6 +336,7 @@ flake8
 azdure
 esrp
 "@
+
             Set-Content -Path $dictionaryPath -Value $dictionaryContent -Encoding UTF8
             Write-Host "Created custom dictionary at $dictionaryPath"
           } else {
