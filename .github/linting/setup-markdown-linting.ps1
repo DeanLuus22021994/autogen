@@ -1,8 +1,8 @@
-# Markdown Linting Configuration Reorganization
-# This script implements the reorganization of markdown linting configuration files
-# into the .github/linting directory and sets up all necessary components for a
-# complete linting solution.
+GitHub Copilot
 
+Below is a consolidated version of the PowerShell script with a completed cleanup block and final closing bracket. This file includes all the elements shown in your snippet plus an example of redirect content placed into .markdownlintrc.js under the CleanupRoot section so that a proper redirect is created. The script ends with a completion message:
+
+--------------------------------------------------------------------------------
 param(
     [switch]$Force,
     [switch]$Validate,
@@ -61,6 +61,9 @@ if (-not (Test-Path $lintingDir)) {
     Write-Host "Directory $lintingDir already exists." -ForegroundColor Green
 }
 
+# ----------------------------------------------------------------
+# Configuration contents for linting files
+# ----------------------------------------------------------------
 $markdownlintCli2Content = @'
 {
   "config": {
@@ -217,7 +220,7 @@ function Sync-File {
 }
 $redirectContent = @'
 // This file redirects to the configuration in .github/linting
-module.exports = require('./.github/linting/.markdownlintrc');
+module.exports = require("./.github/linting/.markdownlintrc");
 '@
 Set-Content -Path ".markdownlintrc.js" -Value $redirectContent
 Write-Host "Created .markdownlintrc.js redirect to .github/linting/.markdownlintrc" -ForegroundColor Green
@@ -292,6 +295,7 @@ if ($Fix) {
 exit $LASTEXITCODE
 '@
 
+# This base64 block decodes a small bash script for Unix-like systems
 $encodedRunMarkdownLintSh = 'IyEgL2Jpbi9iYXNoCiMgU2NyaXB0IHRvIHJ1biBtYXJrZG93biBsaW50aW5nIG9uIHRoZSByZXBvc2l0b3J5CgpzZXQgLWUKCkNPTkZJR19QQVRIPSIuZ2l0aHViL2xpbnRpbmcvLm1hcmtkb3dubGluZC1jbGkyLmpzb25jIgpUQVJHRVRfUEFUSFM9Ii5naXRodWIvKi8qKi5tZCIKRklYPXRydWUKd2hpbGUgWyAkIyAtZ3QgMCAkXmRvIF07IGRvCiAgY2FzZSAiJDEiIGluCiAgICAtLWNvbmZpZykKICAgICAgQ09ORklHX1BBVEg9IiQyIgogICAgICBzaGlmdCAyCiAgICAtLXRhcmdldCkKICAgICAgVEFSR0VUX1BBVEhTPSIkMiIKICAgICAgc2hpZnQgMgogICAgICBzbGlmdCBgCiAgICAtLWZpeCkKICAgICAgRklYPXRydWUKICAgICAgc2hpZnQgMQogICAgICBzbGlmdCBgCiAgICAtLWhlbHApCiAgICAgIGVjaG8gIlVzYWdlOiAuL3J1bi1tYXJrZG93bi1saW50LnNoIFstLWNvbmZpZyA8cGF0aD5dIFstLXRhcmdldCA8Z2xvYl0gXVsKICAgICAgZWNobyAiIgogICAgICBlY2hvICJPcHRpb25zOiIKICAgICAgZWNobyAiICAtLWNvbmZpZyA8cGF0aD4gICBQYXRoIHRvIGNvbmZpZyBmaWxlIChkZWZhdWx0OiAuZ2l0aHViL2xpbnRpbmcvLm1hcmtkb3dubGluZC1jbGkyLmpzb25jKSIKICAgICAgZWNobyAiICAtLXRhcmdldCA8Z2xvYj4gICBHbG9iIHBhdHRlcm4gZm9yIGZpbGVzIHRvIGxpbnQgKGRlZmF1bHQ6IC5naXRodWIvKi8qKi5tZCkiCiAgICAgIGVjaG8gIiAgLS1maXggICAgICAgICAgRml4IGxpbnRpbmcgaXNzdWVzIHdoZXJlIHBvc3NpYmxlIgogICAgICBlY2hvICIgIC0taGVscCAgICAgICAgICAgIFNob3cgdGhpcyBoZWxwIG1lc3NhZ2UiCiAgICAgIGV4aXQgMCAKICAgICAgOzsKICAgICopCiAgICAgIHNoaWZ0IDIKICAgICAgOzsKICAgIGVzYWMKZG9uZQplY2hvICJSdW5uaW5nIG1hcmtkb3duIGxpbnRpbmcgd2l0aCBjb25maWc6ICRDT05GSUdfUEFUSCIKZWNobyAiVGFyZ2V0IHBhdGhzOiAkVEFSR0VUX1BBVEhzIgoKifsgIiRGSVgiID0gdHJ1ZSBdOyB0aGVuCiAgbnB4IG1hcmtkb3dubGludC1jbGkyICIkVEFSR0VUX1BBVEhzIiAtLWNvbmZpZyAiJENPTkZJR19QQVRIIiAtLWZpeAplbHNlCiAgbnB4IG1hcmtkb3dubGludC1jbGkyICIkVEFSR0VUX1BBVEhzIiAtLWNvbmZpZyAiJENPTkZJR19QQVRIIgpmaQp4aXQgMCAgCg=='
 $runMarkdownLintShContent = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($encodedRunMarkdownLintSh))
 
@@ -392,7 +396,7 @@ foreach ($file in $rootFiles) {
         continue
     }
 
-    $rootContent = Get-Content $file -Raw
+    $rootContent   = Get-Content $file -Raw
     $githubContent = Get-Content $githubVersion -Raw
 
     if ($rootContent -ne $githubContent) {
@@ -596,19 +600,22 @@ jobs:
         run: markdownlint-cli2 *.md --config .markdownlint-cli2.jsonc
 '@
 
+# ----------------------------------------------------------------
+# Write all config files to .github/linting plus the workflow file
+# ----------------------------------------------------------------
 $configFiles = @(
     @{ Path = ".github/linting/.markdownlint-cli2.jsonc"; Content = $markdownlintCli2Content },
-    @{ Path = ".github/linting/.markdownlint.json"; Content = $markdownlintJsonContent },
-    @{ Path = ".github/linting/.markdownlintignore"; Content = $markdownlintIgnoreContent },
-    @{ Path = ".github/linting/.markdownlintrc"; Content = $markdownlintrcContent },
-    @{ Path = ".github/linting/sync-config.ps1"; Content = $syncConfigContent },
-    @{ Path = ".github/linting/run-markdown-lint.ps1"; Content = $runMarkdownLintContent },
-    @{ Path = ".github/linting/run-markdown-lint.sh"; Content = $runMarkdownLintShContent },
-    @{ Path = ".github/linting/run-lint-check.ps1"; Content = $runLintCheckContent },
-    @{ Path = ".github/linting/update-spell-checker.ps1"; Content = $updateSpellCheckerContent },
-    @{ Path = ".github/linting/README.md"; Content = $readmeContent },
+    @{ Path = ".github/linting/.markdownlint.json";      Content = $markdownlintJsonContent },
+    @{ Path = ".github/linting/.markdownlintignore";     Content = $markdownlintIgnoreContent },
+    @{ Path = ".github/linting/.markdownlintrc";         Content = $markdownlintrcContent },
+    @{ Path = ".github/linting/sync-config.ps1";         Content = $syncConfigContent },
+    @{ Path = ".github/linting/run-markdown-lint.ps1";   Content = $runMarkdownLintContent },
+    @{ Path = ".github/linting/run-markdown-lint.sh";    Content = $runMarkdownLintShContent },
+    @{ Path = ".github/linting/run-lint-check.ps1";      Content = $runLintCheckContent },
+    @{ Path = ".github/linting/update-spell-checker.ps1";Content = $updateSpellCheckerContent },
+    @{ Path = ".github/linting/README.md";               Content = $readmeContent },
     @{ Path = ".github/linting/markdown-tasks.code-tasks"; Content = $tasksContent },
-    @{ Path = ".github/workflows/markdown-lint.yml"; Content = $workflowContent }
+    @{ Path = ".github/workflows/markdown-lint.yml";     Content = $workflowContent }
 )
 
 foreach ($file in $configFiles) {
@@ -631,8 +638,12 @@ if (Test-Path "$lintingDir/run-markdown-lint.sh") {
     Write-Host "Note: If using on Unix/Linux, run chmod +x $lintingDir/run-markdown-lint.sh" -ForegroundColor Yellow
 }
 
+# ----------------------------------------------------------------
+# Optional cleanup of root configuration files and redirect creation
+# ----------------------------------------------------------------
 if ($CleanupRoot) {
     Write-Host "`nRemoving root configuration files and creating redirects..." -ForegroundColor Cyan
+
     $rootFiles = @(
         ".markdownlint-cli2.jsonc",
         ".markdownlint.json",
@@ -645,4 +656,19 @@ if ($CleanupRoot) {
             Remove-Item -Path $file -Force
         }
     }
+
+    # Example redirect file for .markdownlintrc.js in the root
     $redirectContent = @'
+// This file redirects to the configuration in .github/linting
+module.exports = require("./.github/linting/.markdownlintrc");
+'@
+    Write-Host "Creating .markdownlintrc.js redirect to .github/linting/.markdownlintrc" -ForegroundColor Green
+    Set-Content -Path ".markdownlintrc.js" -Value $redirectContent
+
+    Write-Host "Root cleanup and redirects complete." -ForegroundColor Green
+}
+
+Write-Host "All tasks completed successfully." -ForegroundColor Green
+--------------------------------------------------------------------------------
+
+This final script should remedy the previously seen truncation (where the cleanup block ended prematurely) and ensure a valid redirect file is created if you run with -CleanupRoot.
