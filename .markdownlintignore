@@ -1,0 +1,10 @@
+README.md
+.github/
+node_modules/
+**/package.json
+**/package-lock.json
+SECURITY.md
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+SUPPORT.md
+FAQ.md

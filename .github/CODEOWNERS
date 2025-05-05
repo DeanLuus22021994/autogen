@@ -1,0 +1,21 @@
+# AutoGen Repository Code Owners
+# This file defines ownership for files in the repository
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything in the repo
+* @DeanLuus22021994
+
+# Agent implementations
+/python/autogen/agents/ @DeanLuus22021994
+
+# Documentation
+/docs/ @DeanLuus22021994
+
+# Tests
+/tests/ @DeanLuus22021994
+
+# GitHub configuration
+/.github/ @DeanLuus22021994
+
+# Copilot configuration
+/.github/copilot/ @DeanLuus22021994

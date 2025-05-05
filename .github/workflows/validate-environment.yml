@@ -1,3 +1,16 @@
+# Environment Validation Workflow for AutoGen Fork
+# This workflow validates the environment configuration and required secrets
+#
+# #problems - Environment variables or secrets not properly configured
+# #security - Secret handling and validation
+# #todo - Future improvements to automate environment setup
+# #optimize - Performance improvements for validation steps
+#
+# Environment Variables Referenced:
+# - FORK_AUTOGEN_USER_PERSONAL_ACCESS_TOKEN
+# - FORK_HUGGINGFACE_ACCESS_TOKEN
+# - FORK_USER_DOCKER_ACCESS_TOKEN
+
 name: Validate Environment and Secrets
 
 on:
@@ -24,6 +37,8 @@ jobs:
         shell: pwsh
         run: |
           echo "::group::Validating Required Secrets"
+          # #problems - Missing or misconfigured secrets will cause this step to fail
+          # #security - Ensure we're not outputting secret values, only checking existence
           $requiredSecrets = @(
             "FORK_AUTOGEN_USER_PERSONAL_ACCESS_TOKEN",
             "FORK_HUGGINGFACE_ACCESS_TOKEN",
@@ -62,6 +77,7 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           # Import modules from automation directory
+          # #problems - Missing modules will cause this step to fail
           $modulePath = "./.scripts/automation/github"
           Import-Module "$modulePath/Common.psm1" -Force
           Import-Module "$modulePath/Security.psm1" -Force
@@ -69,6 +85,7 @@ jobs:
           Write-Host "## Security Configuration Check"
 
           # Check VS Code configuration for security issues
+          # #security - Scanning for exposed tokens and credentials
           $vsCodeDir = Join-Path $PWD ".vscode"
           if (Test-Path $vsCodeDir) {
             $vsCodeFiles = Get-ChildItem -Path $vsCodeDir -Filter "*.json" | Select-Object -ExpandProperty FullName
@@ -105,6 +122,7 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           # Import modules from automation directory
+          # #problems - Missing automation scripts will cause this check to fail
           $modulePath = "./.scripts/automation/github"
           Import-Module "$modulePath/Common.psm1" -Force
           Import-Module "$modulePath/Security.psm1" -Force
@@ -112,6 +130,7 @@ jobs:
           Write-Host "## Repository Security Scan"
 
           # File types to scan for tokens
+          # #optimize - Limit scan to specific file types to improve performance
           $fileTypes = @("*.ps1", "*.py", "*.js", "*.ts", "*.json", "*.md", "*.ipynb")
           $filesToScan = @()
 
@@ -122,6 +141,7 @@ jobs:
           }
 
           # Limit to recently changed files in PRs to speed up checks
+          # #optimize - Only scanning changed files in PRs for better performance
           if ("${{ github.event_name }}" -eq "pull_request") {
             Write-Host "Scanning only changed files in PR"
             $changedFiles = git diff --name-only HEAD~1 HEAD
@@ -153,9 +173,11 @@ jobs:
 
       - name: Restore dependencies
         run: dotnet restore ./dotnet/AutoGen.sln
+        # #problems - Missing dependencies will cause this step to fail
 
       - name: Build
         run: dotnet build ./dotnet/AutoGen.sln --no-restore
+        # #problems - Build failures will be caught here
 
   validate-python:
     runs-on: ubuntu-latest
@@ -174,13 +196,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest mypy ruff
           pip install -e "./python/[dev]"
+          # #problems - Package installation failures will be caught here
 
       - name: Validate Python configuration
         run: |
           python -c "import autogen; print(f'AutoGen version: {autogen.__version__}')"
+          # #problems - Module import errors will be caught here
 
       - name: Create mypy configuration
         run: |
+          # #todo - Consider storing this in a template file for easier maintenance
           echo "[mypy]" > mypy.ini
           echo "disallow_untyped_defs = True" >> mypy.ini
           echo "disallow_incomplete_defs = True" >> mypy.ini
@@ -225,6 +250,7 @@ jobs:
 
       - name: Run mypy validation
         run: mypy ./python/autogen
+        # #problems - Type errors will be caught here
 
   lint-configs:
     runs-on: ubuntu-latest
@@ -236,6 +262,7 @@ jobs:
         shell: bash
         run: |
           echo "::group::Checking VS Code config files"
+          # #security - Checking for hardcoded credentials in configuration files
 
           # Check mcp.json for directly embedded tokens
           if grep -q 'GITHUB_PERSONAL_ACCESS_TOKEN.*=.*"ghp_' .vscode/mcp.json 2>/dev/null; then
@@ -265,6 +292,7 @@ jobs:
           fi
 
           # Ensure environment variable references use the correct format
+          # #todo - Add additional checks for other environment variable formats
           if [ -f .vscode/mcp.json ] && ! grep -q 'GITHUB_PERSONAL_ACCESS_TOKEN.*=.*"\${env:' .vscode/mcp.json 2>/dev/null; then
             echo "::warning::mcp.json should use \${env:VARIABLE_NAME} syntax for environment variables"
           fi
@@ -276,6 +304,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
+          # #problems - Custom validation script issues will be caught here
           # Run a custom environment validation script
           if (Test-Path "./.scripts/automation/orchestration/Validate-Environment.ps1") {
             & "./.scripts/automation/orchestration/Validate-Environment.ps1" -Verbose
@@ -294,6 +323,7 @@ jobs:
             mkdir -p ./.vscode
 
             echo "# AutoGen Custom Dictionary" > "$DICT_PATH"
+            # #todo - Consider generating this list from project code analysis
             echo "autogen" >> "$DICT_PATH"
             echo "mcp" >> "$DICT_PATH"
             echo "vscode" >> "$DICT_PATH"
@@ -334,6 +364,9 @@ jobs:
             echo "flake8" >> "$DICT_PATH"
             echo "azdure" >> "$DICT_PATH"
             echo "esrp" >> "$DICT_PATH"
+            echo "codeowners" >> "$DICT_PATH"
+            echo "iterability" >> "$DICT_PATH"
+            echo "testneeded" >> "$DICT_PATH"
 
             echo "Created custom dictionary at $DICT_PATH"
           else
@@ -348,6 +381,7 @@ jobs:
             $settings = Get-Content $settingsPath -Raw | ConvertFrom-Json
             if (-not ($settings.'cSpell.customDictionaries'.dict)) {
               Write-Host "Updating VS Code settings to use the custom dictionary"
+              # #problems - Existing settings format might cause issues
               $settings | Add-Member -NotePropertyName 'cSpell.customDictionaries' -NotePropertyValue @{
                 dict = @{
                   name = "autogen-words"
@@ -372,6 +406,7 @@ jobs:
           echo "::group::Validating VS Code configuration files"
 
           # Check if VS Code files exist and are tracked
+          # #problems - Missing VS Code configuration files
           tracked_files=(
             ".vscode/extensions.json"
             ".vscode/launch.json"

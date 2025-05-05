@@ -1,0 +1,279 @@
+---
+applyTo: '**'
+# ---
+
+# 🔧 GitHub Copilot / Chat – Enhanced Prompt Engineering Framework
+# Location: `.github/copilot/framework.yaml`
+# Purpose: Define standardized AI-assisted development patterns, decomposition strategies,
+# and quality protocols for consistent, maintainable code generation.
+
+# ---
+
+# ## 📘 Framework Overview
+
+# This framework establishes a structured approach to AI-assisted development, enabling:
+# - **Deterministic code generation** with consistent, predictable outputs
+# - **Modular design patterns** emphasizing reusability and separation of concerns
+# - **Self-documenting implementations** with built-in traceability
+# - **Testing-oriented development** that anticipates validation requirements
+# - **Progressive refinement cycles** that build upon previous iterations
+
+# ---
+
+# ## ⚙️ Core Interaction Principles
+
+# ### ✅ Universal Behavior Protocol
+
+# - 🔹 **Pre-Implementation Planning**: Generate implementation plans with indexed steps before code
+# - 🔹 **Complete Solutions**: Provide full file replacements with all necessary imports and dependencies
+# - 🔹 **Architectural Integrity**: Every generated file or method adheres to SOLID principles
+# - 🔹 **Iterability First**: Design data structures with iteration patterns appropriate to language
+# - 🔹 **Runtime Consideration**: Explicitly account for error handling, edge cases and performance characteristics
+
+# ---
+
+# ## 📝 Request/Response Protocol
+
+# When requesting implementations, follow this pattern:
+
+# ```markdown
+# ### 🔍 IMPLEMENTATION REQUEST
+
+# **Context**: [Brief description of where this code fits]
+# **Purpose**: [What this code should accomplish]
+# **Constraints**: [Any limitations to respect]
+# **Pattern Preferences**: [Design patterns to follow]
+# **Language/Framework**: [Tech stack details]
+
+# ---
+
+# **Details**: [Fuller explanation if needed]
+# ```
+
+# Expected response format:
+
+# ```markdown
+# ### 🧩 Implementation Plan
+
+# 1. **Task Decomposition**:
+#    - Component 1: [Purpose]
+#    - Component 2: [Purpose]
+#    - ...
+
+# 2. **Architecture Approach**:
+#    - [Key architectural decisions explained]
+#    - [Dependencies and interactions]
+
+# 3. **Implementation Files**:
+#    - `[filepath1]`: [Purpose]
+#    - `[filepath2]`: [Purpose]
+#    - ...
+
+# ### 📄 Implementation: [filepath]
+
+# ```[language]
+# // Generated code with:
+# // - Complete imports
+# // - Well-structured components
+# // - Clear documentation
+# // - Error handling
+# // - Performance considerations
+# ```
+
+# ### 🧪 Validation Strategy
+
+# - Unit tests for [specific behaviors]
+# - Integration tests for [specific integrations]
+# - Potential edge cases: [list]
+# ```
+
+# ---
+
+# ## 📁 Copilot Integration Structure
+
+# Maintain these files for optimal Copilot assistance:
+
+# ### `./.github/copilot/domain/vocabulary.md`
+
+# Define domain-specific terminology, patterns, and conventions:
+
+# ```markdown
+# ## Domain Vocabulary
+
+# | Term | Definition | Example Usage |
+# |------|------------|---------------|
+# | Term1 | Meaning | Context where used |
+# ...
+# ```
+
+# ### `./.github/copilot/patterns/[pattern-name].md`
+
+# Document reusable patterns for the assistant to reference:
+
+# ```markdown
+# ## Pattern: [Name]
+
+# **Purpose**: [What this pattern solves]
+# **When to use**: [Appropriate scenarios]
+# **Implementation template**:
+
+# ```[language]
+# // Template code
+# ```
+
+# **Key considerations**:
+# - [Important note 1]
+# - [Important note 2]
+# ```
+
+# ### `./.github/copilot/workflows/[workflow-name].md`
+
+# Define repeatable processes:
+
+# ```markdown
+# ## Workflow: [Name]
+
+# **Steps**:
+# 1. [Step 1]
+# 2. [Step 2]
+# ...
+
+# **Inputs required**:
+# - [Input 1]
+# - [Input 2]
+
+# **Expected outputs**:
+# - [Output 1]
+# - [Output 2]
+# ```
+
+# ---
+
+# ## 🧠 Quality Assurance Protocol
+
+# All generated code must meet these standards:
+
+# 1. **Correctness**: Functionally accurate implementation
+# 2. **Completeness**: All edge cases and error conditions handled
+# 3. **Clarity**: Self-documenting with appropriate comments
+# 4. **Consistency**: Follows project conventions and patterns
+# 5. **Conciseness**: No redundant or unnecessary code
+# 6. **Compatibility**: Works with specified dependencies and environment
+# 7. **Testability**: Designed for automated testing
+
+# ---
+
+# ## 🔄 Refinement Cycle
+
+# Each implementation includes a refinement protocol:
+
+# 1. **Initial Implementation**: First complete solution
+# 2. **Evaluation**: Assessment against quality criteria
+# 3. **Refinement Request**: Specific improvements needed
+# 4. **Iteration**: Updated implementation with changes highlighted
+# 5. **Documentation**: Update documentation to reflect changes
+
+# When requesting refinements:
+
+# ```markdown
+# ### 🔄 Refinement Request
+
+# **Target**: [File or component to refine]
+# **Issues**:
+# 1. [Issue 1]
+# 2. [Issue 2]
+# ...
+# **Desired Outcome**: [What success looks like]
+# ```
+
+# ---
+
+# ## 📊 Implementation Metrics
+
+# For complex implementations, provide these metrics:
+
+# - **Complexity score**: Estimate of cognitive complexity
+# - **Dependency count**: Number of external dependencies
+# - **Test coverage potential**: Estimate of testable surface area
+# - **Maintenance forecast**: Anticipated maintenance needs
+
+# ---
+
+# ## 🧪 Testing Guidelines
+
+# Every implementation should suggest appropriate tests:
+
+# - **Unit tests**: For isolated functionality
+# - **Integration tests**: For component interactions
+# - **Property-based tests**: For behavior verification across input ranges
+# - **Performance tests**: For runtime characteristics
+
+# Test naming convention: `[ComponentName]_[Scenario]_[ExpectedResult]`
+
+# ---
+
+# ## 🛠️ Tool Integration
+
+# Enable these integrations where applicable:
+
+# - **Linters**: Compatibility with project linting rules
+# - **Type checkers**: Strong typing where supported
+# - **Package managers**: Proper dependency specification
+# - **Build systems**: Integration with build pipeline
+# - **CI/CD**: Considerations for automated testing
+
+# ---
+
+# ## 🔍 IDE Problem References
+
+# Use these tags to identify and track issues in your code:
+
+# - `#problems`: General marker for issues to be addressed
+# - `#todo`: Tasks that need to be completed
+# - `#fixme`: Bugs or incorrect implementations that need fixing
+# - `#optimize`: Areas that need performance improvement
+# - `#refactor`: Code that needs restructuring
+# - `#security`: Security issues that need to be addressed
+# - `#testneeded`: Code requiring test coverage
+
+# Always include a brief description of the issue to provide context.
+
+# ---
+
+# ## 🔒 AutoGen Fork Environment Variables
+
+# This framework acknowledges the following environment variables configured in the repository:
+
+# - `REPO_PATH`: "autogen"
+# - `FORK_AUTOGEN_OWNER`: DeanLuus22021994
+# - `FORK_AUTOGEN_SSH_REPO_URL`: "https://github.com/DeanLuus22021994/autogen"
+# - `FORK_AUTOGEN_USER_PERSONAL_ACCESS_TOKEN`: [SECURED]
+# - `FORK_AUTOGEN_USER_DOCKER_USERNAME`: deanluus22021994
+# - `FORK_USER_DOCKER_ACCESS_TOKEN`: [SECURED]
+# - `FORK_HUGGINGFACE_ACCESS_TOKEN`: [SECURED]
+
+# These variables should be properly referenced in workflows and scripts to ensure proper authentication and repository access.
+
+# ---
+
+# ## 📚 External Resources
+
+# Reference these resources for additional guidance:
+
+# - [AutoGen Documentation](https://microsoft.github.io/autogen/docs/)
+# - [GitHub Copilot Documentation](https://docs.github.com/en/copilot)
+# - [SOLID Principles](https://en.wikipedia.org/wiki/SOLID)
+# - [Testing Best Practices](https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs)
+# - [GitHub Actions Secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
+
+# ---
+
+# ## 🏆 Success Metrics
+
+# Evaluate the effectiveness of this framework using these metrics:
+
+# - **Code quality**: Reduction in bugs and technical debt
+# - **Development speed**: Time saved in implementation and debugging
+# - **Consistency**: Uniformity across the codebase
+# - **Learning curve**: Ease of onboarding new developers
+# - **Maintainability**: Long-term ease of updates and extensions
