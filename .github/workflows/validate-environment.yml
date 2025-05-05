@@ -180,49 +180,47 @@ jobs:
 
       - name: Create mypy configuration
         run: |
-          cat > mypy.ini << 'EOF'
-[mypy]
-disallow_untyped_defs = True
-disallow_incomplete_defs = True
-check_untyped_defs = True
-disallow_untyped_decorators = True
-no_implicit_optional = True
-strict_optional = True
-warn_redundant_casts = True
-warn_return_any = True
-warn_unused_ignores = True
-warn_unused_configs = True
-
-[mypy.plugins.numpy.*]
-follow_imports = skip
-
-[mypy.plugins.pandas.*]
-follow_imports = skip
-
-[mypy-numpy]
-ignore_missing_imports = True
-
-[mypy-pandas]
-ignore_missing_imports = True
-
-[mypy-matplotlib]
-ignore_missing_imports = True
-
-[mypy-seaborn]
-ignore_missing_imports = True
-
-[mypy-scipy]
-ignore_missing_imports = True
-
-[mypy-sklearn]
-ignore_missing_imports = True
-
-[mypy-transformers]
-ignore_missing_imports = True
-
-[mypy-torch]
-ignore_missing_imports = True
-EOF
+          echo "[mypy]" > mypy.ini
+          echo "disallow_untyped_defs = True" >> mypy.ini
+          echo "disallow_incomplete_defs = True" >> mypy.ini
+          echo "check_untyped_defs = True" >> mypy.ini
+          echo "disallow_untyped_decorators = True" >> mypy.ini
+          echo "no_implicit_optional = True" >> mypy.ini
+          echo "strict_optional = True" >> mypy.ini
+          echo "warn_redundant_casts = True" >> mypy.ini
+          echo "warn_return_any = True" >> mypy.ini
+          echo "warn_unused_ignores = True" >> mypy.ini
+          echo "warn_unused_configs = True" >> mypy.ini
+          echo "" >> mypy.ini
+          echo "[mypy.plugins.numpy.*]" >> mypy.ini
+          echo "follow_imports = skip" >> mypy.ini
+          echo "" >> mypy.ini
+          echo "[mypy.plugins.pandas.*]" >> mypy.ini
+          echo "follow_imports = skip" >> mypy.ini
+          echo "" >> mypy.ini
+          echo "[mypy-numpy]" >> mypy.ini
+          echo "ignore_missing_imports = True" >> mypy.ini
+          echo "" >> mypy.ini
+          echo "[mypy-pandas]" >> mypy.ini
+          echo "ignore_missing_imports = True" >> mypy.ini
+          echo "" >> mypy.ini
+          echo "[mypy-matplotlib]" >> mypy.ini
+          echo "ignore_missing_imports = True" >> mypy.ini
+          echo "" >> mypy.ini
+          echo "[mypy-seaborn]" >> mypy.ini
+          echo "ignore_missing_imports = True" >> mypy.ini
+          echo "" >> mypy.ini
+          echo "[mypy-scipy]" >> mypy.ini
+          echo "ignore_missing_imports = True" >> mypy.ini
+          echo "" >> mypy.ini
+          echo "[mypy-sklearn]" >> mypy.ini
+          echo "ignore_missing_imports = True" >> mypy.ini
+          echo "" >> mypy.ini
+          echo "[mypy-transformers]" >> mypy.ini
+          echo "ignore_missing_imports = True" >> mypy.ini
+          echo "" >> mypy.ini
+          echo "[mypy-torch]" >> mypy.ini
+          echo "ignore_missing_imports = True" >> mypy.ini
 
       - name: Run mypy validation
         run: mypy ./python/autogen
