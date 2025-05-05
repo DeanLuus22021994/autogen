@@ -1,101 +1,201 @@
 # Script to quickly toggle markdown linting on/off
 
-using namespace System.Management.Automation
-
 <#
 .SYNOPSIS
     Toggles markdown linting on or off.
 .DESCRIPTION
     Provides a simple interface to enable or disable markdown linting
-    by updating the XML configuration file.
+    by updating VS Code settings or the configuration file.
 .PARAMETER Enable
     Enables linting if specified. Cannot be used with -Disable.
 .PARAMETER Disable
     Disables linting if specified. Cannot be used with -Enable.
-.PARAMETER IgnoreDuringEditing
-    Sets whether linting should be ignored during editing.
+.PARAMETER Status
+    Shows the current linting status without changing anything.
 .EXAMPLE
     .\Toggle-MarkdownLinting.ps1 -Disable
     Turns off markdown linting.
 .EXAMPLE
-    .\Toggle-MarkdownLinting.ps1 -Enable -IgnoreDuringEditing $true
-    Turns on markdown linting but ignores it during editing.
+    .\Toggle-MarkdownLinting.ps1 -Enable
+    Turns on markdown linting.
+.EXAMPLE
+    .\Toggle-MarkdownLinting.ps1 -Status
+    Shows the current markdown linting status.
 #>
 [CmdletBinding(DefaultParameterSetName = 'Toggle')]
 param(
-    [Parameter(ParameterSetName = 'Enable')]
+    [Parameter(ParameterSetName = 'Enable', Mandatory = $false)]
     [switch]$Enable,
 
-    [Parameter(ParameterSetName = 'Disable')]
+    [Parameter(ParameterSetName = 'Disable', Mandatory = $false)]
     [switch]$Disable,
 
-    [Parameter()]
-    [bool]$IgnoreDuringEditing = $null
+    [Parameter(ParameterSetName = 'Status', Mandatory = $false)]
+    [switch]$Status
 )
 
-# Import the linting loader module
-$loaderPath = Join-Path $PSScriptRoot "core\LintingLoader.ps1"
+# Get the directory of the current script
+$scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
+$repoRoot = Split-Path -Parent (Split-Path -Parent $scriptPath)
 
+# Import helper module if it exists
+$helperModulePath = Join-Path -Path $scriptPath -ChildPath "MarkdownLintHelpers.psm1"
+if (Test-Path -Path $helperModulePath) {
+    Import-Module -Name $helperModulePath -Force
+    Write-Verbose "Imported helper module: $helperModulePath"
+}
+
+function Get-LintingStatus {
+    [CmdletBinding()]
+    param()
+
+    $vscodeSettingsPath = Join-Path -Path $repoRoot -ChildPath ".vscode\settings.json"
+
+    if (-not (Test-Path -Path $vscodeSettingsPath)) {
+        return @{
+            Enabled = $true  # Default to enabled if there's no settings file
+            InSettings = $false
+        }
+    }
+
+    try {
+        $settings = Get-Content -Path $vscodeSettingsPath -Raw | ConvertFrom-Json -ErrorAction Stop
+
+        # Check if markdownlint.enabled property exists and is not null
+        if (Get-Member -InputObject $settings -Name "markdownlint.enabled" -MemberType NoteProperty) {
+            return @{
+                Enabled = [bool]$settings."markdownlint.enabled"
+                InSettings = $true
+            }
+        }
+        else {
+            return @{
+                Enabled = $true  # Default to enabled if property doesn't exist
+                InSettings = $false
+            }
+        }
+    }
+    catch {
+        Write-Warning "Error reading VS Code settings: $_"
+        return @{
+            Enabled = $true  # Default to enabled on error
+            InSettings = $false
+        }
+    }
+}
+
+function Set-LintingStatus {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [bool]$Enabled
+    )
+
+    $vscodeDir = Join-Path -Path $repoRoot -ChildPath ".vscode"
+    $vscodeSettingsPath = Join-Path -Path $vscodeDir -ChildPath "settings.json"
+
+    # Create .vscode directory if it doesn't exist
+    if (-not (Test-Path -Path $vscodeDir)) {
+        New-Item -Path $vscodeDir -ItemType Directory -Force | Out-Null
+    }
+
+    # Create settings.json if it doesn't exist
+    if (-not (Test-Path -Path $vscodeSettingsPath)) {
+        Set-Content -Path $vscodeSettingsPath -Value "{}" -Force
+    }
+
+    try {
+        $settings = Get-Content -Path $vscodeSettingsPath -Raw | ConvertFrom-Json
+
+        # Create a PSCustomObject if settings is null
+        if ($null -eq $settings) {
+            $settings = [PSCustomObject]@{}
+        }
+
+        # Add or update markdownlint.enabled property
+        $settings | Add-Member -MemberType NoteProperty -Name "markdownlint.enabled" -Value $Enabled -Force
+
+        # Save settings back to file
+        $settings | ConvertTo-Json -Depth 10 | Set-Content -Path $vscodeSettingsPath -Force
+
+        return $true
+    }
+    catch {
+        Write-Error "Failed to update VS Code settings: $_"
+        return $false
+    }
+}
+
+function Show-LintingStatus {
+    [CmdletBinding()]
+    param()
+
+    $status = Get-LintingStatus
+
+    if ($status.Enabled) {
+        Write-Host "Markdown linting is currently ENABLED." -ForegroundColor Green
+    }
+    else {
+        Write-Host "Markdown linting is currently DISABLED." -ForegroundColor Yellow
+    }
+
+    if (-not $status.InSettings) {
+        Write-Host "Note: This is the default setting as no explicit configuration was found." -ForegroundColor Cyan
+    }
+
+    # Check if VS Code extension is installed
+    try {
+        $extensions = Invoke-Expression "code --list-extensions" -ErrorAction SilentlyContinue
+        if ($extensions -contains "DavidAnson.vscode-markdownlint") {
+            Write-Host "VS Code markdownlint extension is installed." -ForegroundColor Green
+        }
+        else {
+            Write-Warning "VS Code markdownlint extension is not installed. Install it for better integration."
+        }
+    }
+    catch {
+        Write-Verbose "Could not check VS Code extensions: $_"
+    }
+}
+
+# Main execution
 try {
-    if (-not (Test-Path $loaderPath)) {
-        throw "Linting loader module not found at $loaderPath"
+    if ($Status) {
+        Show-LintingStatus
     }
-
-    . $loaderPath
-
-    # Get current configuration
-    $currentConfig = Get-LintingConfiguration
-
-    # Determine the new enabled state using PowerShell 7 switch expression with enhanced fallthrough handling
-    $newEnabled = switch -Exact ($PSCmdlet.ParameterSetName) {
-        'Enable'  { $true }
-        'Disable' { $false }
-        'Toggle'  { -not $currentConfig.Enabled }
-        default   {
-            Write-Warning "Unexpected parameter set: $($PSCmdlet.ParameterSetName)"
-            -not $currentConfig.Enabled
+    elseif ($Enable) {
+        $result = Set-LintingStatus -Enabled $true
+        if ($result) {
+            Write-Host "Markdown linting has been ENABLED." -ForegroundColor Green
         }
+        Show-LintingStatus
     }
-
-    # Update the configuration using splatting for cleaner parameter passing
-    $params = @{
-        Enabled = $newEnabled
-    }
-
-    # Add IgnoreDuringEditing if specified using null-conditional operator
-    if ($null -ne $IgnoreDuringEditing) {
-        $params.IgnoreDuringEditing = $IgnoreDuringEditing
-    }
-
-    # Update configuration and handle result
-    $result = Update-LintingConfiguration @params
-
-    # Use command success pipeline instead of if/else for cleaner flow control
-    $result ? {
-        # Use string interpolation for cleaner string formatting
-        $status = $newEnabled ? "enabled" : "disabled"
-        Write-Host "Markdown linting is now $status" -ForegroundColor Green
-
-        # Check if linting is both enabled and set to be ignored during editing
-        if ($newEnabled -and ($params.IgnoreDuringEditing ?? $currentConfig.IgnoreDuringEditing)) {
-            Write-Host "Note: Linting will be ignored during editing" -ForegroundColor Yellow
+    elseif ($Disable) {
+        $result = Set-LintingStatus -Enabled $false
+        if ($result) {
+            Write-Host "Markdown linting has been DISABLED." -ForegroundColor Yellow
         }
-    } : {
-        # Enhanced error handling with more specific feedback
-        Write-Host "Failed to update linting configuration" -ForegroundColor Red
-        Write-Host "Please check if you have permission to modify the configuration file" -ForegroundColor Red
+        Show-LintingStatus
+    }
+    else {
+        # No parameter specified, toggle current state
+        $currentStatus = Get-LintingStatus
+        $newState = -not $currentStatus.Enabled
+        $result = Set-LintingStatus -Enabled $newState
+
+        if ($result) {
+            if ($newState) {
+                Write-Host "Markdown linting has been ENABLED." -ForegroundColor Green
+            }
+            else {
+                Write-Host "Markdown linting has been DISABLED." -ForegroundColor Yellow
+            }
+        }
+
+        Show-LintingStatus
     }
 }
 catch {
-    # Advanced error handling with PowerShell 7.5 error variable enhancements
-    $errorDetails = @{
-        Message = $_.Exception.Message
-        Category = $_.CategoryInfo.Category
-        File = $loaderPath
-        LineNumber = $_.InvocationInfo.ScriptLineNumber
-    }
-
-    Write-Host "Error: $($errorDetails.Message)" -ForegroundColor Red
-    Write-Verbose "Error details: $(ConvertTo-Json $errorDetails -Compress)"
+    Write-Error "Error toggling markdown linting: $_"
     exit 1
 }
