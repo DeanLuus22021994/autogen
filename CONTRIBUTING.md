@@ -134,3 +134,47 @@ Now that 0.4.0 is out, we should ensure the docs between versions are easy to na
 ```
 
 See [here](https://pydata-sphinx-theme.readthedocs.io/en/stable/examples/kitchen-sink/admonitions.html#versionadded) for how they are rendered.
+
+## Markdown Linting Rules
+
+We use `markdownlint-cli` for linting markdown files. This helps ensure consistency and readability across all markdown documentation.
+
+### Running `markdownlint` Locally
+
+To run `markdownlint` locally, you need to have Node.js installed. You can then install `markdownlint-cli` globally using npm:
+
+```bash
+npm install -g markdownlint-cli
+```
+
+Once installed, you can run `markdownlint` on all markdown files in the repository:
+
+```bash
+markdownlint '**/*.md' '**/*.markdown' '**/*.mdwn' '**/*.mdown' '**/*.mkd'
+```
+
+### Fixing Linting Issues
+
+Before submitting a pull request, make sure to fix any linting issues in your markdown files. This helps maintain the quality and consistency of the documentation.
+
+## YAML Linting Rules
+
+We use `yamllint` for linting YAML files. This helps ensure consistency and readability across all YAML configuration files.
+
+### Running `yamllint` Locally
+
+To run `yamllint` locally, you need to have Python installed. You can then install `yamllint` using pip:
+
+```bash
+pip install yamllint
+```
+
+Once installed, you can run `yamllint` on all YAML files in the repository:
+
+```bash
+yamllint '**/*.yaml' '**/*.yml'
+```
+
+### Fixing Linting Issues
+
+Before submitting a pull request, make sure to fix any linting issues in your YAML files. This helps maintain the quality and consistency of the configuration files.

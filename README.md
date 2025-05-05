@@ -8,6 +8,8 @@
 [![Discord](https://img.shields.io/badge/discord-chat-green?logo=discord)](https://aka.ms/autogen-discord)
 [![Documentation](https://img.shields.io/badge/Documentation-AutoGen-blue?logo=read-the-docs)](https://microsoft.github.io/autogen/)
 [![Blog](https://img.shields.io/badge/Blog-AutoGen-blue?logo=blogger)](https://devblogs.microsoft.com/autogen/)
+[![Markdown Lint](https://github.com/DeanLuus22021994/autogen/actions/workflows/markdown-lint.yml/badge.svg)](https://github.com/DeanLuus22021994/autogen/actions/workflows/markdown-lint.yml)
+[![YAML Lint](https://github.com/DeanLuus22021994/autogen/actions/workflows/yaml-lint.yml/badge.svg)](https://github.com/DeanLuus22021994/autogen/actions/workflows/yaml-lint.yml)
 
 </div>
 
@@ -127,6 +129,50 @@ The ecosystem also supports two essential _developer tools_:
 You can use the AutoGen framework and developer tools to create applications for your domain. For example, [Magentic-One](./python/packages/magentic-one-cli/) is a state-of-the-art multi-agent team built using AgentChat API and Extensions API that can handle a variety of tasks that require web browsing, code execution, and file handling.
 
 With AutoGen you get to join and contribute to a thriving ecosystem. We host weekly office hours and talks with maintainers and community. We also have a [Discord server](https://aka.ms/autogen-discord) for real-time chat, GitHub Discussions for Q&A, and a blog for tutorials and updates.
+
+## Markdown Linting
+
+We use `markdownlint-cli` for linting markdown files. This helps ensure consistency and readability across all markdown documentation.
+
+### Running `markdownlint` Locally
+
+To run `markdownlint` locally, you need to have Node.js installed. You can then install `markdownlint-cli` globally using npm:
+
+```bash
+npm install -g markdownlint-cli
+```
+
+Once installed, you can run `markdownlint` on all markdown files in the repository:
+
+```bash
+markdownlint '**/*.md' '**/*.markdown' '**/*.mdwn' '**/*.mdown' '**/*.mkd'
+```
+
+### Fixing Linting Issues
+
+Before submitting a pull request, make sure to fix any linting issues in your markdown files. This helps maintain the quality and consistency of the documentation.
+
+## YAML Linting
+
+We use `yamllint` for linting YAML files. This helps ensure consistency and readability across all YAML configuration files.
+
+### Running `yamllint` Locally
+
+To run `yamllint` locally, you need to have Python installed. You can then install `yamllint` using pip:
+
+```bash
+pip install yamllint
+```
+
+Once installed, you can run `yamllint` on all YAML files in the repository:
+
+```bash
+yamllint '**/*.yaml' '**/*.yml'
+```
+
+### Fixing Linting Issues
+
+Before submitting a pull request, make sure to fix any linting issues in your YAML files. This helps maintain the quality and consistency of the configuration files.
 
 ## Where to go next?
 
