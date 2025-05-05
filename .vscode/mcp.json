@@ -6,8 +6,7 @@
 				"-y",
 				"@modelcontextprotocol/server-sequential-thinking"
 			]
-		},
-		"github": {
+		},		"github": {
 			"command": "uv",
 			"args": [
 				"run",
@@ -18,7 +17,7 @@
 				"mcp/github"
 			],
 			"env": {
-				"GITHUB_PERSONAL_ACCESS_TOKEN": "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"
+				"GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_PERSONAL_ACCESS_TOKEN}"
 			}
 		},
 		"playwright": {
