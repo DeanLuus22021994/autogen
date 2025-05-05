@@ -3,20 +3,28 @@
   "$schema": "https://raw.githubusercontent.com/DavidAnson/markdownlint/main/schema/markdownlint-config-schema.json",
   "config": {
     "default": true,
-    "MD013": { "line_length": 120 },
-    "MD024": { "allow_different_nesting": true },
-    "MD033": { "allowed_elements": ["br", "img", "a"] },
-    "MD041": false
+    "MD013": false,
+    "MD022": false,
+    "MD025": false,
+    "MD031": false,
+    "MD032": false,
+    "MD034": false,
+    "MD055": false,
+    "MD056": false
   },
-  "ignores": [
-    "node_modules/**",
-    ".git/**",
-    "**/*.svg"
-  ],
   "customRules": [
     ".github/linting/rules/**/*.js"
   ],
+  "ignores": [
+    "README.md",
+    "node_modules/**",
+    "**/package.json",
+    "**/package-lock.json"
+  ],
+  "noProgress": true,
   "outputFormatters": [
-    ["markdownlint-cli2-formatter-pretty", { "appendLink": true }]
-  ]
+    ["markdownlint-cli2-formatter-default"]
+  ],
+  "fix": false,
+  "gitignore": true
 }

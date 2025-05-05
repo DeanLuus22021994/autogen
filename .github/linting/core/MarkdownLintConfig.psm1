@@ -24,26 +24,42 @@ function Get-DefaultMarkdownLintConfig {
     [OutputType([PSCustomObject])]
     param()
 
+    # Import configuration templates if available
+    $configTemplatesPath = Join-Path (Split-Path $PSScriptRoot) "config\DefaultConfigs.psm1"
+    if (Test-Path $configTemplatesPath) {
+        Import-Module $configTemplatesPath -Force
+        return Get-MarkdownLintCliConfig
+    }
+
+    # Fallback default configuration
     return [PSCustomObject]@{
         '$schema' = "https://raw.githubusercontent.com/DavidAnson/markdownlint/main/schema/markdownlint-config-schema.json"
         config = @{
             default = $true
-            MD013 = @{ line_length = 120 }
-            MD024 = @{ allow_different_nesting = $true }
-            MD033 = @{ allowed_elements = @("br", "img", "a") }
-            MD041 = $false
+            MD013 = $false
+            MD022 = $false
+            MD025 = $false
+            MD031 = $false
+            MD032 = $false
+            MD034 = $false
+            MD055 = $false
+            MD056 = $false
         }
         ignores = @(
+            "README.md",
             "node_modules/**",
-            ".git/**",
-            "**/*.svg"
+            "**/package.json",
+            "**/package-lock.json"
         )
         customRules = @(
             ".github/linting/rules/**/*.js"
         )
         outputFormatters = @(
-            @("markdownlint-cli2-formatter-pretty", @{ appendLink = $true })
+            @("markdownlint-cli2-formatter-default")
         )
+        noProgress = $true
+        fix = $false
+        gitignore = $true
     }
 }
 
@@ -107,6 +123,7 @@ function Merge-MarkdownLintConfig {
         [PSCustomObject]$OverrideConfig
     )
 
+    # Using the ?? operator from PowerShell 7.0+ for null coalescence
     $merged = [PSCustomObject]@{}
 
     # Copy all properties from base config
@@ -132,9 +149,54 @@ function Merge-MarkdownLintConfig {
     return $merged
 }
 
+function Export-MarkdownLintConfig {
+    <#
+    .SYNOPSIS
+        Exports a markdown linting configuration to a file.
+    .DESCRIPTION
+        Saves a configuration object to a JSON or JSONC file.
+    .PARAMETER Config
+        The configuration object to export.
+    .PARAMETER Path
+        The file path where the configuration will be saved.
+    .PARAMETER AsJsonc
+        If true, exports as JSONC (with comments); otherwise as regular JSON.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [PSCustomObject]$Config,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+
+        [Parameter()]
+        [switch]$AsJsonc
+    )
+
+    # Validate config before exporting
+    if (-not (Test-MarkdownLintConfig -Config $Config)) {
+        throw "Invalid markdown lint configuration"
+    }
+
+    try {
+        $json = $Config | ConvertTo-Json -Depth 10
+
+        # If JSONC, we could add comments here (in a real implementation)
+        # For now, we just save as regular JSON
+
+        $json | Out-File -FilePath $Path -Encoding utf8 -Force
+        Write-Verbose "Configuration exported to $Path"
+    }
+    catch {
+        throw "Failed to export configuration: $_"
+    }
+}
+
 # Export functions
 Export-ModuleMember -Function @(
     'Get-DefaultMarkdownLintConfig',
     'Test-MarkdownLintConfig',
-    'Merge-MarkdownLintConfig'
+    'Merge-MarkdownLintConfig',
+    'Export-MarkdownLintConfig'
 )

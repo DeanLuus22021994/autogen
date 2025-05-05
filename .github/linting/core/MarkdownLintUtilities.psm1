@@ -88,76 +88,76 @@ function Register-MarkdownLintVSCodeTasks {
     [CmdletBinding()]
     param()
 
-    $vscodePath = Join-Path (Join-Path $PSScriptRoot ".." ".." "..") ".vscode"
-    $tasksPath = Join-Path $vscodePath "tasks.json"
-
-    if (-not (Test-Path $vscodePath)) {
-        New-Item -Path $vscodePath -ItemType Directory -Force | Out-Null
-    }
-
-    if (-not (Test-Path $tasksPath)) {
-        # Create new tasks file
-        @{
-            version = "2.0.0"
-            tasks = @(
-                @{
-                    label = "Lint Markdown"
-                    type = "shell"
-                    command = "npx markdownlint-cli2 '**/*.md'"
-                    problemMatcher = []
-                    group = @{
-                        kind = "build"
-                        isDefault = $false
-                    }
-                }
-            )
-        } | ConvertTo-Json -Depth 4 | Out-File $tasksPath -Force
-
-        Write-Verbose "Created VS Code tasks configuration"
+    # Import the VS Code integration module
+    $vsCodeModulePath = Join-Path (Split-Path $PSScriptRoot) "scripts\Update-VsCodeConfig.ps1"
+    if (Test-Path $vsCodeModulePath) {
+        . $vsCodeModulePath
+        Update-VsCodeTasksConfiguration
     } else {
-        # Update existing tasks file
-        try {
-            $tasksContent = Get-Content $tasksPath -Raw | ConvertFrom-Json
+        Write-Warning "VS Code integration module not found at $vsCodeModulePath"
 
-            # Check if our task already exists
-            $markdownTask = $tasksContent.tasks | Where-Object { $_.label -eq "Lint Markdown" }
+        # Fallback implementation
+        $vscodePath = Join-Path (Join-Path $PSScriptRoot ".." ".." "..") ".vscode"
+        $tasksPath = Join-Path $vscodePath "tasks.json"
 
-            if (-not $markdownTask) {
-                # Add our task
-                $newTask = @{
-                    label = "Lint Markdown"
-                    type = "shell"
-                    command = "npx markdownlint-cli2 '**/*.md'"
-                    problemMatcher = @()
-                    group = @{
-                        kind = "build"
-                        isDefault = $false
+        if (-not (Test-Path $vscodePath)) {
+            New-Item -Path $vscodePath -ItemType Directory -Force | Out-Null
+        }
+
+        if (-not (Test-Path $tasksPath)) {
+            # Create new tasks file
+            @{
+                version = "2.0.0"
+                tasks = @(
+                    @{
+                        label = "Lint Markdown"
+                        type = "shell"
+                        command = "npx markdownlint-cli2 '**/*.md'"
+                        problemMatcher = @()
+                        group = @{
+                            kind = "build"
+                            isDefault = $false
+                        }
                     }
-                }
+                )
+            } | ConvertTo-Json -Depth 4 | Out-File $tasksPath -Force
 
-                $tasksContent.tasks += $newTask
-                $tasksContent | ConvertTo-Json -Depth 4 | Out-File $tasksPath -Force
-
-                Write-Verbose "Added Markdown linting task to VS Code configuration"
-            } else {
-                Write-Verbose "Markdown linting task already exists in VS Code configuration"
-            }
-        } catch {
-            Write-Warning "Could not update VS Code tasks: $_"
+            Write-Verbose "Created VS Code tasks configuration"
         }
     }
 }
 
-# Fix for the "esac" spelling issue in the original file
-# This is a placeholder - in the original file "esac" is likely part
-# of a bash/shell case statement end marker and should be kept as is
+# cSpell:ignore esac
+# Note: 'esac' is a valid bash keyword - it's 'case' spelled backwards
+# and is used to end case statements in shell scripts
+
 function Process-ShellCommands {
+    <#
+    .SYNOPSIS
+        Processes shell commands with proper handling of special keywords.
+    .DESCRIPTION
+        Ensures shell script syntax is properly handled, including bash-specific
+        keywords like 'esac' (which is 'case' spelled backwards, used to end
+        case statements in shell scripts).
+    .PARAMETER Command
+        The shell command to process.
+    .EXAMPLE
+        Process-ShellCommands -Command 'case "$1" in start) echo "Starting"; ;; stop) echo "Stopping"; ;; esac'
+    #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
         [string]$Command
     )
 
+    # Import the shell processing module if available
+    $shellModulePath = Join-Path (Split-Path $PSScriptRoot) "scripts\Process-ShellCommands.ps1"
+    if (Test-Path $shellModulePath) {
+        . $shellModulePath
+        return Process-ShellCommand -Command $Command
+    }
+
+    # Fallback implementation
     # Handle shell commands, including those with case statements
     # In shell scripts, "case" blocks end with "esac" (case spelled backwards)
     if ($Command -match "case .* in") {

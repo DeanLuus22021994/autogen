@@ -1,23 +1,17 @@
-# Node modules
-node_modules/
-
-# Git directories
-.git/
-
-# Build outputs
-dist/
-build/
-
-# Images and binary files
-**/*.svg
-**/*.png
-**/*.jpg
-**/*.jpeg
-**/*.gif
-**/*.ico
-
-# Generated documentation
-docs/generated/
-
-# Third-party markdown
-vendor/
+{
+  "default": true,
+  "MD013": false,
+  "MD022": false,
+  "MD025": false,
+  "MD031": false,
+  "MD032": false,
+  "MD034": false,
+  "MD055": false,
+  "MD056": false,
+  "MD041": true,
+  "MD042": true,
+  "MD043": true,
+  "MD044": true,
+  "MD046": { "style": "consistent" },
+  "MD048": { "style": "backtick" }
+}
