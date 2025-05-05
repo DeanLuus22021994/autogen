@@ -14,7 +14,7 @@ AutoGenBench also requires Docker (Desktop or Engine). **It will not run in GitH
 
 If you are working in WSL, you can follow the instructions below to set up your environment:
 
-1. Install Docker Desktop. After installation, restart is needed, then open Docker Desktop, in Settings, Ressources, WSL Integration, Enable integration with additional distros – Ubuntu
+1. Install Docker Desktop. After installation, restart is needed, then open Docker Desktop, in Settings, Resources, WSL Integration, Enable integration with additional distributions – Ubuntu
 2. Clone autogen and export `AUTOGEN_REPO_BASE`. This environment variable enables the Docker containers to use the correct version agents.
     ```bash
     git clone git@github.com:microsoft/autogen.git
@@ -44,9 +44,9 @@ If an OAI_CONFIG_LIST is *not* provided (by means of file or environment variabl
 
 For some benchmark scenarios, additional keys may be required (e.g., keys for the Bing Search API). These can be added to an `ENV.json` file in the current working folder. An example `ENV.json` file is provided below:
 
-```
+```json
 {
-    "BING_API_KEY": "xxxyyyzzz"
+    "BING_API_KEY": "xxx-yyy-zzz"
 }
 ```
 
@@ -96,7 +96,7 @@ Note: This will attempt to download HumanEval
 
 Once the script completes, you should now see a folder in your current directory called `Tasks` that contains one JSONL file per template in `Templates`.
 
-Now to run a specific subset of HumanEval use:
+**Now to run a specific subset of HumanEval use:**
 
 ```bash
 agbench run Tasks/human_eval_MagenticOne.jsonl
@@ -111,7 +111,7 @@ agbench tabulate Results/human_eval_MagenticOne
 Where:
 
 - `agbench run Tasks/human_eval_MagenticOne.jsonl` runs the tasks defined in `Tasks/human_eval_MagenticOne.jsonl`
-- `agbench tablue results/human_eval_MagenticOne` tabulates the results of the run
+- `agbench tabulate results/human_eval_MagenticOne` tabulates the results of the run
 
 Each of these commands has extensive in-line help via:
 
