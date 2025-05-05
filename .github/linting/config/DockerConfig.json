@@ -1,0 +1,37 @@
+{
+  "dockerConfig": {
+    "imageName": "autogen-markdown-lint",
+    "buildArgs": {
+      "NODE_VERSION": "18-alpine",
+      "MARKDOWNLINT_VERSION": "0.7.1"
+    },
+    "volumeMounts": {
+      "rules": "/app/rules",
+      "testFiles": "/app/test",
+      "config": "/app/config"
+    },
+    "performance": {
+      "useLayerCaching": true,
+      "prewarmContainer": true,
+      "useAlpineBase": true
+    }
+  },
+  "testConfig": {
+    "defaultTestPath": ".",
+    "filePatterns": ["**/*.md"],
+    "ignorePatterns": [
+      "node_modules/**",
+      ".git/**",
+      ".github/ISSUE_TEMPLATE/**"
+    ],
+    "dynamicRuleLoading": {
+      "enabled": true,
+      "scanSubdirectories": true
+    },
+    "reporting": {
+      "enableJsonOutput": true,
+      "generateSummary": true,
+      "highlightProblems": true
+    }
+  }
+}

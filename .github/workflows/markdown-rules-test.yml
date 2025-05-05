@@ -1,0 +1,47 @@
+name: Markdown Rule Tests
+
+on:
+  push:
+    paths:
+      - '.github/linting/rules/**'
+      - '**/*.md'
+  pull_request:
+    paths:
+      - '.github/linting/rules/**'
+      - '**/*.md'
+  workflow_dispatch:
+
+jobs:
+  test-markdown-rules:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+
+      - name: Set up PowerShell
+        uses: azure/powershell@v1
+        with:
+          azps-version: latest
+          failOnStderr: true
+
+      - name: Build Docker Image
+        run: |
+          pwsh -File .github/linting/Test-MarkdownRules.ps1 -BuildContainer
+
+      - name: Test Markdown Rules
+        run: |
+          pwsh -File .github/linting/Test-MarkdownRules.ps1 -Detailed
+
+      - name: Test Custom Rules
+        run: |
+          # Test each custom rule individually
+          Get-ChildItem -Path .github/linting/rules -Filter *.js |
+          ForEach-Object {
+            $ruleName = $_.BaseName
+            Write-Host "Testing rule: $ruleName"
+            pwsh -File .github/linting/Test-SpecificRule.ps1 -RuleName $ruleName -UseDocker
+          }
