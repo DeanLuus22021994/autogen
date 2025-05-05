@@ -7,18 +7,22 @@ This document explains how to set up your environment variables for working with
 The following environment variables need to be set on your system or in GitHub Secrets for Actions:
 
 ### Repository Configuration
+
 - `REPO_PATH`: The name of the repository (default: "autogen")
 
 ### GitHub Configuration
+
 - `FORK_AUTOGEN_OWNER`: Your GitHub username (e.g., "DeanLuus22021994")
 - `FORK_AUTOGEN_SSH_REPO_URL`: The HTTPS URL to your forked repository
 - `FORK_AUTOGEN_USER_PERSONAL_ACCESS_TOKEN`: Your GitHub Personal Access Token (PAT)
 
 ### Docker Configuration
+
 - `FORK_AUTOGEN_USER_DOCKER_USERNAME`: Your Docker Hub username
 - `FORK_USER_DOCKER_ACCESS_TOKEN`: Your Docker Hub access token
 
 ### API Tokens
+
 - `FORK_HUGGINGFACE_ACCESS_TOKEN`: Your Hugging Face access token
 
 ## Setting Environment Variables
@@ -54,8 +58,63 @@ You can validate your environment setup by running the "Validate Environment Set
 
 ## Troubleshooting
 
-If you encounter Git authentication errors:
+### Git Authentication Errors
 
-1. Check that your Personal Access Token has the correct scopes (repo, workflow, packages)
-2. Ensure your token has not expired
+If you encounter Git authentication errors (e.g., "Permission denied (publickey)"), you can use our fix scripts:
+
+#### Automatic Fix Scripts (No Prompts)
+
+1. For Windows users:
+
+   ```powershell
+   cd .devcontainer
+   .\auto-fix-git-auth.ps1
+   ```
+
+2. For Linux/Mac users:
+
+   ```bash
+   cd .devcontainer
+   chmod +x auto-fix-git-auth.sh
+   ./auto-fix-git-auth.sh
+   ```
+
+These scripts will automatically configure Git to use HTTPS with a personal access token from your environment variables.
+
+#### Interactive Fix Scripts (With Prompts)
+
+1. For Windows users:
+
+   ```powershell
+   cd .devcontainer
+   .\setup-environment.ps1
+   ```
+
+2. For Linux/Mac users:
+
+   ```bash
+   cd .devcontainer
+   chmod +x setup-environment.sh
+   ./setup-environment.sh
+   ```
+
+These scripts will:
+
+1. Prompt you for your GitHub username and personal access token
+2. Configure Git to use HTTPS with your token instead of SSH
+3. Test the connection to verify it works
+4. Optionally save these credentials as environment variables
+
+#### Manual Fix
+
+If the quick-fix scripts don't resolve your issue, you can manually configure Git:
+
+1. Ensure your Personal Access Token has the correct scopes (repo, workflow, packages)
+2. Configure Git to use HTTPS with your token:
+
+   ```bash
+   git config --global url."https://YOUR_TOKEN@github.com/YOUR_USERNAME".insteadOf "git@github.com:YOUR_USERNAME"
+   git config --global url."https://YOUR_TOKEN@github.com/YOUR_USERNAME".insteadOf "https://github.com/YOUR_USERNAME"
+   ```
+   ```
 3. Verify that the repo exists and you have proper access permissions

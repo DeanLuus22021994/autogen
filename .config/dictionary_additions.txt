@@ -1,0 +1,9 @@
+autogen
+agentchat
+publickey
+autogenstudio
+asyncio
+HUGGINGFACE
+appdir
+Multimodal
+Magentic

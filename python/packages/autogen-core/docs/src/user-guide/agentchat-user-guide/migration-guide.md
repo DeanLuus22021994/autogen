@@ -65,7 +65,7 @@ See each feature below for detailed information on how to migrate.
   - [Code Executors](#code-executors)
 
 The following features currently in `v0.2`
-will be provided in the future releases of `v0.4.*` versions:
+will be provided in the future releases of `v0.5.*` versions:
 
 - Model Client Cost [#4835](https://github.com/microsoft/autogen/issues/4835)
 - Teachable Agent
@@ -611,7 +611,7 @@ async def main() -> None:
     stream = group_chat.run_stream(task="Write a python script to print 'Hello, world!'")
     # `Console` is a simple UI to display the stream.
     await Console(stream)
-    
+
     # Close the connection to the model client.
     await model_client.close()
 
@@ -1332,7 +1332,7 @@ async def main() -> None:
             break
         response = await assistant.on_messages([TextMessage(content=user_input, source="user")], CancellationToken())
         print("Assistant:", response.chat_message.to_text())
-    
+
     await model_client.close()
 
 asyncio.run(main())

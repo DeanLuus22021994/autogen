@@ -7,7 +7,7 @@ name = "agbench"
 dynamic = ["version"]
 license = {file = "LICENSE-CODE"}
 authors = [
-  { name="Adam Fourney", email="adamfo@microsoft.com" },
+  { name = "Adam Fourney", email = "adamfo@microsoft.com" },
 ]
 description = "AutoGen Benchmarking Tools"
 readme = "README.md"

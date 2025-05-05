@@ -1,13 +1,13 @@
 # This script helps set up the required environment variables for AutoGen development
 
-# Function to validate input is not empty
-function Validate-Input {
+# Function to test input is not empty
+function Test-InputNotEmpty {
     param(
-        [string]$input,
+        [string]$inputValue,
         [string]$message
     )
 
-    if ([string]::IsNullOrWhiteSpace($input)) {
+    if ([string]::IsNullOrWhiteSpace($inputValue)) {
         Write-Host $message -ForegroundColor Red
         return $false
     }
@@ -34,7 +34,7 @@ Write-Host ""
 
 # Get GitHub username
 $githubUsername = Read-Host "Enter your GitHub username (e.g., DeanLuus22021994)"
-if (Validate-Input $githubUsername "GitHub username is required.") {
+if (Test-InputNotEmpty $githubUsername "GitHub username is required.") {
     Set-UserEnvironmentVariable "FORK_AUTOGEN_OWNER" $githubUsername
 }
 
@@ -44,13 +44,13 @@ $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($githubToke
 $tokenValue = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
 [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($BSTR)
 
-if (Validate-Input $tokenValue "GitHub Personal Access Token is required.") {
+if (Test-InputNotEmpty $tokenValue "GitHub Personal Access Token is required.") {
     Set-UserEnvironmentVariable "FORK_AUTOGEN_USER_PERSONAL_ACCESS_TOKEN" $tokenValue
 }
 
 # Get Docker username
 $dockerUsername = Read-Host "Enter your Docker Hub username"
-if (Validate-Input $dockerUsername "Docker Hub username is required.") {
+if (Test-InputNotEmpty $dockerUsername "Docker Hub username is required.") {
     Set-UserEnvironmentVariable "FORK_AUTOGEN_USER_DOCKER_USERNAME" $dockerUsername
 }
 
@@ -60,7 +60,7 @@ $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($dockerToke
 $dockerTokenValue = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
 [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($BSTR)
 
-if (Validate-Input $dockerTokenValue "Docker Hub access token is required.") {
+if (Test-InputNotEmpty $dockerTokenValue "Docker Hub access token is required.") {
     Set-UserEnvironmentVariable "FORK_USER_DOCKER_ACCESS_TOKEN" $dockerTokenValue
 }
 
@@ -70,7 +70,7 @@ $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($hfToken)
 $hfTokenValue = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
 [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($BSTR)
 
-if (Validate-Input $hfTokenValue "Hugging Face access token is required.") {
+if (Test-InputNotEmpty $hfTokenValue "Hugging Face access token is required.") {
     Set-UserEnvironmentVariable "FORK_HUGGINGFACE_ACCESS_TOKEN" $hfTokenValue
 }
 

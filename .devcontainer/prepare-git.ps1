@@ -50,7 +50,7 @@ if (-not $gitEmail) {
 
 # Verify the connection
 Write-Host "Testing GitHub connection..."
-$testResult = git ls-remote "https://github.com/$owner/$repoPath.git" HEAD
+$testOutput = git ls-remote "https://github.com/$owner/$repoPath.git" HEAD
 if ($LASTEXITCODE -eq 0) {
     Write-Host "GitHub connection successful!"
 }

@@ -9,8 +9,8 @@ classifiers=[
     "Programming Language :: Python :: 3",
 ]
 dependencies=[
-    "autogen-agentchat>=0.4.4,<0.5",
-    "autogen-ext[docker,openai,magentic-one,rich]>=0.4.4,<0.5",
+    "autogen-agentchat>=0.5.0,<0.6",
+    "autogen-ext[docker,openai,magentic-one,rich]>=0.5.0,<0.6",
     "pyyaml>=5.1",
 ]
 description="Magentic-One is a generalist multi-agent system, built on `AutoGen-AgentChat`, for solving complex web and file-based tasks. This package installs the `m1` command-line utility to quickly get started with Magentic-One."
