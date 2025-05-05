@@ -7,7 +7,7 @@
     "MD041": false
   },
   "customRules": [
-    "./.github/linting/rules/*.js"
+    "./rules/*.js"
   ],
   "globs": ["**/*.md"],
   "ignores": [

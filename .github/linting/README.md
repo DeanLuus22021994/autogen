@@ -52,6 +52,15 @@ These tasks can be accessed via the Command Palette (Ctrl+Shift+P) by typing "Ta
 
 # Run linting on all files
 .\.github\linting\Invoke-MarkdownLint.ps1
+
+# Run the simplified linting script
+.\.github\linting\run-markdown-lint.ps1
+
+# Fix markdown issues automatically
+.\.github\linting\run-markdown-lint.ps1 -Fix
+
+# Validate linting configuration
+.\.github\linting\run-lint-check.ps1
 ```
 
 ## Configuration
@@ -115,3 +124,32 @@ If you encounter issues with markdown linting:
 2. Check the configuration files for syntax errors
 3. Verify that the rules directory exists and contains valid rule files
 4. Try running the linting tools with the `-Verbose` flag for additional information
+
+For more help:
+
+```powershell
+# Get detailed information about the current status
+.\.github\linting\Toggle-MarkdownLinting.ps1 -Status
+
+# Validate the linting configuration
+.\.github\linting\run-lint-check.ps1
+```
+
+## Directory Structure
+
+```
+.github/linting/
+├── config/                 # Configuration storage
+├── core/                   # Core functionality modules
+├── rules/                  # Custom markdown linting rules
+├── scripts/                # Utility scripts
+├── utils/                  # Helper functions
+├── Initialize-MarkdownLinting.ps1  # Setup script
+├── Invoke-MarkdownLint.ps1         # Main linting script
+├── MarkdownLintHelpers.psm1        # PowerShell module with helper functions
+├── README.md                       # This documentation
+├── Toggle-MarkdownLinting.ps1      # Enable/disable linting
+├── markdown-tasks.code-tasks       # VS Code tasks template
+├── run-markdown-lint.ps1           # Simplified linting script
+└── run-lint-check.ps1              # Configuration validator
+```

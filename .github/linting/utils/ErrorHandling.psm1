@@ -1,24 +1,78 @@
-# .github/linting/utils/FileOperations.psm1
-# File operations for markdown linting
+# .github/linting/utils/ErrorHandling.psm1
+# Error handling utilities for markdown linting
 
-function Test-PathExists {
+using namespace System.Management.Automation
+
+function Write-LintError {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
-        [string]$Path,
+        [string]$Message,
 
         [Parameter(Mandatory = $false)]
-        [switch]$Create,
+        [System.Management.Automation.ErrorRecord]$ErrorRecord,
 
         [Parameter(Mandatory = $false)]
-        [ValidateSet('File', 'Directory')]
-        [string]$ItemType = 'File'
+        [switch]$Fatal
     )
 
-    $exists = Test-Path -Path $Path
+    $errorDetails = if ($ErrorRecord) {
+        " Error details: $($ErrorRecord.Exception.Message)"
+    } else {
+        ""
+    }
 
-    if (-not $exists -and $Create) {
-        if ($ItemType -eq 'Directory') {
+    Write-Host "ERROR: $Message$errorDetails" -ForegroundColor Red
+
+    if ($Fatal) {
+        throw [System.Management.Automation.RuntimeException]::new($Message)
+    }
+}
+
+function Test-CommandExecution {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [scriptblock]$ScriptBlock,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ErrorMessage,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$ContinueOnError
+    )
+
+    try {
+        & $ScriptBlock
+        return $true
+    }
+    catch {
+        Write-LintError -Message $ErrorMessage -ErrorRecord $_ -Fatal:(-not $ContinueOnError)
+        return $false
+    }
+}
+
+# Helper function to format error messages
+function Get-FormattedErrorMessage {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Management.Automation.ErrorRecord]$ErrorRecord,
+
+        [Parameter(Mandatory = $false)]
+        [string]$Context
+    )
+
+    $contextInfo = if ($Context) {
+        " while $Context"
+    } else {
+        ""
+    }
+
+    return "Error$contextInfo`: $($ErrorRecord.Exception.Message)"
+}
+
+Export-ModuleMember -Function Write-LintError, Test-CommandExecution, Get-FormattedErrorMessage
             New-Item -Path $Path -ItemType Directory -Force | Out-Null
         }
         else {
