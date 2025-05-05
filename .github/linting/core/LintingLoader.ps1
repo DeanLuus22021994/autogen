@@ -12,6 +12,12 @@ using namespace System.IO
     and determine if linting should be enabled or disabled.
 #>
 
+# Import error handling helpers
+$ErrorHandlingModule = Join-Path -Path $PSScriptRoot -ChildPath '..\utils\ErrorHandling.psm1'
+if (Test-Path -Path $ErrorHandlingModule) {
+    Import-Module $ErrorHandlingModule -Force
+}
+
 function Get-LintingConfiguration {
     <#
     .SYNOPSIS
@@ -63,7 +69,9 @@ function Get-LintingConfiguration {
         return $config
     }
     catch {
-        Write-Warning "Error reading linting configuration: $_"
+        # Use Write-Warning with a formatted error message
+        $errorMessage = Get-FormattedErrorMessage -ErrorRecord $_ -Context "reading linting configuration"
+        Write-Warning $errorMessage
         return $defaultConfig
     }
 }
@@ -118,8 +126,11 @@ function Update-LintingConfiguration {
         Whether verbose output should be enabled.
     .PARAMETER DefaultTarget
         The default glob pattern for files to lint.
+    .OUTPUTS
+        [bool] True if the update succeeds, false otherwise.
     #>
     [CmdletBinding()]
+    [OutputType([bool])]
     param(
         [Parameter()]
         [bool]$Enabled,
@@ -142,7 +153,14 @@ function Update-LintingConfiguration {
 
     # Create directory if it doesn't exist
     if (-not (Test-Path $configDir)) {
-        New-Item -Path $configDir -ItemType Directory -Force | Out-Null
+        try {
+            New-Item -Path $configDir -ItemType Directory -Force | Out-Null
+        }
+        catch {
+            $errorMessage = Get-FormattedErrorMessage -ErrorRecord $_ -Context "creating configuration directory"
+            Write-Warning $errorMessage
+            return $false
+        }
     }
 
     # Get current config if it exists
@@ -158,14 +176,15 @@ function Update-LintingConfiguration {
     # Create root element
     $root = $xmlDoc.CreateElement("LintingConfiguration")
 
+    # Use the null-coalescing operator to set values
     # Create enabled element
     $enabledElement = $xmlDoc.CreateElement("Enabled")
-    $enabledElement.InnerText = if ($PSBoundParameters.ContainsKey('Enabled')) { $Enabled.ToString().ToLower() } else { $currentConfig.Enabled.ToString().ToLower() }
+    $enabledElement.InnerText = ($Enabled ?? $currentConfig.Enabled).ToString().ToLower()
     $root.AppendChild($enabledElement) | Out-Null
 
     # Create ignore during editing element
     $ignoreElement = $xmlDoc.CreateElement("IgnoreDuringEditing")
-    $ignoreElement.InnerText = if ($PSBoundParameters.ContainsKey('IgnoreDuringEditing')) { $IgnoreDuringEditing.ToString().ToLower() } else { $currentConfig.IgnoreDuringEditing.ToString().ToLower() }
+    $ignoreElement.InnerText = ($IgnoreDuringEditing ?? $currentConfig.IgnoreDuringEditing).ToString().ToLower()
     $root.AppendChild($ignoreElement) | Out-Null
 
     # Create settings element
@@ -173,17 +192,17 @@ function Update-LintingConfiguration {
 
     # Create auto-fix element
     $autoFixElement = $xmlDoc.CreateElement("AutoFix")
-    $autoFixElement.InnerText = if ($PSBoundParameters.ContainsKey('AutoFix')) { $AutoFix.ToString().ToLower() } else { $currentConfig.Settings.AutoFix.ToString().ToLower() }
+    $autoFixElement.InnerText = ($AutoFix ?? $currentConfig.Settings.AutoFix).ToString().ToLower()
     $settingsElement.AppendChild($autoFixElement) | Out-Null
 
     # Create verbose output element
     $verboseElement = $xmlDoc.CreateElement("VerboseOutput")
-    $verboseElement.InnerText = if ($PSBoundParameters.ContainsKey('VerboseOutput')) { $VerboseOutput.ToString().ToLower() } else { $currentConfig.Settings.VerboseOutput.ToString().ToLower() }
+    $verboseElement.InnerText = ($VerboseOutput ?? $currentConfig.Settings.VerboseOutput).ToString().ToLower()
     $settingsElement.AppendChild($verboseElement) | Out-Null
 
     # Create default target element
     $targetElement = $xmlDoc.CreateElement("DefaultTarget")
-    $targetElement.InnerText = if ($PSBoundParameters.ContainsKey('DefaultTarget')) { $DefaultTarget } else { $currentConfig.Settings.DefaultTarget }
+    $targetElement.InnerText = $DefaultTarget ?? $currentConfig.Settings.DefaultTarget
     $settingsElement.AppendChild($targetElement) | Out-Null
 
     # Add settings to root
@@ -199,7 +218,8 @@ function Update-LintingConfiguration {
         return $true
     }
     catch {
-        Write-Warning "Error updating linting configuration: $_"
+        $errorMessage = Get-FormattedErrorMessage -ErrorRecord $_ -Context "updating linting configuration"
+        Write-Warning $errorMessage
         return $false
     }
 }

@@ -1,4 +1,4 @@
-# .github/linting/config/DefaultConfigs.psm1
+# .github\linting\config\DefaultConfigs.psm1
 # Configuration templates for markdown linting
 
 using namespace System.IO
@@ -166,4 +166,4 @@ Export-ModuleMember -Function @(
     'Get-MarkdownLintJsonConfig',
     'Get-MarkdownLintRcConfig',
     'Get-MarkdownlintIgnoreConfig'
-)
+) | ForEach-Object { Export-ModuleMember -Function $_ }
