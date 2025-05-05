@@ -498,28 +498,25 @@ function Get-DirectoryMetrics {
         foreach ($key in $dirInfo.Keys) {
             $Tree[$key] = $dirInfo[$key]
         }
-    }
-
-    # Process root directory
-    $rootTree = @{
-    }
-    Process-Directory -DirPath $Path -RelativePath (Split-Path -Leaf $Path) -Tree $rootTree
+    }    # Process root directory
+    $rootTree = @{}
+    Invoke-DirectoryProcessing -DirPath $Path -RelativePath (Split-Path -Leaf $Path) -Tree $rootTree
 
     # Convert file type counts to array for easier JSON processing
     $fileTypeStats = @()
-    foreach ($ext in $filesByType.Keys) {
+    foreach ($ext in $script:filesByType.Keys) {
         $fileTypeStats += @{
             Extension = $ext
-            Count = $filesByType[$ext]
+            Count = $script:filesByType[$ext]
         }
     }
 
-    # Create metrics object
+    # Create metrics object with proper scoping
     $metrics = [PSCustomObject]@{
         RootPath = $Path
-        TotalFiles = $totalFiles
-        TotalDirectories = $totalDirectories
-        TotalSizeKB = [Math]::Round($totalSizeBytes / 1KB, 2)
+        TotalFiles = $script:totalFiles
+        TotalDirectories = $script:totalDirectories
+        TotalSizeKB = [Math]::Round($script:totalSizeBytes / 1KB, 2)
         FileTypes = $fileTypeStats
         DirectoryTree = $rootTree
     }
