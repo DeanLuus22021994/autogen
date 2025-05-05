@@ -8,7 +8,7 @@
   "MD034": false,
   "MD055": false,
   "MD056": false,
-  "customRules": [],
+  "customRules": {},
   "MD046": { "style": "consistent" },
   "MD048": { "style": "backtick" },
   "MD041": true,

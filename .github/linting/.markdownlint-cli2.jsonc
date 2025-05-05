@@ -10,7 +10,7 @@
     "MD055": false,
     "MD056": false
   },
-  "overrides": [
+  "customizationRules": [
     {
       "glob": ".github/**/*.md",
       "config": {
