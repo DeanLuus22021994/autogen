@@ -1,0 +1,11 @@
+# .github\linting\config\LintingConfig.xml
+<?xml version="1.0" encoding="utf-8"?>
+<LintingConfiguration>
+  <Enabled>true</Enabled>
+  <IgnoreDuringEditing>true</IgnoreDuringEditing>
+  <Settings>
+    <AutoFix>false</AutoFix>
+    <VerboseOutput>false</VerboseOutput>
+    <DefaultTarget>.github/**/*.md</DefaultTarget>
+  </Settings>
+</LintingConfiguration>

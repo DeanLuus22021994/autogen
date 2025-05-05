@@ -151,10 +151,10 @@ function Process-ShellCommands {
     )
 
     # Import the shell processing module if available
-    $shellModulePath = Join-Path (Split-Path $PSScriptRoot) "scripts\Process-ShellCommands.ps1"
+    $shellModulePath = Join-Path (Split-Path $PSScriptRoot) "scripts\Format-ShellCommand.ps1"
     if (Test-Path $shellModulePath) {
         . $shellModulePath
-        return Process-ShellCommand -Command $Command
+        return Format-ShellCommand -Command $Command
     }
 
     # Fallback implementation

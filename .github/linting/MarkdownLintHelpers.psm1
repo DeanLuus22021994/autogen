@@ -1,4 +1,4 @@
-# .github/linting/MarkdownLintHelpers.psm1
+# .github\linting\MarkdownLintHelpers.psm1
 # Shared helper functions for markdown linting scripts
 
 using namespace System.IO
@@ -7,6 +7,10 @@ using namespace System.Management.Automation
 # Constants for file paths and content templates
 $script:lintingDir = ".github/linting"
 $script:workflowDir = ".github/workflows"
+
+# cSpell:ignore esac
+# Note: 'esac' is a valid bash keyword - it's 'case' spelled backwards
+# and is used to end case statements in shell scripts
 
 function Show-MarkdownLintHelp {
     [CmdletBinding()]
