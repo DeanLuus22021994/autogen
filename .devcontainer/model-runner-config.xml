@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model_settings>
+  <docker_model_runner>
+    <enabled>true</enabled>
+    <version>latest</version>
+    <endpoint>http://model-runner.docker.internal/engines/v1/chat/completions</endpoint>
+    <models_endpoint>http://model-runner.docker.internal/engines</models_endpoint>
+  </docker_model_runner>
+  <models>
+    <model>
+      <name>ai/mistral</name>
+      <description>Mistral base model</description>
+      <parameters>
+        <temperature>0.7</temperature>
+        <max_tokens>2048</max_tokens>
+      </parameters>
+    </model>
+    <model>
+      <name>ai/mistral-nemo</name>
+      <description>Mistral NeMo-enhanced model</description>
+      <parameters>
+        <temperature>0.7</temperature>
+        <max_tokens>2048</max_tokens>
+      </parameters>
+    </model>
+    <model>
+      <name>ai/mxbai-embed-large</name>
+      <description>MxbAI embedding model</description>
+      <parameters>
+        <dimensions>1024</dimensions>
+      </parameters>
+    </model>
+    <model>
+      <name>ai/smollm2</name>
+      <description>Smol LM2 model</description>
+      <parameters>
+        <temperature>0.7</temperature>
+        <max_tokens>1024</max_tokens>
+      </parameters>
+    </model>
+  </models>
+  <volume_settings>
+    <path>/opt/autogen/models</path>
+    <persistent>true</persistent>
+    <name>autogen-model-cache</name>
+  </volume_settings>
+</model_settings>

@@ -1,5 +1,4 @@
 # Docker Compose configuration for AutoGen Enhanced DevContainer
-# with Docker Model Runner integration and persistent volumes
 version: '3.8'
 
 services:
