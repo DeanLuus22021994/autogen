@@ -115,10 +115,35 @@ function Update-DirTag {
         [switch]$PreserveGuid = $true,
 
         [Parameter(Mandatory = $false)]
-        [switch]$Force
+        [switch]$Force,
+
+        [Parameter(Mandatory = $false)]
+        [int]$MaxRetries = 3,
+
+        [Parameter(Mandatory = $false)]
+        [int]$RetryDelayMs = 250
     )
 
-    $tagFilePath = Join-Path -Path $DirectoryPath -ChildPath "DIR.TAG"    if (-not (Test-Path -Path $tagFilePath)) {
+    # Initialize result object with status information
+    $result = [PSCustomObject]@{
+        StatusCode = [DirTagStatusCode]::Success
+        Message = "Operation completed successfully"
+        FilePath = $null
+        Success = $false
+        Data = $null
+    }
+
+    $tagFilePath = Join-Path -Path $DirectoryPath -ChildPath "DIR.TAG"
+    $result.FilePath = $tagFilePath
+
+    # Check if directory exists
+    if (-not (Test-Path -Path $DirectoryPath -PathType Container)) {
+        $result.StatusCode = [DirTagStatusCode]::DirectoryNotFound
+        $result.Message = "Directory not found: $DirectoryPath"
+        $result.Success = $false
+        Write-Warning $result.Message
+        return $result
+    }if (-not (Test-Path -Path $tagFilePath)) {
         Write-Warning "DIR.TAG not found at $tagFilePath. Creating a new one."
         $params = @{
             DirectoryPath = $DirectoryPath
@@ -385,6 +410,41 @@ function Find-DirTags {
     }
 
     return $results
+}
+
+# Define error/status codes for better monitoring and diagnostics
+enum DirTagStatusCode {
+    Success = 0
+    FileNotFound = 1
+    AccessDenied = 2
+    InvalidContent = 3
+    SyntaxError = 4
+    DirectoryNotFound = 5
+    ProcessingFailed = 6
+    ValidationFailed = 7
+    GeneralError = 99
+}
+
+function Get-DirTagStatusMessage {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [DirTagStatusCode]$StatusCode
+    )
+
+    $statusMessages = @{
+        [DirTagStatusCode]::Success = "Operation completed successfully"
+        [DirTagStatusCode]::FileNotFound = "DIR.TAG file not found"
+        [DirTagStatusCode]::AccessDenied = "Access denied to DIR.TAG file"
+        [DirTagStatusCode]::InvalidContent = "Invalid DIR.TAG content format"
+        [DirTagStatusCode]::SyntaxError = "Syntax error in DIR.TAG content"
+        [DirTagStatusCode]::DirectoryNotFound = "Target directory not found"
+        [DirTagStatusCode]::ProcessingFailed = "Processing failed"
+        [DirTagStatusCode]::ValidationFailed = "Validation failed"
+        [DirTagStatusCode]::GeneralError = "An unexpected error occurred"
+    }
+
+    return $statusMessages[$StatusCode]
 }
 
 # Export the functions

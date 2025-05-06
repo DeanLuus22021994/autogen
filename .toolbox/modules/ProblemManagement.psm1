@@ -317,17 +317,31 @@ function Update-DirTagFromProblems {
         $problemsByType = $problems | Group-Object -Property Type
         foreach ($type in $problemsByType) {
             $todoItems += "Fix $($type.Count) $($type.Name) issues in directory [OUTSTANDING]"
-        }
-
-        # Update the DIR.TAG
+        }        # Update the DIR.TAG
         $result = Update-DirTag -DirectoryPath $DirectoryPath -Status $status -TodoItems $todoItems -Force:$Force
 
-        if ($result) {
+        # Handle both boolean and object results for backward compatibility
+        $isSuccess = Convert-DirTagResultToBool -Result $result
+
+        if ($isSuccess) {
             Write-Verbose "Updated DIR.TAG in $DirectoryPath with problem information"
+
+            # If it's a result object, log any messages
+            if ($result.PSObject.Properties.Name -contains 'Message') {
+                Write-Verbose $result.Message
+            }
+
             return $true
         }
         else {
-            Write-Warning "Failed to update DIR.TAG in $DirectoryPath"
+            $message = "Failed to update DIR.TAG in $DirectoryPath"
+
+            # If it's a result object, include the error message
+            if ($result.PSObject.Properties.Name -contains 'Message') {
+                $message += ": $($result.Message)"
+            }
+
+            Write-Warning $message
             return $false
         }
     }
@@ -350,6 +364,35 @@ function Update-DirTagFromProblems {
             Write-Warning "Failed to create DIR.TAG in $DirectoryPath"
             return $false
         }
+    }
+}
+
+# Add support for the enhanced Update-DirTag function
+function Convert-DirTagResultToBool {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+        [PSCustomObject]$Result
+    )
+
+    process {
+        # If it's already a boolean, return it
+        if ($Result -is [bool]) {
+            return $Result
+        }
+
+        # If it's a proper result object, check Success property
+        if ($Result.PSObject.Properties.Name -contains 'Success') {
+            return $Result.Success
+        }
+
+        # If it's a proper result object, check StatusCode property
+        if ($Result.PSObject.Properties.Name -contains 'StatusCode') {
+            return $Result.StatusCode -eq [DirTagStatusCode]::Success
+        }
+
+        # Default fallback to avoid runtime errors
+        return $false
     }
 }
 
