@@ -1,0 +1,23 @@
+{
+  "stackName": "autogen-inference",
+  "deploymentTemplate": "../templates/gpu-inference.yml",
+  "environment": {
+    "INFERENCE_IMAGE": "nvidia/cuda:12.0.1-runtime-ubuntu22.04",
+    "INFERENCE_REPLICAS": "3",
+    "GPU_COUNT": "1",
+    "API_IMAGE": "autogen/inference-api:latest",
+    "API_REPLICAS": "2",
+    "API_PORT": "8080",
+    "AUTH_ENABLED": "true",
+    "MODEL_DIR": "/data/models"
+  },
+  "networks": ["autogen-network"],
+  "volumes": ["models", "inference_cache"],
+  "deploymentOptions": {
+    "mode": "replicated",
+    "updateParallelism": 1,
+    "updateDelay": "10s",
+    "updateOrder": "start-first",
+    "monitor": true
+  }
+}

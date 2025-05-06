@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<legal_analysis_configuration>
+  <docker_model_runner>
+    <enabled>true</enabled>
+    <version>beta</version>
+    <endpoint>http://model-runner.docker.internal/engines/v1/chat/completions</endpoint>
+  </docker_model_runner>
+
+  <models>
+    <model>
+      <name>ai/mistral-nemo</name>
+      <description>Optimized Mistral model for NVIDIA GPUs</description>
+      <purpose>primary</purpose>
+      <quantization>int8</quantization>
+      <priority>1</priority>
+    </model>
+    <model>
+      <name>ai/mistral</name>
+      <description>Standard Mistral model</description>
+      <purpose>fallback</purpose>
+      <quantization>int8</quantization>
+      <priority>2</priority>
+    </model>
+    <model>
+      <name>ai/llama3</name>
+      <description>Llama 3 model (alternate option)</description>
+      <purpose>alternative</purpose>
+      <quantization>int8</quantization>
+      <priority>3</priority>
+    </model>
+  </models>
+
+  <document_processing>
+    <supported_formats>
+      <format>pdf</format>
+      <format>docx</format>
+      <format>txt</format>
+    </supported_formats>
+    <extraction>
+      <pdf_tool>xpdf</pdf_tool>
+      <max_chunk_size>12000</max_chunk_size>
+      <extract_metadata>true</extract_metadata>
+    </extraction>
+  </document_processing>
+
+  <analysis_modules>
+    <module>
+      <name>event_extraction</name>
+      <enabled>true</enabled>
+      <confidence_threshold>40</confidence_threshold>
+      <description>Extracts timeline events from documents</description>
+    </module>
+    <module>
+      <name>sentiment_analysis</name>
+      <enabled>true</enabled>
+      <intensity_threshold>1</intensity_threshold>
+      <description>Analyzes sentiment and bias in text</description>
+    </module>
+    <module>
+      <name>entity_extraction</name>
+      <enabled>true</enabled>
+      <description>Identifies persons, organizations, locations, and roles</description>
+    </module>
+  </analysis_modules>
+
+  <visualization>
+    <enable_excel_reports>true</enable_excel_reports>
+    <enable_text_reports>true</enable_text_reports>
+    <enable_web_dashboard>false</enable_web_dashboard>
+    <color_scheme>
+      <positive>Green</positive>
+      <negative>Red</negative>
+      <neutral>Gray</neutral>
+      <highlight>Cyan</highlight>
+    </color_scheme>
+  </visualization>
+
+  <file_monitoring>
+    <enabled>true</enabled>
+    <poll_interval_seconds>2</poll_interval_seconds>
+    <default_watch_folder>./incoming-documents</default_watch_folder>
+    <default_output_folder>./analysis-results</default_output_folder>
+  </file_monitoring>
+
+  <privacy>
+    <store_raw_documents>false</store_raw_documents>
+    <store_extracted_text>true</store_extracted_text>
+    <enable_encryption>false</enable_encryption>
+    <retention_days>30</retention_days>
+  </privacy>
+
+  <locale>
+    <date_format>yyyy-MM-dd</date_format>
+    <time_format>HH:mm:ss</time_format>
+    <language>en-US</language>
+  </locale>
+
+  <legal_disclaimer>
+    This tool provides document analysis for informational purposes only.
+    It does not constitute legal advice, and should not be relied upon as such.
+    All processing is performed locally without external API calls.
+  </legal_disclaimer>
+</legal_analysis_configuration>

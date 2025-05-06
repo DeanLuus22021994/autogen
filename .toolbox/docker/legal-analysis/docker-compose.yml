@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  # Main legal document analysis service
+  legal-analysis:
+    image: legal-analysis:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: legal-analysis
+    volumes:
+      - ./incoming-documents:/app/incoming-documents
+      - ./analysis-results:/app/analysis-results
+      - ./config:/app/config
+      - model-cache:/app/model-cache
+    ports:
+      - "8080:8080"  # Web UI
+    environment:
+      - MODEL_RUNNER_ENDPOINT=http://model-runner:8000/v1/chat/completions
+      - CONFIG_FILE=/app/config/legal-analysis-config.xml
+      - WATCH_FOLDER=/app/incoming-documents
+      - OUTPUT_FOLDER=/app/analysis-results
+      - MODEL_TYPE=ai/mistral-nemo
+      - QUANTIZATION_LEVEL=int8
+    depends_on:
+      - legal-db
+      - model-runner
+    networks:
+      - legal-analysis-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # Database for storing analysis results
+  legal-db:
+    image: postgres:14-alpine
+    container_name: legal-db
+    volumes:
+      - legal-db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=legal_analysis_pwd
+      - POSTGRES_USER=legal_analyst
+      - POSTGRES_DB=legal_analysis
+    ports:
+      - "5432:5432"
+    networks:
+      - legal-analysis-network
+    restart: unless-stopped
+
+  # Web UI for viewing analysis results
+  legal-ui:
+    image: legal-analysis-ui:latest
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+    container_name: legal-ui
+    ports:
+      - "3000:3000"
+    environment:
+      - API_URL=http://legal-analysis:8080/api
+    depends_on:
+      - legal-analysis
+    networks:
+      - legal-analysis-network
+
+  # Docker Model Runner for local AI processing
+  model-runner:
+    image: ghcr.io/autogen-dev/docker-extension:latest
+    container_name: model-runner
+    volumes:
+      - ~/.cache/huggingface:/root/.cache/huggingface
+      - model-cache:/app/model-cache
+    ports:
+      - "8000:8000"
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    networks:
+      - legal-analysis-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+volumes:
+  legal-db-data:
+    driver: local
+  model-cache:
+    driver: local
+
+networks:
+  legal-analysis-network:
+    driver: bridge

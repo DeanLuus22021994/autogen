@@ -1,0 +1,71 @@
+# GPU Inference Stack
+# This template is optimized for GPU-accelerated inference with Docker Swarm
+version: '3.8'
+
+services:
+  inference:
+    image: ${INFERENCE_IMAGE:-nvidia/cuda:12.0.1-base-ubuntu22.04}
+    deploy:
+      replicas: ${INFERENCE_REPLICAS:-3}
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: ${GPU_COUNT:-1}
+              capabilities: [gpu]
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - MODEL_PATH=/models
+      - LOG_LEVEL=INFO
+    volumes:
+      - models:/models
+      - inference_cache:/cache
+    networks:
+      - autogen-network
+
+  api:
+    image: ${API_IMAGE:-model-api:latest}
+    deploy:
+      replicas: ${API_REPLICAS:-2}
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+      restart_policy:
+        condition: any
+        max_attempts: 5
+      update_config:
+        parallelism: 1
+        delay: 5s
+        order: start-first
+    ports:
+      - "${API_PORT:-8080}:8080"
+    environment:
+      - INFERENCE_ENDPOINT=http://inference:9000
+      - AUTH_ENABLED=${AUTH_ENABLED:-false}
+    networks:
+      - autogen-network
+    depends_on:
+      - inference
+
+networks:
+  autogen-network:
+    driver: overlay
+    attachable: true
+
+volumes:
+  models:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${MODEL_DIR:-/path/to/models}
+  inference_cache:
+    driver: local

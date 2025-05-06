@@ -1,0 +1,580 @@
+{
+    "folders": [
+        {
+            "name": "Swarm Compose Root",
+            "path": ".."
+        },
+        {
+            "name": "Templates",
+            "path": "../templates"
+        },
+        {
+            "name": "Scripts",
+            "path": "../scripts"
+        },
+        {
+            "name": "Configurations",
+            "path": "../configs"
+        },
+        {
+            "name": "Deployments",
+            "path": "../deployments"
+        },
+        {
+            "name": "Toolbox",
+            "path": "../../.."
+        }
+    ],
+    "settings": {
+        "files.exclude": {
+            "**/.git": true,
+            "**/.svn": true,
+            "**/.hg": true,
+            "**/CVS": true,
+            "**/.DS_Store": true,
+            "**/Thumbs.db": true,
+            "**/*.pyc": true,
+            "**/__pycache__": true
+        },
+        "yaml.schemas": {
+            "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json": [
+                "**/*.compose.yml",
+                "**/*.compose.yaml",
+                "**/docker-compose.yml",
+                "**/docker-compose.yaml"
+            ],
+            "https://raw.githubusercontent.com/docker/compose/master/compose/config/compose_spec.json": [
+                "**/*.compose.yml",
+                "**/*.compose.yaml",
+                "**/docker-compose.yml",
+                "**/docker-compose.yaml"
+            ]
+        },
+        "docker.composeDetection": ["**/docker-compose.yml", "**/docker-compose.yaml", "**/*.compose.yml", "**/*.compose.yaml"]
+    },    "tasks": {
+        "version": "2.0.0",
+        "tasks": [            {
+                "label": "Initialize Docker Swarm",
+                "type": "shell",
+                "command": "pwsh",
+                "args": [
+                    "-File",
+                    "${workspaceFolder}/../scripts/Initialize-DockerSwarm.ps1",
+                    "-AdvertiseAddr",
+                    "${input:advertiseAddr}",
+                    "${input:enableGPU}"
+                ],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                }
+            },            {
+                "label": "Initialize Mistral GPU Runner",
+                "type": "shell",
+                "command": "pwsh",
+                "args": [
+                    "-File",
+                    "${workspaceFolder}/../scripts/Initialize-MistralGPURunner.ps1",
+                    "-StackName",
+                    "${input:stackName}",
+                    "-ModelType",
+                    "${input:modelType}",
+                    "-GPUCount",
+                    "${input:gpuCount}",
+                    "-Quantization",
+                    "${input:quantization}",
+                    "-ContextLength",
+                    "${input:contextLength}"
+                ],
+                "group": "build"
+            },
+            {
+                "label": "Setup Mistral Model Integration",
+                "type": "shell",
+                "command": "pwsh",
+                "args": [
+                    "-File",
+                    "${workspaceFolder}/../scripts/Setup-MistralModelIntegration.ps1",
+                    "${input:refreshCache}"
+                ],
+                "group": "build"
+            },
+            {
+                "label": "Test Mistral Model Integration",
+                "type": "shell",
+                "command": "pwsh",
+                "args": [
+                    "-File",
+                    "${workspaceFolder}/../scripts/Test-MistralModelIntegration.ps1",
+                    "${input:verboseOutput}"
+                ],
+                "group": "test"
+            },
+            {
+                "label": "Update DIR.TAG Files",
+                "type": "shell",
+                "command": "pwsh",
+                "args": [
+                    "-File",
+                    "${workspaceFolder}/../../config/Sync-DirTagConfig.ps1",
+                    "-UpdateAll"
+                ],
+                "group": {
+                    "kind": "build",
+                    "isDefault": false
+                }
+            },
+            {
+                "label": "Deploy Swarm Stack",
+                "type": "shell",
+                "command": "pwsh",
+                "args": [
+                    "-File",
+                    "${workspaceFolder}/../scripts/Deploy-SwarmStack.ps1",
+                    "-ConfigFile",
+                    "${input:configFile}",
+                    "-StackName",
+                    "${input:stackName}"
+                ],
+                "group": "build"
+            },
+            {
+                "label": "Remove Swarm Stack",
+                "type": "shell",
+                "command": "pwsh",
+                "args": [
+                    "-File",
+                    "${workspaceFolder}/../scripts/Remove-SwarmStack.ps1",
+                    "-StackName",
+                    "${input:stackName}"
+                ],
+                "group": "build"
+            },
+            {
+                "label": "Generate Swarm Compose Template",
+                "type": "shell",
+                "command": "pwsh",
+                "args": [
+                    "-File",
+                    "${workspaceFolder}/../scripts/New-SwarmComposeTemplate.ps1",
+                    "-TemplateName",
+                    "${input:templateName}",
+                    "-OutputPath",
+                    "${input:outputPath}"
+                ],
+                "group": "build"
+            },
+            {
+                "label": "Monitor Swarm Services",
+                "type": "shell",
+                "command": "pwsh",
+                "args": [
+                    "-File",
+                    "${workspaceFolder}/../scripts/Watch-SwarmServices.ps1",
+                    "-StackName",
+                    "${input:stackName}"
+                ],
+                "group": "test"
+            },
+            {
+                "label": "Scale Swarm Service",
+                "type": "shell",
+                "command": "pwsh",
+                "args": [
+                    "-File",
+                    "${workspaceFolder}/../scripts/Set-SwarmServiceScale.ps1",
+                    "-StackName",
+                    "${input:stackName}",
+                    "-ServiceName",
+                    "${input:serviceName}",
+                    "-ReplicaCount",
+                    "${input:replicaCount}"
+                ],                "group": "build"
+            },
+            {
+                "label": "Diagnose Swarm Cluster",
+                "type": "shell",
+                "command": "pwsh",
+                "args": [
+                    "-File",
+                    "${workspaceFolder}/../scripts/Diagnose-SwarmCluster.ps1",
+                    "-OutputFile",
+                    "${input:diagnosticOutputFile}",
+                    "${input:includeServiceLogs}",
+                    "${input:detailedReport}"
+                ],
+                "group": "test"
+            },
+            {
+                "label": "Backup Swarm Stack",
+                "type": "shell",
+                "command": "pwsh",
+                "args": [
+                    "-File",
+                    "${workspaceFolder}/../scripts/Backup-SwarmDeployment.ps1",
+                    "-StackName",
+                    "${input:stackName}",
+                    "-BackupDir",
+                    "${input:backupDir}",
+                    "${input:includeVolumes}",
+                    "${input:compressBackup}"
+                ],
+                "group": "build"
+            },
+            {
+                "label": "Restore Swarm Stack",
+                "type": "shell",
+                "command": "pwsh",
+                "args": [
+                    "-File",
+                    "${workspaceFolder}/../scripts/Restore-SwarmDeployment.ps1",
+                    "-BackupPath",
+                    "${input:backupPath}",
+                    "-StackName",
+                    "${input:restoreStackName}",
+                    "${input:restoreVolumes}",
+                    "${input:skipDeploy}"
+                ],
+                "group": "build"
+            },
+            {
+                "label": "Manage Swarm Networks",
+                "type": "shell",
+                "command": "pwsh",
+                "args": [
+                    "-File",
+                    "${workspaceFolder}/../scripts/Manage-SwarmNetworks.ps1",
+                    "-Action",
+                    "${input:networkAction}",
+                    "-NetworkName",
+                    "${input:networkName}",
+                    "${input:networkAttachable}",
+                    "${input:networkEncrypted}"
+                ],
+                "group": "build"
+            }
+        ],"inputs": [
+            {
+                "id": "advertiseAddr",
+                "description": "IP address to advertise for Swarm (leave empty for auto-detect):",
+                "default": "",
+                "type": "promptString"
+            },
+            {
+                "id": "enableGPU",
+                "description": "Enable GPU support?",
+                "default": "-EnableGPU",
+                "options": [
+                    {
+                        "label": "Yes",
+                        "value": "-EnableGPU"
+                    },
+                    {
+                        "label": "No",
+                        "value": ""
+                    }
+                ],
+                "type": "pickString"
+            },
+            {
+                "id": "configFile",
+                "description": "Configuration file path:",
+                "default": "${workspaceFolder}/../configs/default.config.json",
+                "type": "promptString"
+            },
+            {
+                "id": "stackName",
+                "description": "Swarm stack name:",
+                "default": "autogen",
+                "type": "promptString"
+            },
+            {
+                "id": "templateName",
+                "description": "Template name:",
+                "default": "gpu-inference",
+                "type": "promptString"
+            },
+            {
+                "id": "outputPath",
+                "description": "Output path:",
+                "default": "${workspaceFolder}/../deployments/",
+                "type": "promptString"
+            },
+            {
+                "id": "serviceName",
+                "description": "Service name:",
+                "default": "inference",
+                "type": "promptString"
+            },            {
+                "id": "replicaCount",
+                "description": "Number of replicas:",
+                "default": "3",
+                "type": "promptString"
+            },            {
+                "id": "diagnosticOutputFile",
+                "description": "Path to save diagnostic report (leave empty for screen output only):",
+                "default": "${workspaceFolder}/../diagnostics/swarm-report.txt",
+                "type": "promptString"
+            },
+            {
+                "id": "includeServiceLogs",
+                "description": "Include service logs in diagnostic report?",
+                "default": "-IncludeServiceLogs",
+                "options": [
+                    {
+                        "label": "Yes",
+                        "value": "-IncludeServiceLogs"
+                    },
+                    {
+                        "label": "No",
+                        "value": ""
+                    }
+                ],
+                "type": "pickString"
+            },
+            {
+                "id": "detailedReport",
+                "description": "Generate detailed diagnostic report?",
+                "default": "-DetailedReport",
+                "options": [
+                    {
+                        "label": "Yes",
+                        "value": "-DetailedReport"
+                    },
+                    {
+                        "label": "No",
+                        "value": ""
+                    }
+                ],
+                "type": "pickString"
+            },
+            {
+                "id": "backupDir",
+                "description": "Backup directory:",
+                "default": "${workspaceFolder}/../backups",
+                "type": "promptString"
+            },
+            {
+                "id": "backupPath",
+                "description": "Backup to restore (directory or zip file):",
+                "default": "${workspaceFolder}/../backups",
+                "type": "promptString"
+            },
+            {
+                "id": "restoreStackName",
+                "description": "Stack name to restore as (leave empty to use original):",
+                "default": "",
+                "type": "promptString"
+            },
+            {
+                "id": "includeVolumes",
+                "description": "Include volumes in backup?",
+                "default": "-IncludeVolumes",
+                "options": [
+                    {
+                        "label": "Yes",
+                        "value": "-IncludeVolumes"
+                    },
+                    {
+                        "label": "No",
+                        "value": ""
+                    }
+                ],
+                "type": "pickString"
+            },
+            {
+                "id": "compressBackup",
+                "description": "Compress backup?",
+                "default": "-Compress",
+                "options": [
+                    {
+                        "label": "Yes",
+                        "value": "-Compress"
+                    },
+                    {
+                        "label": "No",
+                        "value": ""
+                    }
+                ],
+                "type": "pickString"
+            },
+            {
+                "id": "restoreVolumes",
+                "description": "Restore volumes?",
+                "default": "-RestoreVolumes",
+                "options": [
+                    {
+                        "label": "Yes",
+                        "value": "-RestoreVolumes"
+                    },
+                    {
+                        "label": "No",
+                        "value": ""
+                    }
+                ],
+                "type": "pickString"
+            },
+            {
+                "id": "skipDeploy",
+                "description": "Skip deployment after restore?",
+                "default": "",
+                "options": [
+                    {
+                        "label": "Yes",
+                        "value": "-SkipDeploy"
+                    },
+                    {
+                        "label": "No",
+                        "value": ""
+                    }
+                ],
+                "type": "pickString"
+            },
+            {
+                "id": "networkAction",
+                "description": "Network action:",
+                "default": "List",
+                "options": ["List", "Create", "Remove"],
+                "type": "pickString"
+            },
+            {
+                "id": "networkName",
+                "description": "Network name:",
+                "default": "autogen-network",
+                "type": "promptString"
+            },
+            {
+                "id": "networkAttachable",
+                "description": "Make network attachable?",
+                "default": "-Attachable",
+                "options": [
+                    {
+                        "label": "Yes",
+                        "value": "-Attachable"
+                    },
+                    {
+                        "label": "No",
+                        "value": ""
+                    }
+                ],
+                "type": "pickString"
+            },            {
+                "id": "networkEncrypted",
+                "description": "Encrypt network traffic?",
+                "default": "",
+                "options": [
+                    {
+                        "label": "Yes",
+                        "value": "-Encrypted"
+                    },
+                    {
+                        "label": "No",
+                        "value": ""
+                    }
+                ],
+                "type": "pickString"
+            },
+            {
+                "id": "modelType",
+                "description": "Mistral model type:",
+                "default": "ai/mistral-nemo",
+                "options": [
+                    {
+                        "label": "Mistral NeMo (optimized for NVIDIA GPUs)",
+                        "value": "ai/mistral-nemo"
+                    },
+                    {
+                        "label": "Mistral (standard)",
+                        "value": "ai/mistral"
+                    }
+                ],
+                "type": "pickString"
+            },
+            {
+                "id": "gpuCount",
+                "description": "Number of GPUs to allocate:",
+                "default": "1",
+                "type": "promptString"
+            },
+            {
+                "id": "quantization",
+                "description": "Quantization level:",
+                "default": "int8",
+                "options": [
+                    {
+                        "label": "INT8 (good balance of speed and quality)",
+                        "value": "int8"
+                    },
+                    {
+                        "label": "INT4 (fastest, lower quality)",
+                        "value": "int4"
+                    },
+                    {
+                        "label": "None (highest quality, slowest)",
+                        "value": "none"
+                    }
+                ],
+                "type": "pickString"
+            },            {
+                "id": "contextLength",
+                "description": "Context length:",
+                "default": "8192",
+                "options": ["4096", "8192", "16384", "32768"],
+                "type": "pickString"
+            },
+            {
+                "id": "refreshCache",
+                "description": "Refresh cache?",
+                "default": "",
+                "options": [
+                    {
+                        "label": "Yes",
+                        "value": "-RefreshCache"
+                    },
+                    {
+                        "label": "No",
+                        "value": ""
+                    }
+                ],
+                "type": "pickString"
+            },
+            {
+                "id": "verboseOutput",
+                "description": "Show verbose output?",
+                "default": "",
+                "options": [
+                    {
+                        "label": "Yes",
+                        "value": "-Verbose"
+                    },
+                    {
+                        "label": "No",
+                        "value": ""
+                    }
+                ],
+                "type": "pickString"
+            }
+        ]
+    },
+    "launch": {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "name": "PowerShell: Launch Current File",
+                "type": "PowerShell",
+                "request": "launch",
+                "script": "${file}",
+                "cwd": "${workspaceFolder}/.."
+            }
+        ]
+    },
+    "extensions": {
+        "recommendations": [
+            "ms-vscode.powershell",
+            "ms-azuretools.vscode-docker",
+            "redhat.vscode-yaml",
+            "davidanson.vscode-markdownlint",
+            "ms-kubernetes-tools.vscode-kubernetes-tools"
+        ]
+    }
+}

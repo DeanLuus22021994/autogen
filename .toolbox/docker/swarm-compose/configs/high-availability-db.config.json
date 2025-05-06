@@ -1,0 +1,25 @@
+{
+  "stackName": "autogen-db",
+  "deploymentTemplate": "../templates/high-availability-db.yml",
+  "environment": {
+    "POSTGRES_IMAGE": "postgres:16-alpine",
+    "POSTGRES_USER": "autogen",
+    "POSTGRES_PASSWORD": "secure_password_here",
+    "POSTGRES_DB": "autogen",
+    "POSTGRES_PORT": "5432",
+    "REPLICA_COUNT": "2",
+    "PGADMIN_IMAGE": "dpage/pgadmin4:latest",
+    "PGADMIN_EMAIL": "admin@example.com",
+    "PGADMIN_PASSWORD": "pgadmin_password",
+    "PGADMIN_PORT": "8080"
+  },
+  "networks": ["db-network"],
+  "volumes": ["postgres_primary_data", "postgres_replica_data", "pgadmin_data"],
+  "deploymentOptions": {
+    "mode": "replicated",
+    "updateParallelism": 1,
+    "updateDelay": "30s",
+    "updateOrder": "stop-first",
+    "monitor": true
+  }
+}

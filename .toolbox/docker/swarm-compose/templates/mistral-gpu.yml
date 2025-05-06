@@ -1,0 +1,81 @@
+# Mistral GPU Inference Template for Docker Model Runner
+# This template is optimized for running Mistral models on NVIDIA GPUs with Docker Swarm
+version: '3.8'
+
+services:
+  mistral-nvidia:
+    image: ${MISTRAL_IMAGE:-ai/mistral-nemo:latest}
+    deploy:
+      replicas: ${REPLICAS:-1}
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: ${GPU_COUNT:-1}
+              capabilities: [gpu]
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+      placement:
+        constraints:
+          - node.labels.gpu == true
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - MODEL_PATH=/models
+      - QUANTIZATION=${QUANTIZATION:-int8}  # Options: none, int8, int4
+      - TENSOR_PARALLEL_SIZE=${TENSOR_PARALLEL_SIZE:-1}
+      - MAX_BATCH_SIZE=${MAX_BATCH_SIZE:-8}
+      - MAX_INPUT_LENGTH=${MAX_INPUT_LENGTH:-4096}
+      - MAX_TOTAL_TOKENS=${MAX_TOTAL_TOKENS:-8192}
+      - CONTEXT_LENGTH=${CONTEXT_LENGTH:-8192}
+      - KV_CACHE_SIZE=${KV_CACHE_SIZE:-4096}
+      - MODEL_RUNNER_ENDPOINT=http://model-runner.docker.internal/engines/v1/chat/completions
+    ports:
+      - "${API_PORT:-8080}:8080"
+    volumes:
+      - model_cache:/cache
+      - ${MODEL_DIR:-/tmp/models}:/models
+    networks:
+      - mistral-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  monitoring:
+    image: ${MONITORING_IMAGE:-prom/prometheus:v2.45.0}
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+      placement:
+        constraints:
+          - node.role == manager
+    ports:
+      - "${MONITORING_PORT:-9090}:9090"
+    volumes:
+      - prometheus_data:/prometheus
+      - ./configs/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - mistral-network
+    depends_on:
+      - mistral-nvidia
+
+networks:
+  mistral-network:
+    driver: overlay
+    attachable: true
+
+volumes:
+  model_cache:
+    driver: local
+  prometheus_data:
+    driver: local

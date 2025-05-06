@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Document Analysis Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">Legal Document Analysis System</div>
+            <nav>
+                <ul>
+                    <li><a href="#dashboard">Dashboard</a></li>
+                    <li><a href="#documents">Documents</a></li>
+                    <li><a href="#timeline">Timeline</a></li>
+                    <li><a href="#settings">Settings</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <section id="dashboard" class="dashboard">
+            <div class="card">
+                <div class="card-header">Document Processing</div>
+                <div class="card-content">
+                    <div class="chart-container">
+                        <canvas id="documentChart"></canvas>
+                    </div>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="stat-value" id="processed-count">0</div>
+                            <div class="stat-label">Processed</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="pending-count">0</div>
+                            <div class="stat-label">Pending</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="error-count">0</div>
+                            <div class="stat-label">Errors</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">Recent Documents</div>
+                <div class="card-content">
+                    <ul class="document-list" id="recent-documents">
+                        <li class="document-item">
+                            <div>
+                                <div class="document-title">No documents processed yet</div>
+                                <div class="document-date">--</div>
+                            </div>
+                            <span class="document-status status-processing">Waiting</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">Sentiment Overview</div>
+                <div class="card-content">
+                    <div class="chart-container">
+                        <canvas id="sentimentChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="timeline-section">
+            <div class="card">
+                <div class="card-header">Latest Document Timeline</div>
+                <div class="card-content">
+                    <div class="timeline" id="document-timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-date">Select a document to view its timeline</div>
+                            <div class="timeline-event">
+                                No timeline data available. Process a document first.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="upload-section">
+            <div class="upload-area" id="dropzone">
+                <div class="upload-message">Drag &amp; Drop documents here</div>
+                <div>or</div>
+                <button class="upload-button" id="file-select">Select Files</button>
+                <input type="file" id="file-input" style="display: none;" multiple accept=".pdf,.docx,.txt">
+                <div class="upload-info">Supported formats: PDF, DOCX, TXT</div>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            &copy; 2025 Legal Document Analysis System. All processing is performed locally.
+        </div>
+    </footer>
+
+    <script>
+        // Sample data for charts - will be replaced by actual API data
+        const ctx = document.getElementById('documentChart').getContext('2d');
+        const documentChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['PDF', 'DOCX', 'TXT'],
+                datasets: [{
+                    label: 'Document Types',
+                    data: [0, 0, 0],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(54, 162, 235, 0.6)',
+                        'rgba(255, 206, 86, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Document Types'
+                    }
+                }
+            }
+        });
+
+        const sentimentCtx = document.getElementById('sentimentChart').getContext('2d');
+        const sentimentChart = new Chart(sentimentCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Positive', 'Neutral', 'Negative'],
+                datasets: [{
+                    label: 'Sentiment Analysis',
+                    data: [0, 0, 0],
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(255, 206, 86, 0.6)',
+                        'rgba(255, 99, 132, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(255, 99, 132, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // File upload handling
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('file-input');
+        const fileSelect = document.getElementById('file-select');
+
+        fileSelect.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', handleFileSelect);
+
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.style.backgroundColor = '#e3f2fd';
+        });
+
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.style.backgroundColor = '#f8f9fa';
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.style.backgroundColor = '#f8f9fa';
+
+            if (e.dataTransfer.files.length > 0) {
+                handleFiles(e.dataTransfer.files);
+            }
+        });
+
+        function handleFileSelect(e) {
+            if (fileInput.files.length > 0) {
+                handleFiles(fileInput.files);
+            }
+        }
+
+        function handleFiles(files) {
+            // Placeholder for actual file upload handling
+            // In a real implementation, this would send files to the API
+
+            const recentDocuments = document.getElementById('recent-documents');
+            recentDocuments.innerHTML = '';
+
+            Array.from(files).forEach(file => {
+                const listItem = document.createElement('li');
+                listItem.className = 'document-item';
+
+                listItem.innerHTML = `
+                    <div>
+                        <div class="document-title">${file.name}</div>
+                        <div class="document-date">Just now</div>
+                    </div>
+                    <span class="document-status status-processing">Processing</span>
+                `;
+
+                recentDocuments.appendChild(listItem);
+
+                // Update counts
+                document.getElementById('pending-count').textContent =
+                    parseInt(document.getElementById('pending-count').textContent) + 1;
+            });
+
+            // Reset file input for next upload
+            fileInput.value = '';
+
+            alert(`Files received for processing: ${Array.from(files).map(f => f.name).join(', ')}`);
+        }
+
+        // Connect to API and get initial data
+        document.addEventListener('DOMContentLoaded', () => {
+            // This would be replaced with actual API calls
+            console.log('Dashboard initialized. Connecting to API...');
+        });
+    </script>
+</body>
+</html>

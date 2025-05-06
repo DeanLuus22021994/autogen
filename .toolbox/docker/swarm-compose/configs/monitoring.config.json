@@ -1,0 +1,24 @@
+{
+  "stackName": "autogen-monitoring",
+  "deploymentTemplate": "../templates/monitoring-stack.yml",
+  "environment": {
+    "PROMETHEUS_IMAGE": "prom/prometheus:v2.45.0",
+    "PROMETHEUS_PORT": "9090",
+    "GRAFANA_IMAGE": "grafana/grafana:10.0.3",
+    "GRAFANA_PORT": "3000",
+    "GRAFANA_USER": "admin",
+    "GRAFANA_PASSWORD": "autogen_secure_password",
+    "NODE_EXPORTER_IMAGE": "prom/node-exporter:v1.6.0",
+    "CADVISOR_IMAGE": "gcr.io/cadvisor/cadvisor:v0.47.2",
+    "DCGM_EXPORTER_IMAGE": "nvidia/dcgm-exporter:3.1.7-3.1.4-ubuntu20.04"
+  },
+  "networks": ["monitoring-network"],
+  "volumes": ["prometheus_data", "grafana_data"],
+  "deploymentOptions": {
+    "mode": "global",
+    "updateParallelism": 1,
+    "updateDelay": "5s",
+    "updateOrder": "start-first",
+    "monitor": true
+  }
+}

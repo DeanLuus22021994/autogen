@@ -1,0 +1,49 @@
+{
+  "modelRunnerEndpoint": "http://model-runner.docker.internal/engines/v1/chat/completions",
+  "models": {
+    "mistralNemo": "ai/mistral-nemo",
+    "mistral": "ai/mistral"
+  },
+  "defaultSettings": {
+    "quantization": "int8",
+    "gpuCount": 1,
+    "contextLength": 8192,
+    "tensorParallelSize": 1,
+    "maxBatchSize": 8,
+    "maxInputLength": 4096,
+    "maxTotalTokens": 8192,
+    "kvCacheSize": 4096
+  },
+  "swarmIntegration": {
+    "stackName": "autogen-mistral",
+    "apiPort": 8080,
+    "monitoringPort": 9090,
+    "modelCacheVolume": "model_cache",
+    "prometheusDataVolume": "prometheus_data"
+  },
+  "optimization": {
+    "enableTensorParallel": true,
+    "enableFlashAttention": true,
+    "enableGradientAccumulation": false,
+    "enableConsolidatedGrad": false,
+    "fp16Inference": true,
+    "enableLowMemoryMode": false
+  },
+  "benchmarks": {
+    "tokensPerSecond": {
+      "int8": 150,
+      "int4": 250,
+      "none": 80
+    },
+    "memoryUsage": {
+      "int8": "8GB",
+      "int4": "5GB",
+      "none": "16GB"
+    },
+    "latency": {
+      "int8": "50ms",
+      "int4": "30ms",
+      "none": "100ms"
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "stackName": "autogen-mistral",
+  "deploymentTemplate": "../templates/mistral-gpu.yml",
+  "environment": {
+    "MISTRAL_IMAGE": "ai/mistral-nemo:latest",
+    "REPLICAS": "1",
+    "GPU_COUNT": "1",
+    "QUANTIZATION": "int8",
+    "TENSOR_PARALLEL_SIZE": "1",
+    "MAX_BATCH_SIZE": "8",
+    "MAX_INPUT_LENGTH": "4096",
+    "MAX_TOTAL_TOKENS": "8192",
+    "CONTEXT_LENGTH": "8192",
+    "KV_CACHE_SIZE": "4096",
+    "API_PORT": "8080",
+    "MONITORING_PORT": "9090",
+    "MODEL_DIR": "/data/models/mistral"
+  },
+  "networks": ["mistral-network"],
+  "volumes": ["model_cache", "prometheus_data"],
+  "deploymentOptions": {
+    "mode": "replicated",
+    "updateParallelism": 1,
+    "updateDelay": "10s",
+    "updateOrder": "start-first",
+    "monitor": true
+  }
+}

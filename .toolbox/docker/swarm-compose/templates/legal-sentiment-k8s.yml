@@ -1,0 +1,872 @@
+# Legal Document Sentiment Analysis Stack for South African Criminal Defense
+# This template defines a Kubernetes deployment for real-time legal document analysis
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ${NAMESPACE:-legal-analytics}
+
+---
+# ConfigMap for application configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: legal-analytics-config
+  namespace: ${NAMESPACE:-legal-analytics}
+data:
+  LEGAL_CONTEXT: "south-african-criminal"
+  LANGUAGE_MODELS: "en_za,xh,zu,afr"
+  LOG_LEVEL: "INFO"
+  RETENTION_DAYS: "1825"  # 5 years retention for legal documents
+  LEGAL_JURISDICTION: "south-africa"
+  LEGAL_SPECIALIZATION: "criminal-defense"
+
+---
+# Secret for sensitive information
+apiVersion: v1
+kind: Secret
+metadata:
+  name: legal-analytics-secrets
+  namespace: ${NAMESPACE:-legal-analytics}
+type: Opaque
+stringData:
+  DB_USERNAME: "${DB_USERNAME:-legaluser}"
+  DB_PASSWORD: "${DB_PASSWORD:-change_me_in_production}"
+  API_KEY: "${API_KEY:-generate_secure_key_in_production}"
+  JWT_SECRET: "${JWT_SECRET:-generate_secure_jwt_in_production}"
+
+---
+# Document Ingestion Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: document-ingestion
+  namespace: ${NAMESPACE:-legal-analytics}
+spec:
+  replicas: ${INGESTION_REPLICAS:-2}
+  selector:
+    matchLabels:
+      app: document-ingestion
+  template:
+    metadata:
+      labels:
+        app: document-ingestion
+    spec:
+      containers:
+      - name: document-ingestion
+        image: ${INGESTION_IMAGE:-autogen/legal-doc-ingestion:latest}
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        env:
+        - name: UPLOAD_LIMIT
+          value: "${UPLOAD_LIMIT:-50MB}"
+        - name: SUPPORTED_FORMATS
+          value: "pdf,docx,txt,rtf"
+        - name: OCR_ENABLED
+          value: "${OCR_ENABLED:-true}"
+        - name: KAFKA_BROKERS
+          value: "kafka-service:9092"
+        - name: DOCUMENT_TOPIC
+          value: "legal-documents"
+        volumeMounts:
+        - name: document-storage
+          mountPath: /data/documents
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      volumes:
+      - name: document-storage
+        persistentVolumeClaim:
+          claimName: document-storage-pvc
+
+---
+# Service for document ingestion
+apiVersion: v1
+kind: Service
+metadata:
+  name: document-ingestion-service
+  namespace: ${NAMESPACE:-legal-analytics}
+spec:
+  selector:
+    app: document-ingestion
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP
+
+---
+# NLP Processing Service with South African legal context
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nlp-processor
+  namespace: ${NAMESPACE:-legal-analytics}
+spec:
+  replicas: ${NLP_REPLICAS:-3}
+  selector:
+    matchLabels:
+      app: nlp-processor
+  template:
+    metadata:
+      labels:
+        app: nlp-processor
+    spec:
+      containers:
+      - name: nlp-processor
+        image: ${NLP_IMAGE:-autogen/legal-nlp-processor:latest}
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        env:
+        - name: KAFKA_BROKERS
+          value: "kafka-service:9092"
+        - name: DOCUMENT_TOPIC
+          value: "legal-documents"
+        - name: PROCESSED_TOPIC
+          value: "processed-documents"
+        - name: LEGAL_CONTEXT
+          valueFrom:
+            configMapKeyRef:
+              name: legal-analytics-config
+              key: LEGAL_CONTEXT
+        - name: LANGUAGE_MODELS
+          valueFrom:
+            configMapKeyRef:
+              name: legal-analytics-config
+              key: LANGUAGE_MODELS
+        - name: MODEL_CACHE_SIZE
+          value: "${MODEL_CACHE_SIZE:-1GB}"
+        volumeMounts:
+        - name: model-storage
+          mountPath: /models
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 20
+      volumes:
+      - name: model-storage
+        persistentVolumeClaim:
+          claimName: model-storage-pvc
+
+---
+# Service for NLP processor
+apiVersion: v1
+kind: Service
+metadata:
+  name: nlp-processor-service
+  namespace: ${NAMESPACE:-legal-analytics}
+spec:
+  selector:
+    app: nlp-processor
+  ports:
+  - port: 8000
+    targetPort: 8000
+  type: ClusterIP
+
+---
+# Sentiment Analysis Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentiment-analyzer
+  namespace: ${NAMESPACE:-legal-analytics}
+spec:
+  replicas: ${SENTIMENT_REPLICAS:-2}
+  selector:
+    matchLabels:
+      app: sentiment-analyzer
+  template:
+    metadata:
+      labels:
+        app: sentiment-analyzer
+    spec:
+      containers:
+      - name: sentiment-analyzer
+        image: ${SENTIMENT_IMAGE:-autogen/legal-sentiment-analyzer:latest}
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        env:
+        - name: KAFKA_BROKERS
+          value: "kafka-service:9092"
+        - name: PROCESSED_TOPIC
+          value: "processed-documents"
+        - name: SENTIMENT_TOPIC
+          value: "sentiment-results"
+        - name: LEGAL_SPECIALIZATION
+          valueFrom:
+            configMapKeyRef:
+              name: legal-analytics-config
+              key: LEGAL_SPECIALIZATION
+        - name: BATCH_SIZE
+          value: "${BATCH_SIZE:-10}"
+        volumeMounts:
+        - name: sentiment-model-storage
+          mountPath: /models
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 15
+      volumes:
+      - name: sentiment-model-storage
+        persistentVolumeClaim:
+          claimName: sentiment-model-pvc
+
+---
+# Service for Sentiment Analyzer
+apiVersion: v1
+kind: Service
+metadata:
+  name: sentiment-analyzer-service
+  namespace: ${NAMESPACE:-legal-analytics}
+spec:
+  selector:
+    app: sentiment-analyzer
+  ports:
+  - port: 8000
+    targetPort: 8000
+  type: ClusterIP
+
+---
+# Database for storing analysis results
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: analytics-database
+  namespace: ${NAMESPACE:-legal-analytics}
+spec:
+  serviceName: "analytics-db"
+  replicas: ${DB_REPLICAS:-2}
+  selector:
+    matchLabels:
+      app: analytics-database
+  template:
+    metadata:
+      labels:
+        app: analytics-database
+    spec:
+      containers:
+      - name: postgresql
+        image: ${DB_IMAGE:-postgres:16-alpine}
+        ports:
+        - containerPort: 5432
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: legal-analytics-secrets
+              key: DB_USERNAME
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: legal-analytics-secrets
+              key: DB_PASSWORD
+        - name: POSTGRES_DB
+          value: "legal_sentiment"
+        volumeMounts:
+        - name: db-storage
+          mountPath: /var/lib/postgresql/data
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - "$(POSTGRES_USER)"
+          initialDelaySeconds: 30
+          periodSeconds: 10
+  volumeClaimTemplates:
+  - metadata:
+      name: db-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: ${DB_STORAGE:-10Gi}
+
+---
+# Service for Database
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-db-service
+  namespace: ${NAMESPACE:-legal-analytics}
+spec:
+  selector:
+    app: analytics-database
+  ports:
+  - port: 5432
+    targetPort: 5432
+  type: ClusterIP
+
+---
+# Dashboard for visualizing sentiment trends
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-dashboard
+  namespace: ${NAMESPACE:-legal-analytics}
+spec:
+  replicas: ${DASHBOARD_REPLICAS:-1}
+  selector:
+    matchLabels:
+      app: analytics-dashboard
+  template:
+    metadata:
+      labels:
+        app: analytics-dashboard
+    spec:
+      containers:
+      - name: dashboard
+        image: ${DASHBOARD_IMAGE:-autogen/legal-analytics-dashboard:latest}
+        ports:
+        - containerPort: 3000
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        env:
+        - name: DB_HOST
+          value: "analytics-db-service"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          value: "legal_sentiment"
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: legal-analytics-secrets
+              key: DB_USERNAME
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: legal-analytics-secrets
+              key: DB_PASSWORD
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: legal-analytics-secrets
+              key: API_KEY
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+---
+# Service for Dashboard
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard-service
+  namespace: ${NAMESPACE:-legal-analytics}
+spec:
+  selector:
+    app: analytics-dashboard
+  ports:
+  - port: 3000
+    targetPort: 3000
+  type: ClusterIP
+
+---
+# Secure API for attorney access
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: legal-api
+  namespace: ${NAMESPACE:-legal-analytics}
+spec:
+  replicas: ${API_REPLICAS:-2}
+  selector:
+    matchLabels:
+      app: legal-api
+  template:
+    metadata:
+      labels:
+        app: legal-api
+    spec:
+      containers:
+      - name: legal-api
+        image: ${API_IMAGE:-autogen/legal-api-gateway:latest}
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        env:
+        - name: DB_HOST
+          value: "analytics-db-service"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          value: "legal_sentiment"
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: legal-analytics-secrets
+              key: DB_USERNAME
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: legal-analytics-secrets
+              key: DB_PASSWORD
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: legal-analytics-secrets
+              key: JWT_SECRET
+        - name: RATE_LIMIT
+          value: "${API_RATE_LIMIT:-100}"
+        - name: SESSION_TIMEOUT
+          value: "${SESSION_TIMEOUT:-30m}"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+---
+# Service for Legal API
+apiVersion: v1
+kind: Service
+metadata:
+  name: legal-api-service
+  namespace: ${NAMESPACE:-legal-analytics}
+spec:
+  selector:
+    app: legal-api
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP
+
+---
+# Kafka for message streaming
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka
+  namespace: ${NAMESPACE:-legal-analytics}
+spec:
+  serviceName: "kafka"
+  replicas: ${KAFKA_REPLICAS:-3}
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      containers:
+      - name: kafka
+        image: ${KAFKA_IMAGE:-confluentinc/cp-kafka:7.3.0}
+        ports:
+        - containerPort: 9092
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        env:
+        - name: KAFKA_BROKER_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: KAFKA_ZOOKEEPER_CONNECT
+          value: "zookeeper-service:2181"
+        - name: KAFKA_ADVERTISED_LISTENERS
+          value: "PLAINTEXT://$(POD_NAME).kafka-service.$(NAMESPACE).svc.cluster.local:9092"
+        - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+          value: "PLAINTEXT:PLAINTEXT"
+        - name: KAFKA_INTER_BROKER_LISTENER_NAME
+          value: "PLAINTEXT"
+        - name: KAFKA_AUTO_CREATE_TOPICS_ENABLE
+          value: "true"
+        - name: KAFKA_LOG_RETENTION_HOURS
+          value: "${KAFKA_RETENTION:-168}"  # 7 days default
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        volumeMounts:
+        - name: kafka-storage
+          mountPath: /var/lib/kafka/data
+  volumeClaimTemplates:
+  - metadata:
+      name: kafka-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: ${KAFKA_STORAGE:-10Gi}
+
+---
+# Service for Kafka
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-service
+  namespace: ${NAMESPACE:-legal-analytics}
+spec:
+  selector:
+    app: kafka
+  ports:
+  - port: 9092
+    targetPort: 9092
+  clusterIP: None  # Headless service for StatefulSet
+
+---
+# Zookeeper for Kafka
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: zookeeper
+  namespace: ${NAMESPACE:-legal-analytics}
+spec:
+  serviceName: "zookeeper"
+  replicas: ${ZK_REPLICAS:-3}
+  selector:
+    matchLabels:
+      app: zookeeper
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+    spec:
+      containers:
+      - name: zookeeper
+        image: ${ZK_IMAGE:-confluentinc/cp-zookeeper:7.3.0}
+        ports:
+        - containerPort: 2181
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        env:
+        - name: ZOOKEEPER_CLIENT_PORT
+          value: "2181"
+        - name: ZOOKEEPER_TICK_TIME
+          value: "2000"
+        - name: ZOOKEEPER_SERVER_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        volumeMounts:
+        - name: zookeeper-storage
+          mountPath: /var/lib/zookeeper/data
+  volumeClaimTemplates:
+  - metadata:
+      name: zookeeper-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: ${ZK_STORAGE:-5Gi}
+
+---
+# Service for Zookeeper
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper-service
+  namespace: ${NAMESPACE:-legal-analytics}
+spec:
+  selector:
+    app: zookeeper
+  ports:
+  - port: 2181
+    targetPort: 2181
+  clusterIP: None  # Headless service for StatefulSet
+
+---
+# Ingress for external access
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: legal-analytics-ingress
+  namespace: ${NAMESPACE:-legal-analytics}
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-body-size: "${MAX_UPLOAD_SIZE:-100m}"
+spec:
+  tls:
+  - hosts:
+    - "${INGRESS_HOST:-legal-analytics.example.com}"
+    secretName: legal-tls
+  rules:
+  - host: "${INGRESS_HOST:-legal-analytics.example.com}"
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: legal-api-service
+            port:
+              number: 8080
+      - path: /upload
+        pathType: Prefix
+        backend:
+          service:
+            name: document-ingestion-service
+            port:
+              number: 8080
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: dashboard-service
+            port:
+              number: 3000
+
+---
+# Persistent Volume Claims
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: document-storage-pvc
+  namespace: ${NAMESPACE:-legal-analytics}
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: ${DOC_STORAGE:-50Gi}
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: model-storage-pvc
+  namespace: ${NAMESPACE:-legal-analytics}
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: ${MODEL_STORAGE:-20Gi}
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sentiment-model-pvc
+  namespace: ${NAMESPACE:-legal-analytics}
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: ${SENTIMENT_STORAGE:-10Gi}
+
+---
+# NetworkPolicies for security
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: legal-api-network-policy
+  namespace: ${NAMESPACE:-legal-analytics}
+spec:
+  podSelector:
+    matchLabels:
+      app: legal-api
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8080
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: analytics-database
+    ports:
+    - protocol: TCP
+      port: 5432
+
+---
+# Metrics and Monitoring
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: ${NAMESPACE:-legal-analytics}
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus
+rules:
+- apiGroups: [""]
+  resources:
+  - nodes
+  - nodes/proxy
+  - services
+  - endpoints
+  - pods
+  verbs: ["get", "list", "watch"]
+- apiGroups:
+  - extensions
+  resources:
+  - ingresses
+  verbs: ["get", "list", "watch"]
+- nonResourceURLs: ["/metrics"]
+  verbs: ["get"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus
+subjects:
+- kind: ServiceAccount
+  name: prometheus
+  namespace: ${NAMESPACE:-legal-analytics}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus-deployment
+  namespace: ${NAMESPACE:-legal-analytics}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      serviceAccountName: prometheus
+      containers:
+      - name: prometheus
+        image: prom/prometheus:v2.42.0
+        ports:
+        - containerPort: 9090
+        volumeMounts:
+        - name: prometheus-config-volume
+          mountPath: /etc/prometheus/
+        - name: prometheus-storage-volume
+          mountPath: /prometheus/
+      volumes:
+      - name: prometheus-config-volume
+        configMap:
+          defaultMode: 420
+          name: prometheus-config
+      - name: prometheus-storage-volume
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-service
+  namespace: ${NAMESPACE:-legal-analytics}
+spec:
+  selector:
+    app: prometheus
+  ports:
+  - port: 9090
+    targetPort: 9090
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: ${NAMESPACE:-legal-analytics}
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+    scrape_configs:
+      - job_name: 'kubernetes-pods'
+        kubernetes_sd_configs:
+        - role: pod
+        relabel_configs:
+        - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+          action: keep
+          regex: true
+        - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+          action: replace
+          target_label: __metrics_path__
+          regex: (.+)
+        - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+          action: replace
+          regex: ([^:]+)(?::\d+)?;(\d+)
+          replacement: $1:$2
+          target_label: __address__
+        - action: labelmap
+          regex: __meta_kubernetes_pod_label_(.+)
+        - source_labels: [__meta_kubernetes_namespace]
+          action: replace
+          target_label: kubernetes_namespace
+        - source_labels: [__meta_kubernetes_pod_name]
+          action: replace
+          target_label: kubernetes_pod_name

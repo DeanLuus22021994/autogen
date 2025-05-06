@@ -1,0 +1,102 @@
+# Sample Deployment: GPU Inference Service
+# This is a sample deployment of the GPU inference service
+version: '3.8'
+
+services:
+  inference:
+    image: ${INFERENCE_IMAGE:-autogen/gpu-inference:latest}
+    build:
+      context: ./inference
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: nvidia/cuda:12.0.1-runtime-ubuntu22.04
+    deploy:
+      replicas: ${INFERENCE_REPLICAS:-2}
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: ${GPU_COUNT:-1}
+              capabilities: [gpu]
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - MODEL_PATH=/models
+      - MODEL_NAME=${MODEL_NAME:-autogen-7b-v1}
+      - MAX_BATCH_SIZE=${MAX_BATCH_SIZE:-4}
+      - MAX_INPUT_LENGTH=${MAX_INPUT_LENGTH:-4096}
+      - MAX_TOTAL_TOKENS=${MAX_TOTAL_TOKENS:-8192}
+      - PRECISION=${PRECISION:-fp16}
+      - LOG_LEVEL=INFO
+    volumes:
+      - models:/models
+      - inference_cache:/cache
+    networks:
+      - autogen-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  api:
+    image: ${API_IMAGE:-autogen/inference-api:latest}
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    deploy:
+      replicas: ${API_REPLICAS:-2}
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+      restart_policy:
+        condition: any
+      update_config:
+        parallelism: 1
+        delay: 5s
+        order: start-first
+    ports:
+      - "${API_PORT:-8080}:8080"
+    environment:
+      - INFERENCE_ENDPOINT=http://inference:9000
+      - AUTH_ENABLED=${AUTH_ENABLED:-true}
+      - AUTH_KEY=${AUTH_KEY:-default_dev_key}
+      - MAX_REQUEST_SIZE=${MAX_REQUEST_SIZE:-1MB}
+      - RATE_LIMIT=${RATE_LIMIT:-100}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    networks:
+      - autogen-net
+    depends_on:
+      - inference
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+networks:
+  autogen-net:
+    driver: overlay
+    attachable: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  models:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${MODEL_DIR:-/data/models}
+  inference_cache:
+    driver: local
