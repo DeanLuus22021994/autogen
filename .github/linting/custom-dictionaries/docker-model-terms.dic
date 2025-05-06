@@ -1,0 +1,13 @@
+# Docker Model Terms Custom Dictionary
+# Add specialized model terms here to prevent spellcheck warnings
+
+ai/mistral
+ai/mistral-nemo
+ai/mxbai-embed-large
+ai/smollm2
+Docker
+ModelClient
+ModelRunner
+docker-model-integration
+model-runner
+qwen2.5-coder

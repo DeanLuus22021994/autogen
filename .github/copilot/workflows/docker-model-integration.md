@@ -11,7 +11,7 @@ Configure and use Docker Model Runner for local development and testing without 
      - Navigate to Settings > Features in development > Beta
      - Check "Enable Docker Model Runner"
      - Apply and restart Docker Desktop
-1. **Pull Required Models**
+2. **Pull Required Models**
    - Pull models using the Docker Model CLI:
      ```bash
      docker model pull ai/mistral-nemo
@@ -23,7 +23,7 @@ Configure and use Docker Model Runner for local development and testing without 
      ```bash
      docker model list
      ```
-1. **Use Models in Development**
+3. **Use Models in Development**
    - **Interactive CLI usage**:
      ```bash
      docker model run ai/smollm2
@@ -45,11 +45,11 @@ Configure and use Docker Model Runner for local development and testing without 
        }'
      ```
 
-1. **Integrate with AutoGen**
+4. **Integrate with AutoGen**
    - Create configuration connecting AutoGen to local model endpoints
    - Use Docker Model Runner API endpoints for inference
    - Implement fallback to remote APIs when local models are unavailable
-1. **Clean Up Resources**
+5. **Clean Up Resources**
    - Remove models when no longer needed:
      ```bash
      docker model rm ai/model-name

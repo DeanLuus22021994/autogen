@@ -20,13 +20,12 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Set up Docker
-        uses: docker/setup-buildx-action@v2
-
-      - name: Set up PowerShell
+        uses: docker/setup-buildx-action@v2      - name: Set up PowerShell
         uses: azure/powershell@v1
         with:
-          azps-version: latest
-          failOnStderr: true
+          azPSVersion: 'latest'
+          inlineScript: |
+            Write-Host "PowerShell is ready"
 
       - name: Build Docker Image
         run: |
