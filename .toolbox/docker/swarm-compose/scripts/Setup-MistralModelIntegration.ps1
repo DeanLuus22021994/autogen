@@ -110,6 +110,17 @@ description: |
 }
 
 function Test-DockerModelRunner {
+    <#
+    .SYNOPSIS
+        Tests if Docker Model Runner is properly configured.
+
+    .DESCRIPTION
+        Verifies that Docker is running and Docker Model Runner is properly configured
+        with the necessary models for Mistral integration.
+
+    .OUTPUTS
+        [Boolean] True if Docker Model Runner is properly configured, false otherwise.
+    #>
     Write-Log "Checking Docker Model Runner setup..." -Color $CYAN
 
     try {
@@ -146,6 +157,17 @@ function Test-DockerModelRunner {
 }
 
 function Initialize-ModelIntegration {
+    <#
+    .SYNOPSIS
+        Initializes the model integration environment.
+
+    .DESCRIPTION
+        Creates the necessary directory structure and configuration files for
+        integrating Docker Swarm Compose with Docker Model Runner for Mistral models.
+
+    .OUTPUTS
+        [Boolean] True if initialization was successful, false otherwise.
+    #>
     # Create directory for model integration if it doesn't exist
     $modelIntegrationDir = Join-Path $PSScriptRoot "..\model-integration"
 
@@ -213,6 +235,17 @@ function Initialize-ModelIntegration {
 }
 
 function Test-ModelIntegration {
+    <#
+    .SYNOPSIS
+        Tests the model integration setup.
+
+    .DESCRIPTION
+        Verifies that the Docker Model Runner endpoint is accessible and
+        Mistral models are available.
+
+    .OUTPUTS
+        [Boolean] True if integration is working correctly, false otherwise.
+    #>
     Write-Log "Testing model integration..." -Color $CYAN
 
     try {
@@ -263,11 +296,10 @@ try {
         Remove-Item -Path $LogFile -Force
     }
 
-    Write-Log "Starting Mistral Model integration setup..." -Color $CYAN
-    Write-Log "Timestamp: $(Get-Date)" -Color $WHITE
+    Write-Log "Starting Mistral Model integration setup..." -Color $CYAN    Write-Log "Timestamp: $(Get-Date)" -Color $WHITE
 
     # Check Docker Model Runner setup
-    $modelRunnerSetup = Ensure-DockerModelRunner
+    $modelRunnerSetup = Test-DockerModelRunner
 
     if (-not $modelRunnerSetup) {
         Write-Log "Failed to ensure Docker Model Runner setup. Integration may not work properly." -Color $YELLOW
@@ -283,10 +315,8 @@ try {
             Remove-Item -Path $modelIntegrationDir -Recurse -Force
             Write-Log "Cleared existing model integration cache." -Color $GREEN
         }
-    }
-
-    # Set up model integration
-    $integrationSetup = Setup-ModelIntegration
+    }    # Set up model integration
+    $integrationSetup = Initialize-ModelIntegration
 
     if ($integrationSetup) {
         # Test the integration

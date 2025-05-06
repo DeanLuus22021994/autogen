@@ -1,7 +1,6 @@
 {
   "version": "0.2",
-  "language": "en",
-  "words": [
+  "language": "en",  "words": [
     "CUDA",
     "dirtag",
     "dirtags",
@@ -14,6 +13,9 @@
     "DirTagStatusCode",
     "GUID",
     "LLM",
+    "mistral",
+    "Mistral",
+    "MistralAI",
     "NVIDIA",
     "PrecompiledFactory",
     "RAMDisk",
