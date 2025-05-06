@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <docker_documentation>
   <metadata>
     <updated>2025-05-06T00:35:00Z</updated>
@@ -8,10 +8,9 @@
       Used for dynamic referencing throughout the codebase.
     </description>
   </metadata>
-
   <categories>
     <category id="general">
-      <name>General Docker Documentation</name>
+      <n>General Docker Documentation</n>
       <description>Main Docker documentation resources</description>
       <links>
         <link id="docker_main">
@@ -22,9 +21,8 @@
         </link>
       </links>
     </category>
-
     <category id="ai_gordon">
-      <name>Docker Gordon</name>
+      <n>Docker Gordon</n>
       <description>Docker's AI orchestration tool</description>
       <links>
         <link id="gordon_main">
@@ -59,9 +57,8 @@
         </link>
       </links>
     </category>
-
     <category id="model_runner">
-      <name>Docker Model Runner</name>
+      <n>Docker Model Runner</n>
       <description>Docker's built-in AI model runner</description>
       <links>
         <link id="model_runner_main">
@@ -72,9 +69,8 @@
         </link>
       </links>
     </category>
-
     <category id="mcp_toolkit">
-      <name>MCP Catalog and Toolkit</name>
+      <n>MCP Catalog and Toolkit</n>
       <description>Model Control Plane tools and catalog</description>
       <links>
         <link id="mcp_toolkit_main">
@@ -97,9 +93,8 @@
         </link>
       </links>
     </category>
-
     <category id="docker_copilot">
-      <name>Docker Copilot</name>
+      <n>Docker Copilot</n>
       <description>Docker's AI assistant for development</description>
       <links>
         <link id="copilot_main">
@@ -129,7 +124,6 @@
       </links>
     </category>
   </categories>
-
   <tags>
     <tag name="ai">
       <link_ref>gordon_main</link_ref>
