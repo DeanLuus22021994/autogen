@@ -6,6 +6,41 @@
 # Ensure compatibility with existing DirTagManagement module
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath "DirTagManagement.psm1") -Force
 
+# Environment and path handling setup
+function Initialize-EnvironmentPaths {
+    [CmdletBinding()]
+    param()
+
+    # Determine repository root
+    if (-not $env:REPO_ROOT) {
+        # Default case: try to find repository root
+        $currentPath = $PSScriptRoot
+        while ($currentPath -and -not (Test-Path (Join-Path $currentPath ".git"))) {
+            $currentPath = Split-Path $currentPath -Parent
+        }
+
+        if ($currentPath) {
+            $env:REPO_ROOT = $currentPath
+        } else {
+            # Fallback: use relative paths from current module
+            $env:REPO_ROOT = (Resolve-Path (Join-Path $PSScriptRoot ".." "..")).Path
+        }
+    }
+
+    # Check if running in container
+    if ($env:CONTAINER_ENVIRONMENT -or (Test-Path "/.dockerenv")) {
+        $script:IsContainer = $true
+    } else {
+        $script:IsContainer = $false
+    }
+
+    Write-Verbose "Repository root: $env:REPO_ROOT"
+    Write-Verbose "Running in container: $script:IsContainer"
+}
+
+# Initialize environment
+Initialize-EnvironmentPaths
+
 # Enum for group operations types
 enum DirTagGroupOperation {
     Add = 0          # Add a new task to TODO list
@@ -39,14 +74,20 @@ class DirTagGroup {
     }
 
     [void]AddDirectory([string]$path) {
-        if (-not ($this.DirectoryPaths -contains $path)) {
-            $this.DirectoryPaths += $path
+        # Normalize path to repository-relative
+        $normalizedPath = $this.NormalizePath($path)
+
+        if (-not ($this.DirectoryPaths -contains $normalizedPath)) {
+            $this.DirectoryPaths += $normalizedPath
         }
     }
 
     [void]AddDirectoryPattern([string]$pattern) {
-        if (-not ($this.DirectoryPatterns -contains $pattern)) {
-            $this.DirectoryPatterns += $pattern
+        # Normalize pattern to repository-relative
+        $normalizedPattern = $this.NormalizePattern($pattern)
+
+        if (-not ($this.DirectoryPatterns -contains $normalizedPattern)) {
+            $this.DirectoryPatterns += $normalizedPattern
         }
     }
 
@@ -56,19 +97,57 @@ class DirTagGroup {
         }
     }
 
+    [string]NormalizePath([string]$path) {
+        # If path is absolute, convert to repo-relative
+        if ([System.IO.Path]::IsPathRooted($path)) {
+            if ($path.StartsWith($env:REPO_ROOT, [StringComparison]::OrdinalIgnoreCase)) {
+                $relativePath = $path.Substring($env:REPO_ROOT.Length).TrimStart('\', '/')
+                return $relativePath
+            } else {
+                Write-Warning "Path '$path' is outside repository root. Using as-is."
+                return $path
+            }
+        }
+
+        return $path
+    }
+
+    [string]NormalizePattern([string]$pattern) {
+        # Replace absolute path parts with repo-relative paths
+        if ($pattern.StartsWith($env:REPO_ROOT, [StringComparison]::OrdinalIgnoreCase)) {
+            $relativePattern = $pattern.Substring($env:REPO_ROOT.Length).TrimStart('\', '/')
+            $relativePattern = $relativePattern.Replace("\**\", "/**/" )
+            return $relativePattern
+        }
+
+        return $pattern
+    }
+
     [string[]]ResolveDirectories() {
         $allDirs = @()
 
         # Add explicitly specified directories
         foreach ($dir in $this.DirectoryPaths) {
-            if (Test-Path -Path $dir -PathType Container) {
-                $allDirs += $dir
+            $fullPath = if ([System.IO.Path]::IsPathRooted($dir)) {
+                $dir
+            } else {
+                Join-Path $env:REPO_ROOT $dir
+            }
+
+            if (Test-Path -Path $fullPath -PathType Container) {
+                $allDirs += $fullPath
             }
         }
 
         # Add directories matching patterns
         foreach ($pattern in $this.DirectoryPatterns) {
-            $dirs = Get-ChildItem -Path $pattern -Directory -Recurse:$this.IncludeSubdirectories |
+            $fullPattern = if ([System.IO.Path]::IsPathRooted($pattern)) {
+                $pattern
+            } else {
+                Join-Path $env:REPO_ROOT $pattern
+            }
+
+            $dirs = Get-ChildItem -Path $fullPattern -Directory -Recurse:$this.IncludeSubdirectories |
                 Where-Object { $_.FullName -notin $allDirs }
 
             $allDirs += $dirs.FullName
@@ -111,11 +190,19 @@ function New-DirTagGroup {
 
     $group = [DirTagGroup]::new($Name)
     $group.Description = $Description
-    $group.DirectoryPaths = $DirectoryPaths
-    $group.DirectoryPatterns = $DirectoryPatterns
-    $group.ExcludePatterns = $ExcludePatterns
     $group.IncludeSubdirectories = $IncludeSubdirectories
     $group.Metadata = $Metadata
+
+    # Add directories and patterns
+    foreach ($dir in $DirectoryPaths) {
+        $group.AddDirectory($dir)
+    }
+
+    foreach ($pattern in $DirectoryPatterns) {
+        $group.AddDirectoryPattern($pattern)
+    }
+
+    $group.ExcludePatterns = $ExcludePatterns
 
     return $group
 }
@@ -127,18 +214,18 @@ function Get-GPUConfigurationDirTagGroup {
     # Create a group for GPU-related DIR.TAG files
     $group = New-DirTagGroup -Name "GPUConfiguration" -Description "DIR.TAG files related to GPU configuration and optimization"
 
-    # Add common GPU-related directories
-    $group.AddDirectory("c:\Projects\autogen\.devcontainer")
-    $group.AddDirectory("c:\Projects\autogen\.devcontainer\swarm")
-    $group.AddDirectory("c:\Projects\autogen\.devcontainer\buildkit")
-    $group.AddDirectory("c:\Projects\autogen\.devcontainer\docker")
-    $group.AddDirectory("c:\Projects\autogen\.toolbox\docker")
-    $group.AddDirectory("c:\Projects\autogen\.toolbox\docker\swarm-compose")
-    $group.AddDirectory("c:\Projects\autogen\.toolbox\modules")
+    # Add common GPU-related directories using relative paths
+    $group.AddDirectory(".devcontainer")
+    $group.AddDirectory(".devcontainer/swarm")
+    $group.AddDirectory(".devcontainer/buildkit")
+    $group.AddDirectory(".devcontainer/docker")
+    $group.AddDirectory(".toolbox/docker")
+    $group.AddDirectory(".toolbox/docker/swarm-compose")
+    $group.AddDirectory(".toolbox/modules")
 
     # Add pattern for any docker-related directories that might contain GPU configurations
-    $group.AddDirectoryPattern("c:\Projects\autogen\**\*gpu*")
-    $group.AddDirectoryPattern("c:\Projects\autogen\**\*nvidia*")
+    $group.AddDirectoryPattern("**/*gpu*")
+    $group.AddDirectoryPattern("**/*nvidia*")
 
     # Metadata for GPU group
     $group.Metadata = @{
@@ -680,49 +767,50 @@ function Get-StdDirTagGroup {
     switch ($GroupName) {
         "DevContainer" {
             return New-DirTagGroup -Name "DevContainer" -Description "DevContainer configuration files" -DirectoryPaths @(
-                "c:\Projects\autogen\.devcontainer"
+                ".devcontainer"
             ) -DirectoryPatterns @(
-                "c:\Projects\autogen\.devcontainer\*"
+                ".devcontainer/*"
             ) -ExcludePatterns @('node_modules', '.git', 'bin', 'obj')
         }
         "Toolbox" {
             return New-DirTagGroup -Name "Toolbox" -Description "Toolbox utilities and modules" -DirectoryPaths @(
-                "c:\Projects\autogen\.toolbox",
-                "c:\Projects\autogen\.toolbox\modules",
-                "c:\Projects\autogen\.toolbox\docker"
+                ".toolbox",
+                ".toolbox/modules",
+                ".toolbox/docker"
             )
         }
         "Docker" {
             return New-DirTagGroup -Name "Docker" -Description "Docker configuration files" -DirectoryPaths @(
-                "c:\Projects\autogen\.devcontainer\docker",
-                "c:\Projects\autogen\.toolbox\docker"
+                ".devcontainer/docker",
+                ".toolbox/docker"
             ) -DirectoryPatterns @(
-                "c:\Projects\autogen\**\*docker*"
+                "**/*docker*"
             )
-        }        "Swarm" {
+        }
+        "Swarm" {
             return New-DirTagGroup -Name "Swarm" -Description "Docker Swarm configuration files" -DirectoryPaths @(
-                "c:\Projects\autogen\.devcontainer\swarm",
-                "c:\Projects\autogen\.devcontainer\swarm\utils",
-                "c:\Projects\autogen\.devcontainer\swarm\sidecar-containers",
-                "c:\Projects\autogen\.toolbox\docker\swarm-compose"
+                ".devcontainer/swarm",
+                ".devcontainer/swarm/utils",
+                ".devcontainer/swarm/sidecar-containers",
+                ".toolbox/docker/swarm-compose"
             )
         }
         "BuildKit" {
             return New-DirTagGroup -Name "BuildKit" -Description "BuildKit configuration files" -DirectoryPaths @(
-                "c:\Projects\autogen\.devcontainer\buildkit"
+                ".devcontainer/buildkit"
             )
         }
         "Smoll2" {
             return New-DirTagGroup -Name "Smoll2" -Description "smoll2 LLM configuration files" -DirectoryPaths @(
-                "c:\Projects\autogen\.devcontainer\docker",
-                "c:\Projects\autogen\.devcontainer\swarm",
-                "c:\Projects\autogen\.toolbox\docker",
-                "c:\Projects\autogen\docs"
+                ".devcontainer/docker",
+                ".devcontainer/swarm",
+                ".toolbox/docker",
+                "docs"
             ) -Tags "smoll2,LLM,Performance,RAMDisk"
         }
         "All" {
             return New-DirTagGroup -Name "All" -Description "All DIR.TAG files" -DirectoryPatterns @(
-                "c:\Projects\autogen\**"
+                "**"
             ) -ExcludePatterns @('node_modules', '.git', 'bin', 'obj', 'packages')
         }
     }
@@ -738,38 +826,38 @@ function Get-Smoll2ConfigurationDirTagGroup {
         [switch]$IncludeTestFiles
     )
 
-    # Create a group for Smoll2-related DIR.TAG files
+    # Create a group for Smoll2-related DIR.TAG files with relative paths
     $group = New-DirTagGroup -Name "Smoll2Configuration" -Description "DIR.TAG files related to Smoll2 LLM configuration and optimizations"
 
     # Add common Smoll2-related directories
-    $group.AddDirectory("c:\Projects\autogen\.devcontainer")
-    $group.AddDirectory("c:\Projects\autogen\.devcontainer\swarm")
-    $group.AddDirectory("c:\Projects\autogen\.devcontainer\docker")
-    $group.AddDirectory("c:\Projects\autogen\.toolbox\docker")
-    $group.AddDirectory("c:\Projects\autogen\.toolbox\docker\swarm-compose")
-    $group.AddDirectory("c:\Projects\autogen\.toolbox\modules")
+    $group.AddDirectory(".devcontainer")
+    $group.AddDirectory(".devcontainer/swarm")
+    $group.AddDirectory(".devcontainer/docker")
+    $group.AddDirectory(".toolbox/docker")
+    $group.AddDirectory(".toolbox/docker/swarm-compose")
+    $group.AddDirectory(".toolbox/modules")
 
     # Add Smoll2-specific directories
-    $group.AddDirectory("c:\Projects\autogen\.devcontainer\ramdisk")
-    $group.AddDirectory("c:\Projects\autogen\.devcontainer\models")
+    $group.AddDirectory(".devcontainer/ramdisk")
+    $group.AddDirectory(".devcontainer/models")
 
     # Add pattern for any Smoll2-related directories
-    $group.AddDirectoryPattern("c:\Projects\autogen\**\*smoll*")
-    $group.AddDirectoryPattern("c:\Projects\autogen\**\*llm*")
-    $group.AddDirectoryPattern("c:\Projects\autogen\**\*ramdisk*")
+    $group.AddDirectoryPattern("**/*smoll*")
+    $group.AddDirectoryPattern("**/*llm*")
+    $group.AddDirectoryPattern("**/*ramdisk*")
 
     # Optionally include documentation
     if ($IncludeDocumentation) {
-        $group.AddDirectory("c:\Projects\autogen\docs")
-        $group.AddDirectory("c:\Projects\autogen\.github\workflows")
-        $group.AddDirectoryPattern("c:\Projects\autogen\**\*smoll*.md")
+        $group.AddDirectory("docs")
+        $group.AddDirectory(".github/workflows")
+        $group.AddDirectoryPattern("**/*smoll*.md")
     }
 
     # Optionally include test files
     if ($IncludeTestFiles) {
-        $group.AddDirectory("c:\Projects\autogen\tests")
-        $group.AddDirectoryPattern("c:\Projects\autogen\**\*test*.ps1")
-        $group.AddDirectoryPattern("c:\Projects\autogen\**\*benchmark*.ps1")
+        $group.AddDirectory("tests")
+        $group.AddDirectoryPattern("**/*test*.ps1")
+        $group.AddDirectoryPattern("**/*benchmark*.ps1")
     }
 
     # Metadata for Smoll2 group
@@ -779,6 +867,7 @@ function Get-Smoll2ConfigurationDirTagGroup {
         RelatedTech = @("Smoll2", "LLM", "RAMDisk", "Docker", "Swarm", "GPU", "CUDA", "PrecompiledFactory")
         PerformanceCategory = "Ultra-Low Latency"
         CacheStrategy = "RAM-First with Persistent Backup"
+        ContainerOptimized = $true
     }
 
     return $group
@@ -807,24 +896,27 @@ function Sync-Smoll2RelatedDirTags {
     # Get the Smoll2 configuration group
     $smoll2Group = Get-Smoll2ConfigurationDirTagGroup
 
-    # Define standard Smoll2 tasks by category
+    # Define standard Smoll2 tasks by category with containerization best practices
     $configurationTasks = @(
         "Configure Smoll2 LLM for Docker Model Runner [OUTSTANDING]",
         "Set up RAM disk mounting for Smoll2 model cache [OUTSTANDING]",
-        "Configure Docker Swarm for optimal Smoll2 performance [OUTSTANDING]"
+        "Configure Docker Swarm for optimal Smoll2 performance [OUTSTANDING]",
+        "Pre-cache VS Code extensions (including Vim) for containerized development [OUTSTANDING]"
     )
 
     $performanceTasks = @(
         "Implement precompiled cache factory pattern for Smoll2 [OUTSTANDING]",
         "Optimize memory allocation for Smoll2 token processing [OUTSTANDING]",
         "Configure GPU passthrough for Smoll2 inference [OUTSTANDING]",
-        "Set up performance benchmarking for Smoll2 with/without RAM disk [OUTSTANDING]"
+        "Set up performance benchmarking for Smoll2 with/without RAM disk [OUTSTANDING]",
+        "Implement container-aware resource allocation detection [OUTSTANDING]"
     )
 
     $documentationTasks = @(
         "Document Smoll2 precompiled cached factory pattern [OUTSTANDING]",
         "Create usage examples for Smoll2 with RAM disk [OUTSTANDING]",
-        "Document performance benchmarks and optimization strategies [OUTSTANDING]"
+        "Document performance benchmarks and optimization strategies [OUTSTANDING]",
+        "Document containerization best practices for extension pre-caching [OUTSTANDING]"
     )
 
     # Combine tasks based on selected category
@@ -852,7 +944,8 @@ function Sync-Smoll2RelatedDirTags {
         $dependencyTasks = @(
             "Set up NVIDIA Container Toolkit for GPU acceleration [OUTSTANDING]",
             "Configure Docker daemon.json for GPU passthrough [OUTSTANDING]",
-            "Implement shared memory volumes for inter-container communication [OUTSTANDING]"
+            "Implement shared memory volumes for inter-container communication [OUTSTANDING]",
+            "Create extension volume for VS Code extension sharing [OUTSTANDING]"
         )
         $tasksToSync += $dependencyTasks
     }
@@ -902,6 +995,7 @@ function Sync-Smoll2RelatedDirTags {
         SuccessRate = [Math]::Round(($results | Where-Object { $_.Success -eq $true }).Count / $results.Count * 100, 2)
         ExecutionTime = [Math]::Round($duration, 2)
         Timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+        ContainerAware = $true
     }
 
     # Add summary as note to the results
@@ -916,7 +1010,8 @@ function Update-Smoll2PrecompiledCachedFactoryTasks {
         [Parameter(Mandatory = $true)]
         [ValidateSet(
             "RAM_DISK_SETUP", "MODEL_COMPILATION", "CACHE_CONFIGURATION",
-            "GPU_OPTIMIZATION", "BENCHMARK", "DOCUMENTATION", "ALL"
+            "GPU_OPTIMIZATION", "BENCHMARK", "DOCUMENTATION",
+            "CONTAINER_OPTIMIZATION", "EXTENSION_PRECACHING", "ALL"
         )]
         [string]$Component,
 
@@ -934,7 +1029,7 @@ function Update-Smoll2PrecompiledCachedFactoryTasks {
     # Get the Smoll2 configuration group
     $smoll2Group = Get-Smoll2ConfigurationDirTagGroup
 
-    # Define tasks by component
+    # Define tasks by component with container best practices
     $componentTasks = @{
         RAM_DISK_SETUP = @(
             "Set up RAM disk mounting for Smoll2 model cache",
@@ -965,6 +1060,17 @@ function Update-Smoll2PrecompiledCachedFactoryTasks {
             "Document Smoll2 precompiled cached factory pattern",
             "Create usage examples for Smoll2 with RAM disk",
             "Document performance benchmarks and optimization strategies"
+        )
+        CONTAINER_OPTIMIZATION = @(
+            "Optimize container image layers for Smoll2",
+            "Implement container health checks for Smoll2 service",
+            "Create multi-stage builds for smaller runtime images"
+        )
+        EXTENSION_PRECACHING = @(
+            "Configure VS Code extension pre-caching",
+            "Set up persistent extension volume",
+            "Add Vim extension to pre-cached extensions",
+            "Create post-create script for extension installation"
         )
     }
 
@@ -1016,6 +1122,7 @@ function Update-Smoll2PrecompiledCachedFactoryTasks {
         TotalOperations = $totalOperations
         SuccessRate = $successRate
         Timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+        ContainerAware = $true
     }
 
     Write-Verbose "Update summary: $($updateSummary | ConvertTo-Json -Compress)"
