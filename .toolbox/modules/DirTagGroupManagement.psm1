@@ -728,6 +728,304 @@ function Get-StdDirTagGroup {
     }
 }
 
+function Get-Smoll2ConfigurationDirTagGroup {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $false)]
+        [switch]$IncludeDocumentation,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$IncludeTestFiles
+    )
+
+    # Create a group for Smoll2-related DIR.TAG files
+    $group = New-DirTagGroup -Name "Smoll2Configuration" -Description "DIR.TAG files related to Smoll2 LLM configuration and optimizations"
+
+    # Add common Smoll2-related directories
+    $group.AddDirectory("c:\Projects\autogen\.devcontainer")
+    $group.AddDirectory("c:\Projects\autogen\.devcontainer\swarm")
+    $group.AddDirectory("c:\Projects\autogen\.devcontainer\docker")
+    $group.AddDirectory("c:\Projects\autogen\.toolbox\docker")
+    $group.AddDirectory("c:\Projects\autogen\.toolbox\docker\swarm-compose")
+    $group.AddDirectory("c:\Projects\autogen\.toolbox\modules")
+
+    # Add Smoll2-specific directories
+    $group.AddDirectory("c:\Projects\autogen\.devcontainer\ramdisk")
+    $group.AddDirectory("c:\Projects\autogen\.devcontainer\models")
+
+    # Add pattern for any Smoll2-related directories
+    $group.AddDirectoryPattern("c:\Projects\autogen\**\*smoll*")
+    $group.AddDirectoryPattern("c:\Projects\autogen\**\*llm*")
+    $group.AddDirectoryPattern("c:\Projects\autogen\**\*ramdisk*")
+
+    # Optionally include documentation
+    if ($IncludeDocumentation) {
+        $group.AddDirectory("c:\Projects\autogen\docs")
+        $group.AddDirectory("c:\Projects\autogen\.github\workflows")
+        $group.AddDirectoryPattern("c:\Projects\autogen\**\*smoll*.md")
+    }
+
+    # Optionally include test files
+    if ($IncludeTestFiles) {
+        $group.AddDirectory("c:\Projects\autogen\tests")
+        $group.AddDirectoryPattern("c:\Projects\autogen\**\*test*.ps1")
+        $group.AddDirectoryPattern("c:\Projects\autogen\**\*benchmark*.ps1")
+    }
+
+    # Metadata for Smoll2 group
+    $group.Metadata = @{
+        Category = "AI/ML"
+        Priority = "High"
+        RelatedTech = @("Smoll2", "LLM", "RAMDisk", "Docker", "Swarm", "GPU", "CUDA", "PrecompiledFactory")
+        PerformanceCategory = "Ultra-Low Latency"
+        CacheStrategy = "RAM-First with Persistent Backup"
+    }
+
+    return $group
+}
+
+function Sync-Smoll2RelatedDirTags {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $false)]
+        [switch]$Force,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$WhatIf,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet("All", "Configuration", "Performance", "Documentation")]
+        [string]$Category = "All",
+
+        [Parameter(Mandatory = $false)]
+        [switch]$IncludeDependencies
+    )
+
+    $startTime = Get-Date
+    Write-Verbose "Starting Smoll2 DIR.TAG synchronization at $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+
+    # Get the Smoll2 configuration group
+    $smoll2Group = Get-Smoll2ConfigurationDirTagGroup
+
+    # Define standard Smoll2 tasks by category
+    $configurationTasks = @(
+        "Configure Smoll2 LLM for Docker Model Runner [OUTSTANDING]",
+        "Set up RAM disk mounting for Smoll2 model cache [OUTSTANDING]",
+        "Configure Docker Swarm for optimal Smoll2 performance [OUTSTANDING]"
+    )
+
+    $performanceTasks = @(
+        "Implement precompiled cache factory pattern for Smoll2 [OUTSTANDING]",
+        "Optimize memory allocation for Smoll2 token processing [OUTSTANDING]",
+        "Configure GPU passthrough for Smoll2 inference [OUTSTANDING]",
+        "Set up performance benchmarking for Smoll2 with/without RAM disk [OUTSTANDING]"
+    )
+
+    $documentationTasks = @(
+        "Document Smoll2 precompiled cached factory pattern [OUTSTANDING]",
+        "Create usage examples for Smoll2 with RAM disk [OUTSTANDING]",
+        "Document performance benchmarks and optimization strategies [OUTSTANDING]"
+    )
+
+    # Combine tasks based on selected category
+    $tasksToSync = @()
+
+    switch ($Category) {
+        "All" {
+            $tasksToSync += $configurationTasks
+            $tasksToSync += $performanceTasks
+            $tasksToSync += $documentationTasks
+        }
+        "Configuration" {
+            $tasksToSync += $configurationTasks
+        }
+        "Performance" {
+            $tasksToSync += $performanceTasks
+        }
+        "Documentation" {
+            $tasksToSync += $documentationTasks
+        }
+    }
+
+    # Add dependency tasks if requested
+    if ($IncludeDependencies) {
+        $dependencyTasks = @(
+            "Set up NVIDIA Container Toolkit for GPU acceleration [OUTSTANDING]",
+            "Configure Docker daemon.json for GPU passthrough [OUTSTANDING]",
+            "Implement shared memory volumes for inter-container communication [OUTSTANDING]"
+        )
+        $tasksToSync += $dependencyTasks
+    }
+
+    $results = @()
+
+    # Process each task
+    foreach ($task in $tasksToSync) {
+        try {
+            $addResult = Invoke-DirTagGroupOperation -Group $smoll2Group -Operation ([DirTagGroupOperation]::Add) -TodoItem $task -Force:$Force -WhatIf:$WhatIf
+            $results += $addResult
+
+            Write-Verbose "Added task: $task to $($addResult.Count) directories"
+        }
+        catch {
+            Write-Warning "Failed to add task: $task. Error: $_"
+        }
+    }
+
+    # Set the overall status for DIR.TAG files
+    try {
+        $statusResult = Invoke-DirTagGroupOperation -Group $smoll2Group -Operation ([DirTagGroupOperation]::SetStatus) -Status "PARTIALLY_COMPLETE" -Force:$Force -WhatIf:$WhatIf
+        $results += $statusResult
+    }
+    catch {
+        Write-Warning "Failed to set status. Error: $_"
+    }
+
+    # Reorganize tasks
+    try {
+        $reorganizeResult = Invoke-DirTagGroupOperation -Group $smoll2Group -Operation ([DirTagGroupOperation]::Reorganize) -Force:$Force -WhatIf:$WhatIf
+        $results += $reorganizeResult
+    }
+    catch {
+        Write-Warning "Failed to reorganize tasks. Error: $_"
+    }
+
+    $endTime = Get-Date
+    $duration = ($endTime - $startTime).TotalSeconds
+    Write-Verbose "Completed Smoll2 DIR.TAG synchronization in $([Math]::Round($duration, 2)) seconds"
+
+    # Prepare summary
+    $summary = @{
+        Category = $Category
+        TasksProcessed = $tasksToSync.Count
+        DirectoriesUpdated = ($results | Where-Object { $_.Success -eq $true } | Select-Object -ExpandProperty Directory -Unique).Count
+        SuccessRate = [Math]::Round(($results | Where-Object { $_.Success -eq $true }).Count / $results.Count * 100, 2)
+        ExecutionTime = [Math]::Round($duration, 2)
+        Timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+    }
+
+    # Add summary as note to the results
+    $results | Add-Member -NotePropertyName Summary -NotePropertyValue $summary
+
+    return $results
+}
+
+function Update-Smoll2PrecompiledCachedFactoryTasks {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [ValidateSet(
+            "RAM_DISK_SETUP", "MODEL_COMPILATION", "CACHE_CONFIGURATION",
+            "GPU_OPTIMIZATION", "BENCHMARK", "DOCUMENTATION", "ALL"
+        )]
+        [string]$Component,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("NOT_STARTED", "PARTIALLY_COMPLETE", "DONE", "OUTSTANDING")]
+        [string]$Status,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$Force,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$WhatIf
+    )
+
+    # Get the Smoll2 configuration group
+    $smoll2Group = Get-Smoll2ConfigurationDirTagGroup
+
+    # Define tasks by component
+    $componentTasks = @{
+        RAM_DISK_SETUP = @(
+            "Set up RAM disk mounting for Smoll2 model cache",
+            "Configure tmpfs for Docker volumes",
+            "Implement RAM disk performance monitoring"
+        )
+        MODEL_COMPILATION = @(
+            "Implement precompiled cache factory pattern for Smoll2",
+            "Create model compilation pipeline",
+            "Set up CI/CD job for model precompilation"
+        )
+        CACHE_CONFIGURATION = @(
+            "Configure caching layers for Smoll2 LLM",
+            "Implement cache invalidation strategy",
+            "Set up persistent backup for RAM-based cache"
+        )
+        GPU_OPTIMIZATION = @(
+            "Configure GPU passthrough for Smoll2 inference",
+            "Optimize CUDA operations for token generation",
+            "Implement mixed precision inference"
+        )
+        BENCHMARK = @(
+            "Set up performance benchmarking for Smoll2 with/without RAM disk",
+            "Create latency comparison tests",
+            "Implement throughput measurement tools"
+        )
+        DOCUMENTATION = @(
+            "Document Smoll2 precompiled cached factory pattern",
+            "Create usage examples for Smoll2 with RAM disk",
+            "Document performance benchmarks and optimization strategies"
+        )
+    }
+
+    # Determine which tasks to update
+    $tasksToUpdate = @()
+    if ($Component -eq "ALL") {
+        foreach ($comp in $componentTasks.Keys) {
+            $tasksToUpdate += $componentTasks[$comp]
+        }
+    }
+    else {
+        $tasksToUpdate = $componentTasks[$Component]
+    }
+
+    if (-not $tasksToUpdate -or $tasksToUpdate.Count -eq 0) {
+        Write-Warning "No tasks found for component: $Component"
+        return $null
+    }
+
+    Write-Verbose "Updating $($tasksToUpdate.Count) tasks for component: $Component with status: $Status"
+
+    $results = @()
+
+    # Update status for each task
+    foreach ($task in $tasksToUpdate) {
+        try {
+            $updateResult = Invoke-DirTagGroupOperation -Group $smoll2Group -Operation ([DirTagGroupOperation]::Update) -TodoItem $task -Status $Status -Force:$Force -WhatIf:$WhatIf
+            $results += $updateResult
+
+            Write-Verbose "Updated task: '$task' with status: $Status in $($updateResult.Count) directories"
+        }
+        catch {
+            Write-Warning "Failed to update task: '$task'. Error: $_"
+        }
+    }
+
+    # Calculate success metrics
+    $successCount = ($results | Where-Object { $_.Success -eq $true }).Count
+    $totalOperations = $results.Count
+    $successRate = if ($totalOperations -gt 0) { [Math]::Round(($successCount / $totalOperations) * 100, 1) } else { 0 }
+
+    # Create a summary object
+    $updateSummary = [PSCustomObject]@{
+        Component = $Component
+        Status = $Status
+        TasksUpdated = $tasksToUpdate.Count
+        DirectoriesProcessed = ($results | Select-Object -ExpandProperty Directory -Unique).Count
+        SuccessCount = $successCount
+        TotalOperations = $totalOperations
+        SuccessRate = $successRate
+        Timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+    }
+
+    Write-Verbose "Update summary: $($updateSummary | ConvertTo-Json -Compress)"
+
+    # Add summary to the results
+    $results | Add-Member -NotePropertyName Summary -NotePropertyValue $updateSummary -Force
+
+    return $results
+}
+
 # Export module members
 Export-ModuleMember -Function New-DirTagGroup, Get-GPUConfigurationDirTagGroup, Invoke-DirTagGroupOperation,
                              Sync-GPURelatedDirTags, Add-GPUTaskToDirTags, Update-GPUTaskStatus,
