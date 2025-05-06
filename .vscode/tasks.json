@@ -1,318 +1,358 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "Spell Check Workspace",
-            "type": "shell",
-            "command": "${workspaceFolder}/.devcontainer/spell-check.sh",
-            "args": [
-                "--verbose"
-            ],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new",
-                "focus": true
-            },
-            "problemMatcher": {
-                "owner": "cspell",
-                "fileLocation": ["relative", "${workspaceFolder}"],
-                "pattern": {
-                    "regexp": "^(.*):(\\d+):(\\d+) - (Unknown word) \\((.*)\\) (.*)$",
-                    "file": 1,
-                    "line": 2,
-                    "column": 3,
-                    "severity": 4,
-                    "message": 6,
-                    "code": 5
-                }
-            },
-            "group": {
-                "kind": "test",
-                "isDefault": false
-            }
-        },
-        {
-            "label": "Spell Check Current File",
-            "type": "shell",
-            "command": "${workspaceFolder}/.devcontainer/spell-check.sh",
-            "args": [
-                "--path",
-                "${relativeFile}",
-                "--verbose"
-            ],
-            "presentation": {
-                "reveal": "always",
-                "panel": "shared",
-                "focus": true
-            },
-            "problemMatcher": {
-                "owner": "cspell",
-                "fileLocation": ["relative", "${workspaceFolder}"],
-                "pattern": {
-                    "regexp": "^(.*):(\\d+):(\\d+) - (Unknown word) \\((.*)\\) (.*)$",
-                    "file": 1,
-                    "line": 2,
-                    "column": 3,
-                    "severity": 4,
-                    "message": 6,
-                    "code": 5
-                }
-            }
-        },        {
-            "label": "Generate Unknown Words List",
-            "type": "shell",
-            "command": "${workspaceFolder}/.devcontainer/spell-check.sh",
-            "args": [
-                "--fix",
-                "--verbose"
-            ],
-            "presentation": {
-                "reveal": "always",
-                "panel": "shared",
-                "focus": true
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "Add Words to Dictionary",
-            "type": "shell",
-            "command": "${workspaceFolder}/.devcontainer/manage-dictionary.sh",
-            "args": [
-                "add-words"
-            ],
-            "presentation": {
-                "reveal": "always",
-                "panel": "shared",
-                "focus": true
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "Synchronize Dictionary with IDE",
-            "type": "shell",
-            "command": "${workspaceFolder}/.devcontainer/manage-dictionary.sh",
-            "args": [
-                "sync"
-            ],
-            "presentation": {
-                "reveal": "always",
-                "panel": "shared",
-                "focus": true
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "build",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "build",
-                "${workspaceFolder}/dotnet/AutoGen.sln",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary;ForceNoAlign"
-            ],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "publish",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "publish",
-                "${workspaceFolder}/dotnet/AutoGen.sln",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary;ForceNoAlign"
-            ],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "watch",
-            "command": "dotnet",
-            "type": "process",            "args": [
-                "watch",
-                "run",
-                "--project",
-                "${workspaceFolder}/dotnet/AutoGen.sln"
-            ],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "Validate Environment Variables",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "${workspaceFolder}/.scripts/automation/github/orchestration/Validate-Environment.ps1"
-            ],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new",
-                "focus": true
-            },
-            "group": {
-                "kind": "test",
-                "isDefault": true
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "Fix Security Issues",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "${workspaceFolder}/.scripts/automation/github/orchestration/Repair-SecurityIssues.ps1"
-            ],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "Commit VS Code Config",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "${workspaceFolder}/.scripts/automation/github/orchestration/Commit-VSCodeConfig.ps1"
-            ],            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "Verify GitHub Setup",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "${workspaceFolder}/.scripts/automation/github/orchestration/Verify-GitHubSetup.ps1"
-            ],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "Markdown Lint Check",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "${workspaceFolder}/.github/linting/run-markdown-lint.ps1"
-            ],
-            "group": {
-                "kind": "test",
-                "isDefault": false
-            },
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "Markdown Fix Issues",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "${workspaceFolder}/.github/linting/run-markdown-lint.ps1",
-                "-Fix"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": false
-            },
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "Validate Linting Configuration",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "${workspaceFolder}/.github/linting/run-lint-check.ps1"
-            ],            "group": {
-                "kind": "test",
-                "isDefault": false
-            },
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "Update DIR.TAG Files",
-            "type": "shell",
-            "command": "${workspaceFolder}/.devcontainer/manage-dir-tags.sh",
-            "args": [
-                "--action",
-                "update",
-                "--verbose"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": false
-            },
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "Create New Config Directory",
-            "type": "shell",
-            "command": "${workspaceFolder}/.devcontainer/manage-dir-tags.sh",
-            "args": [
-                "--action",
-                "create",
-                "--dir",
-                "${input:configDirectoryPath}",
-                "--verbose"
-            ],
-            "group": "none",
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "Check DIR.TAG Consistency",
-            "type": "shell",
-            "command": "${workspaceFolder}/.devcontainer/manage-dir-tags.sh",
-            "args": [
-                "--action",
-                "check",
-                "--verbose"
-            ],
-            "group": {
-                "kind": "test",
-                "isDefault": false
-            },
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
-            "problemMatcher": []
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Spell Check Workspace",
+      "type": "shell",
+      "command": "${workspaceFolder}/.devcontainer/spell-check.sh",
+      "args": [
+        "--verbose"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "focus": true
+      },
+      "problemMatcher": {
+        "owner": "cspell",
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}"
+        ],
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+) - (Unknown word) \\((.*)\\) (.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 6,
+          "code": 5
         }
-    ],
-    "inputs": [
-        {
-            "id": "configDirectoryPath",
-            "description": "Path to new config directory (relative to project root)",
-            "default": ".config/newdir",
-            "type": "promptString"
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      }
+    },
+    {
+      "label": "Spell Check Current File",
+      "type": "shell",
+      "command": "${workspaceFolder}/.devcontainer/spell-check.sh",
+      "args": [
+        "--path",
+        "${relativeFile}",
+        "--verbose"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true
+      },
+      "problemMatcher": {
+        "owner": "cspell",
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}"
+        ],
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+) - (Unknown word) \\((.*)\\) (.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 6,
+          "code": 5
         }
-    ]
+      }
+    },
+    {
+      "label": "Generate Unknown Words List",
+      "type": "shell",
+      "command": "${workspaceFolder}/.devcontainer/spell-check.sh",
+      "args": [
+        "--fix",
+        "--verbose"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Add Words to Dictionary",
+      "type": "shell",
+      "command": "${workspaceFolder}/.devcontainer/manage-dictionary.sh",
+      "args": [
+        "add-words"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Synchronize Dictionary with IDE",
+      "type": "shell",
+      "command": "${workspaceFolder}/.devcontainer/manage-dictionary.sh",
+      "args": [
+        "sync"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "build",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/dotnet/AutoGen.sln",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary;ForceNoAlign"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "publish",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "publish",
+        "${workspaceFolder}/dotnet/AutoGen.sln",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary;ForceNoAlign"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "watch",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "watch",
+        "run",
+        "--project",
+        "${workspaceFolder}/dotnet/AutoGen.sln"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "Validate Environment Variables",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-File",
+        "${workspaceFolder}/.scripts/automation/github/orchestration/Validate-Environment.ps1"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "focus": true
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Fix Security Issues",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-File",
+        "${workspaceFolder}/.scripts/automation/github/orchestration/Repair-SecurityIssues.ps1"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Commit VS Code Config",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-File",
+        "${workspaceFolder}/.scripts/automation/github/orchestration/Commit-VSCodeConfig.ps1"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Verify GitHub Setup",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-File",
+        "${workspaceFolder}/.scripts/automation/github/orchestration/Verify-GitHubSetup.ps1"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Markdown Lint Check",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-File",
+        "${workspaceFolder}/.github/linting/run-markdown-lint.ps1"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Markdown Fix Issues",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-File",
+        "${workspaceFolder}/.github/linting/run-markdown-lint.ps1",
+        "-Fix"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Validate Linting Configuration",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-File",
+        "${workspaceFolder}/.github/linting/run-lint-check.ps1"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Update DIR.TAG Files",
+      "type": "shell",
+      "command": "${workspaceFolder}/.devcontainer/manage-dir-tags.sh",
+      "args": [
+        "--action",
+        "update",
+        "--verbose"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Create New Config Directory",
+      "type": "shell",
+      "command": "${workspaceFolder}/.devcontainer/manage-dir-tags.sh",
+      "args": [
+        "--action",
+        "create",
+        "--dir",
+        "${input:configDirectoryPath}",
+        "--verbose"
+      ],
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Check DIR.TAG Consistency",
+      "type": "shell",
+      "command": "${workspaceFolder}/.devcontainer/manage-dir-tags.sh",
+      "args": [
+        "--action",
+        "check",
+        "--verbose"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Toolbox: Docker Model Integration Fix",
+      "group": "build",
+      "type": "shell",
+      "args": [
+        "-File",
+        "\\.toolbox\\docker\\Fix-DockerModelIntegration.ps1"
+      ],
+      "command": "pwsh"
+    },
+    {
+      "label": "Toolbox: GitHub Workflows Fix",
+      "group": "build",
+      "type": "shell",
+      "args": [
+        "-File",
+        "\\.toolbox\\github\\Fix-GitHubWorkflows.ps1"
+      ],
+      "command": "pwsh"
+    },
+    {
+      "label": "Toolbox: List Available Tools",
+      "group": "none",
+      "type": "shell",
+      "args": [
+        "-File",
+        "\\.scripts\\toolbox\\Get-AvailableTools.ps1"
+      ],
+      "command": "pwsh"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "configDirectoryPath",
+      "description": "Path to new config directory (relative to project root)",
+      "default": ".config/newdir",
+      "type": "promptString"
+    }
+  ]
 }
