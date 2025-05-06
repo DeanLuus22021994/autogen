@@ -1135,18 +1135,62 @@ Export-ModuleMember -Function New-DirTagGroup, Get-GPUConfigurationDirTagGroup, 
 
 # Example: Add extension pre-caching task to all relevant DIR.TAGs
 function Add-ExtensionPrecacheTaskToDirTags {
+    <#
+    .SYNOPSIS
+        Adds a standard VS Code extension pre-caching task to all relevant DIR.TAG files in DevContainer, Docker, and Toolbox groups.
+
+    .DESCRIPTION
+        This function ensures that the task "Pre-cache VS Code extensions (including Vim) for containerized development [OUTSTANDING]"
+        is present in all DIR.TAG files for DevContainer, Docker, and Toolbox directory groups. It uses the batch group operation
+        system for consistency and idempotency.
+
+    .PARAMETER Force
+        If specified, forces the update even if the DIR.TAG file is read-only or protected.
+
+    .EXAMPLE
+        Add-ExtensionPrecacheTaskToDirTags
+        # Adds the extension pre-caching task to all relevant DIR.TAGs.
+
+        Add-ExtensionPrecacheTaskToDirTags -Force
+        # Forces the update.
+
+    .NOTES
+        - This function is idempotent: it will not add duplicate tasks.
+        - Uses Invoke-DirTagGroupOperation for batch processing.
+        - Adheres to project conventions for DIR.TAG management.
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $false)]
-        [switch]$Force
+        [switch]$Force,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$WhatIf
     )
+
     $task = "Pre-cache VS Code extensions (including Vim) for containerized development [OUTSTANDING]"
+
+    # Get the standard groups
     $groups = @(
         Get-StdDirTagGroup -GroupName "DevContainer",
         Get-StdDirTagGroup -GroupName "Docker",
         Get-StdDirTagGroup -GroupName "Toolbox"
     )
+
+    $results = @()
     foreach ($group in $groups) {
-        Invoke-DirTagGroupOperation -Group $group -Operation ([DirTagGroupOperation]::Add) -TodoItem $task -Force:$Force
+        try {
+            $result = Invoke-DirTagGroupOperation -Group $group -Operation ([DirTagGroupOperation]::Add) -TodoItem $task -Force:$Force -WhatIf:$WhatIf
+            $results += $result
+            Write-Verbose "Processed group '$($group.Name)': $($result.Count) directories updated."
+        }
+        catch {
+            Write-Warning "Failed to process group '$($group.Name)': $_"
+        }
     }
+
+    return $results
 }
+
+# Ensure the function is exported
+Export-ModuleMember -Function Add-ExtensionPrecacheTaskToDirTags
