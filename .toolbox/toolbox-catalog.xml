@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<toolbox_catalog>
+  <metadata>
+    <updated>2025-05-06T00:00:00Z</updated>
+    <version>1.0.0</version>
+    <description>
+      Catalog of toolbox scripts and utilities for the AutoGen project.
+      Used for discovery and documentation of available tools.
+    </description>
+  </metadata>
+  <categories>
+    <category id="docker">
+      <name>Docker Tools</name>
+      <description>Tools for Docker integration and management</description>
+      <tools>
+        <tool id="fix_docker_model_integration">
+          <name>Fix-DockerModelIntegration.ps1</name>
+          <description>Fixes issues with Docker Model Runner integration</description>
+          <path>.toolbox/docker/Fix-DockerModelIntegration.ps1</path>
+          <tags>docker,model-runner,integration,xml</tags>
+        </tool>
+        <tool id="update_docker_extension_model_runner">
+          <name>Update-DockerExtensionModelRunner.ps1</name>
+          <description>Updates Docker extension for Model Runner compatibility</description>
+          <path>.toolbox/docker/Update-DockerExtensionModelRunner.ps1</path>
+          <tags>docker,model-runner,extension</tags>
+        </tool>
+        <tool id="update_docker_extension">
+          <name>Update-DockerExtension.ps1</name>
+          <description>Updates general Docker extension components</description>
+          <path>.toolbox/docker/Update-DockerExtension.ps1</path>
+          <tags>docker,extension</tags>
+        </tool>
+      </tools>
+    </category>
+    <category id="github">
+      <name>GitHub Tools</name>
+      <description>Tools for GitHub workflows and integration</description>
+      <tools>
+        <tool id="fix_github_workflows">
+          <name>Fix-GitHubWorkflows.ps1</name>
+          <description>Fixes issues with GitHub workflow files</description>
+          <path>.toolbox/github/Fix-GitHubWorkflows.ps1</path>
+          <tags>github,workflows,yaml</tags>
+        </tool>
+        <tool id="setup_github_ssh">
+          <name>Setup-GitHubSSH.ps1</name>
+          <description>Sets up SSH access for GitHub</description>
+          <path>.toolbox/github/Setup-GitHubSSH.ps1</path>
+          <tags>github,ssh,security</tags>
+        </tool>
+        <tool id="setup_git_secure_environment">
+          <name>Setup-GitSecureEnvironment.ps1</name>
+          <description>Configures a secure Git environment</description>
+          <path>.toolbox/github/Setup-GitSecureEnvironment.ps1</path>
+          <tags>github,security,git</tags>
+        </tool>
+        <tool id="resolve_push_blocked_by_token">
+          <name>Resolve-PushBlockedByToken.ps1</name>
+          <description>Resolves issues with push operations blocked by token</description>
+          <path>.toolbox/github/Resolve-PushBlockedByToken.ps1</path>
+          <tags>github,token,authentication</tags>
+        </tool>
+      </tools>
+    </category>
+    <category id="markdown">
+      <name>Markdown Tools</name>
+      <description>Tools for markdown linting and fixing</description>
+      <tools>
+        <tool id="add_markdown_rules_function">
+          <name>Add-MarkdownRulesFunction.ps1</name>
+          <description>Adds custom functions for markdown rule validation</description>
+          <path>.toolbox/markdown/Add-MarkdownRulesFunction.ps1</path>
+          <tags>markdown,linting,rules</tags>
+        </tool>
+      </tools>
+    </category>
+    <category id="environment">
+      <name>Environment Tools</name>
+      <description>Tools for environment setup and validation</description>
+      <tools>
+        <tool id="setup_autogen_environment">
+          <name>Setup-AutogenEnvironment.ps1</name>
+          <description>Sets up the AutoGen development environment</description>
+          <path>.toolbox/environment/Setup-AutogenEnvironment.ps1</path>
+          <tags>environment,setup</tags>
+        </tool>
+        <tool id="reset_vscode_environment">
+          <name>Reset-VSCodeEnvironment.ps1</name>
+          <description>Resets the VS Code environment settings</description>
+          <path>.toolbox/environment/Reset-VSCodeEnvironment.ps1</path>
+          <tags>vscode,environment,reset</tags>
+        </tool>
+      </tools>
+    </category>
+    <category id="security">
+      <name>Security Tools</name>
+      <description>Tools for security management</description>
+      <tools>
+        <tool id="validate_env_secrets">
+          <name>Validate-EnvSecrets.ps1</name>
+          <description>Validates environment secrets</description>
+          <path>.toolbox/security/Validate-EnvSecrets.ps1</path>
+          <tags>security,secrets,environment</tags>
+        </tool>
+        <tool id="verify_github_secrets">
+          <name>Verify-GitHubSecrets.ps1</name>
+          <description>Verifies GitHub secrets are configured correctly</description>
+          <path>.toolbox/security/Verify-GitHubSecrets.ps1</path>
+          <tags>security,github,secrets</tags>
+        </tool>
+      </tools>
+    </category>
+    <category id="config">
+      <name>Configuration Tools</name>
+      <description>Tools for configuration management</description>
+      <tools>
+        <tool id="commit_safe_vscode_config">
+          <name>Commit-SafeVsCodeConfig.ps1</name>
+          <description>Commits VS Code configuration files safely</description>
+          <path>.toolbox/config/Commit-SafeVsCodeConfig.ps1</path>
+          <tags>vscode,config,git</tags>
+        </tool>
+      </tools>
+    </category>
+  </categories>
+</toolbox_catalog>
