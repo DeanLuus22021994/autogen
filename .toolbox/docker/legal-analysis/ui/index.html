@@ -92,8 +92,16 @@
             <div class="upload-area" id="dropzone">
                 <div class="upload-message">Drag &amp; Drop documents here</div>
                 <div>or</div>
-                <button class="upload-button" id="file-select">Select Files</button>
-                <input type="file" id="file-input" style="display: none;" multiple accept=".pdf,.docx,.txt">
+                <button class="upload-button" id="file-select" type="button">Select Files</button>
+                <label for="file-input" class="visually-hidden">Select documents to upload</label>
+                <input
+                    type="file"
+                    id="file-input"
+                    class="hidden"
+                    multiple
+                    accept=".pdf,.docx,.txt"
+                    title="Upload documents"
+                >
                 <div class="upload-info">Supported formats: PDF, DOCX, TXT</div>
             </div>
         </section>
@@ -186,16 +194,14 @@
 
         dropzone.addEventListener('dragover', (e) => {
             e.preventDefault();
-            dropzone.style.backgroundColor = '#e3f2fd';
+            dropzone.classList.add('dragover');
         });
-
         dropzone.addEventListener('dragleave', () => {
-            dropzone.style.backgroundColor = '#f8f9fa';
+            dropzone.classList.remove('dragover');
         });
-
         dropzone.addEventListener('drop', (e) => {
             e.preventDefault();
-            dropzone.style.backgroundColor = '#f8f9fa';
+            dropzone.classList.remove('dragover');
 
             if (e.dataTransfer.files.length > 0) {
                 handleFiles(e.dataTransfer.files);
