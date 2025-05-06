@@ -1,63 +1,48 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
-<!-- filepath: c:\Projects\autogen\.github\schemas\docker_documentation_schema.xsd -->
+<?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
-  <!-- Root element definition -->
   <xs:element name="docker_documentation">
     <xs:complexType>
       <xs:sequence>
-        <!-- Metadata section -->
-        <xs:element name="metadata">
+        <xs:element name="model_runner">
           <xs:complexType>
             <xs:sequence>
-              <xs:element name="updated" type="xs:dateTime" />
-              <xs:element name="version" type="xs:string" />
-              <xs:element name="description" type="xs:string" />
+              <xs:element name="enabled" type="xs:boolean"/>
+              <xs:element name="version" type="xs:string"/>
+              <xs:element name="min_docker_version" type="xs:string"/>
+              <xs:element name="endpoint" type="xs:string"/>
             </xs:sequence>
           </xs:complexType>
         </xs:element>
-        <!-- Categories section -->
-        <xs:element name="categories">
+        <xs:element name="models">
           <xs:complexType>
             <xs:sequence>
-              <xs:element name="category" minOccurs="1" maxOccurs="unbounded">
+              <xs:element name="model" maxOccurs="unbounded">
                 <xs:complexType>
                   <xs:sequence>
-                    <xs:element name="n" type="xs:string" />
-                    <xs:element name="description" type="xs:string" />
-                    <xs:element name="links">
+                    <xs:element name="name" type="xs:string"/>
+                    <xs:element name="description" type="xs:string"/>
+                    <xs:element name="capabilities">
                       <xs:complexType>
                         <xs:sequence>
-                          <xs:element name="link" minOccurs="1" maxOccurs="unbounded">
-                            <xs:complexType>
-                              <xs:sequence>
-                                <xs:element name="url" type="xs:anyURI" />
-                                <xs:element name="title" type="xs:string" />
-                                <xs:element name="description" type="xs:string" />
-                                <xs:element name="last_validated" type="xs:dateTime" />
-                              </xs:sequence>
-                              <xs:attribute name="id" type="xs:ID" use="required" />
-                            </xs:complexType>
-                          </xs:element>
+                          <xs:element name="capability" type="xs:string" maxOccurs="unbounded"/>
                         </xs:sequence>
                       </xs:complexType>
                     </xs:element>
                   </xs:sequence>
-                  <xs:attribute name="id" type="xs:ID" use="required" />
                 </xs:complexType>
               </xs:element>
             </xs:sequence>
           </xs:complexType>
         </xs:element>
-        <!-- Tags section -->
-        <xs:element name="tags">
+        <xs:element name="api_references">
           <xs:complexType>
             <xs:sequence>
-              <xs:element name="tag" minOccurs="0" maxOccurs="unbounded">
+              <xs:element name="reference" maxOccurs="unbounded">
                 <xs:complexType>
                   <xs:sequence>
-                    <xs:element name="link_ref" type="xs:IDREF" minOccurs="1" maxOccurs="unbounded" />
+                    <xs:element name="name" type="xs:string"/>
+                    <xs:element name="url" type="xs:string"/>
                   </xs:sequence>
-                  <xs:attribute name="name" type="xs:string" use="required" />
                 </xs:complexType>
               </xs:element>
             </xs:sequence>
@@ -65,25 +50,5 @@
         </xs:element>
       </xs:sequence>
     </xs:complexType>
-    <!-- Constraints to ensure no duplicate link IDs -->
-    <xs:key name="linkIdKey">
-      <xs:selector xpath=".//link" />
-      <xs:field xpath="@id" />
-    </xs:key>
-    <!-- Constraints to ensure no duplicate category IDs -->
-    <xs:key name="categoryIdKey">
-      <xs:selector xpath=".//category" />
-      <xs:field xpath="@id" />
-    </xs:key>
-    <!-- Constraints to ensure no duplicate tag names -->
-    <xs:unique name="tagNameUniqueness">
-      <xs:selector xpath=".//tag" />
-      <xs:field xpath="@name" />
-    </xs:unique>
-    <!-- Constraints to ensure all link references in tags point to valid links -->
-    <xs:keyref name="tagLinkRefs" refer="linkIdKey">
-      <xs:selector xpath=".//tag/link_ref" />
-      <xs:field xpath="." />
-    </xs:keyref>
   </xs:element>
 </xs:schema>

@@ -34,7 +34,7 @@ Add the `--verbose` flag for more detailed output:
 python integration_test.py --verbose
 ```
 
-### What the integration tests check:
+### What the integration tests check
 
 1. Docker installation and version
 2. Docker Model Runner availability
@@ -76,3 +76,5 @@ If you encounter issues:
 3. Check that you have pulled at least one model
 4. Restart Docker Desktop if necessary
 5. Run the integration test with verbose output to diagnose issues
+
+

@@ -25,8 +25,8 @@ jobs:
       - name: Set up PowerShell
         uses: azure/powershell@v1
         with:
-          azPSVersion: 'latest'
-          inlineScript: |
+          azpsversion: 'latest'
+          inline-script: |
             Write-Host "PowerShell setup complete"
 
       - name: Build Docker Image

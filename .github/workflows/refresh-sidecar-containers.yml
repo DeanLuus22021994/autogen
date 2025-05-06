@@ -44,16 +44,15 @@ jobs:
             type=raw,value=latest
             type=raw,value=${{ steps.date.outputs.date }}
             type=sha,format=short
-            type=raw,value=latest
-            type=raw,value=${{ steps.date.outputs.date }}
-            type=sha,format=short
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}      - name: Build and push image
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
         id: build
         uses: docker/build-push-action@v4
         with:
@@ -89,15 +88,15 @@ jobs:
           DATE_TAG=${{ steps.date.outputs.date }}
 
           # Update docker-compose.yml to use the published images instead of build directives
-          sed -i 's/build:/image: ghcr.io\/microsoft\/autogen-markdown-lint:'$DATE_TAG'\n    #build:/' $COMPOSE_FILE
+          sed -i 's/build:/image: ghcr.io\/microsoft\/autogen-markdown-lint:'\'\n    #build:/' $COMPOSE_FILE
           sed -i 's/context: .\/markdown-lint/#context: .\/markdown-lint/' $COMPOSE_FILE
           sed -i 's/dockerfile: Dockerfile/#dockerfile: Dockerfile/' $COMPOSE_FILE
 
-          sed -i 's/build:/image: ghcr.io\/microsoft\/autogen-build-cache:'$DATE_TAG'\n    #build:/' $COMPOSE_FILE | grep -v "image: ghcr.io/microsoft/autogen-markdown-lint"
+          sed -i 's/build:/image: ghcr.io\/microsoft\/autogen-build-cache:'\'\n    #build:/' $COMPOSE_FILE | grep -v "image: ghcr.io/microsoft/autogen-markdown-lint"
           sed -i 's/context: .\/build-cache/#context: .\/build-cache/' $COMPOSE_FILE
           sed -i 's/dockerfile: Dockerfile/#dockerfile: Dockerfile/' $COMPOSE_FILE
 
-          sed -i 's/build:/image: ghcr.io\/microsoft\/autogen-build-tools:'$DATE_TAG'\n    #build:/' $COMPOSE_FILE | grep -v "image: ghcr.io/microsoft/autogen-build-cache" | grep -v "image: ghcr.io/microsoft/autogen-markdown-lint"
+          sed -i 's/build:/image: ghcr.io\/microsoft\/autogen-build-tools:'\'\n    #build:/' $COMPOSE_FILE | grep -v "image: ghcr.io/microsoft/autogen-build-cache" | grep -v "image: ghcr.io/microsoft/autogen-markdown-lint"
           sed -i 's/context: .\/build-tools/#context: .\/build-tools/' $COMPOSE_FILE
           sed -i 's/dockerfile: Dockerfile/#dockerfile: Dockerfile/' $COMPOSE_FILE
 
