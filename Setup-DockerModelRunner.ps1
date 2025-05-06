@@ -7,7 +7,7 @@ param (
     [switch]$CheckOnly = $false,
 
     [Parameter()]
-    [ValidateSet("ai/mistral", "ai/mistral-nemo", "ai/mxbai-embed-large", "ai/smollm2")]
+    [ValidateSet("ai/mistral", "ai/mistral-nemo", "ai/mxbai-embed-large", "ai/smollm2", "ai/llama3")]
     [string[]]$Models = @("ai/mistral")
 )
 

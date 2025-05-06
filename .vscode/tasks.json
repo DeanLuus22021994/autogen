@@ -1,5 +1,8 @@
 {
   "version": "2.0.0",
+  "imports": [
+    "./legal-analysis-tasks.json"
+  ],
   "tasks": [
     {
       "label": "Setup Docker Model Runner",

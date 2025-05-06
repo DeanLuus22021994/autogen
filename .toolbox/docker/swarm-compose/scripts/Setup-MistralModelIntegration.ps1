@@ -109,7 +109,7 @@ description: |
     }
 }
 
-function Ensure-DockerModelRunner {
+function Test-DockerModelRunner {
     Write-Log "Checking Docker Model Runner setup..." -Color $CYAN
 
     try {
@@ -145,7 +145,7 @@ function Ensure-DockerModelRunner {
     }
 }
 
-function Setup-ModelIntegration {
+function Initialize-ModelIntegration {
     # Create directory for model integration if it doesn't exist
     $modelIntegrationDir = Join-Path $PSScriptRoot "..\model-integration"
 

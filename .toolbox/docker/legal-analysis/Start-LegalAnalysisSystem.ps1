@@ -171,6 +171,22 @@ if (-not $dockerInstalled) {
     exit 1
 }
 
+# Configure Docker Model Runner
+Write-Host "Configuring Docker Model Runner for legal analysis..." -ForegroundColor $CYAN
+$setupScript = Join-Path $PSScriptRoot "Setup-LegalAnalysisModels.ps1"
+if (Test-Path $setupScript) {
+    & $setupScript
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Failed to configure Docker Model Runner for legal analysis" -ForegroundColor $RED
+        Write-Host "Please run the 'Setup Docker Model Runner' task from VS Code before proceeding" -ForegroundColor $YELLOW
+        exit 1
+    }
+}
+else {
+    Write-Host "Docker Model Runner setup script not found: $setupScript" -ForegroundColor $RED
+    Write-Host "Please run the 'Setup Docker Model Runner' task from VS Code before proceeding" -ForegroundColor $YELLOW
+}
+
 # Create required directories
 Create-RequiredDirectories
 
