@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:element name="docker_documentation">
     <xs:complexType>
@@ -6,10 +6,10 @@
         <xs:element name="model_runner">
           <xs:complexType>
             <xs:sequence>
-              <xs:element name="enabled" type="xs:boolean"/>
-              <xs:element name="version" type="xs:string"/>
-              <xs:element name="min_docker_version" type="xs:string"/>
-              <xs:element name="endpoint" type="xs:string"/>
+              <xs:element name="enabled" type="xs:boolean" />
+              <xs:element name="version" type="xs:string" />
+              <xs:element name="min_docker_version" type="xs:string" />
+              <xs:element name="endpoint" type="xs:string" />
             </xs:sequence>
           </xs:complexType>
         </xs:element>
@@ -19,12 +19,12 @@
               <xs:element name="model" maxOccurs="unbounded">
                 <xs:complexType>
                   <xs:sequence>
-                    <xs:element name="name" type="xs:string"/>
-                    <xs:element name="description" type="xs:string"/>
+                    <xs:element name="n" type="xs:string" />
+                    <xs:element name="description" type="xs:string" />
                     <xs:element name="capabilities">
                       <xs:complexType>
                         <xs:sequence>
-                          <xs:element name="capability" type="xs:string" maxOccurs="unbounded"/>
+                          <xs:element name="capability" type="xs:string" maxOccurs="unbounded" />
                         </xs:sequence>
                       </xs:complexType>
                     </xs:element>
@@ -40,8 +40,8 @@
               <xs:element name="reference" maxOccurs="unbounded">
                 <xs:complexType>
                   <xs:sequence>
-                    <xs:element name="name" type="xs:string"/>
-                    <xs:element name="url" type="xs:string"/>
+                    <xs:element name="name" type="xs:string" />
+                    <xs:element name="url" type="xs:string" />
                   </xs:sequence>
                 </xs:complexType>
               </xs:element>

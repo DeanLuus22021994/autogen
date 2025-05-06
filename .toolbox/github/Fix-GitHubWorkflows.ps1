@@ -8,8 +8,8 @@ Write-Host "Starting GitHub workflow file fixes..." -ForegroundColor Cyan
 
 # Function to fix the refresh-sidecar-containers.yml file
 function Fix-RefreshSidecarContainersFile {
-    $filePath = "c:\Projects\autogen\.github\workflows\refresh-sidecar-containers.yml"
-    $backupPath = "c:\Projects\autogen\.github\workflows\refresh-sidecar-containers.yml.bak"
+    $filePath = "$PSScriptRoot\..\..\\.github\workflows\refresh-sidecar-containers.yml"
+    $backupPath = "$PSScriptRoot\..\..\\.github\workflows\refresh-sidecar-containers.yml.bak"
 
     # Create a backup if it doesn't exist
     if (-not (Test-Path $backupPath)) {
