@@ -118,9 +118,7 @@ function Update-DirTag {
         [switch]$Force
     )
 
-    $tagFilePath = Join-Path -Path $DirectoryPath -ChildPath "DIR.TAG"
-
-    if (-not (Test-Path -Path $tagFilePath)) {
+    $tagFilePath = Join-Path -Path $DirectoryPath -ChildPath "DIR.TAG"    if (-not (Test-Path -Path $tagFilePath)) {
         Write-Warning "DIR.TAG not found at $tagFilePath. Creating a new one."
         $params = @{
             DirectoryPath = $DirectoryPath
@@ -129,6 +127,7 @@ function Update-DirTag {
         if ($PSBoundParameters.ContainsKey('Status')) { $params.Status = $Status }
         if ($PSBoundParameters.ContainsKey('Description')) { $params.Description = $Description }
         if ($PSBoundParameters.ContainsKey('TodoItems')) { $params.TodoItems = $TodoItems }
+        if ($PSBoundParameters.ContainsKey('Force')) { $params.Force = $Force }
 
         return New-DirTag @params
     }
