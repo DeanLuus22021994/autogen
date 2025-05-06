@@ -1,3 +1,89 @@
+function Test-GPUAvailability {
+    [CmdletBinding()]
+    param()
+
+    try {
+        # Check if nvidia-smi is available
+        $nvidiaSmi = Get-Command -Name "nvidia-smi" -ErrorAction SilentlyContinue
+
+        if ($null -ne $nvidiaSmi) {
+            $gpuInfo = & nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,noheader
+
+            if ($null -ne $gpuInfo -and $gpuInfo.Count -gt 0) {
+                Write-Host "NVIDIA GPU detected:" -ForegroundColor Green
+                $gpuInfo | ForEach-Object { Write-Host "  $_" -ForegroundColor Green }
+                return $true
+            }
+        }
+
+        # If nvidia-smi is not available or returned no GPUs
+        Write-Verbose "No NVIDIA GPUs detected."
+        return $false
+    }
+    catch {
+        Write-Verbose "Error checking for NVIDIA GPUs: $_"
+        return $false
+    }
+}
+
+function Start-GPUAcceleratedTask {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$TaskName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Command,
+
+        [Parameter(Mandatory = $false)]
+        [int]$GPUMemoryReservationMB = 4096,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$UseSwarm,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$Detached
+    )
+
+    # Check if GPU is available
+    if (-not (Test-GPUAvailability)) {
+        Write-Warning "No NVIDIA GPU detected. Task will run without GPU acceleration."
+        # Run the command without GPU acceleration
+        Invoke-Expression $Command
+        return
+    }
+
+    $dockerRunOptions = "--gpus all"
+
+    if ($GPUMemoryReservationMB -gt 0) {
+        $dockerRunOptions += " --env NVIDIA_VISIBLE_DEVICES=all --env NVIDIA_DRIVER_CAPABILITIES=all --env CUDA_VISIBLE_DEVICES=0"
+        $dockerRunOptions += " --env NVIDIA_MEM_RESERVATION=${GPUMemoryReservationMB}m"
+    }
+
+    if ($Detached) {
+        $dockerRunOptions += " -d"
+    }
+
+    if ($UseSwarm) {
+        # Check if we're in a swarm
+        $swarmStatus = docker info --format "{{.Swarm.LocalNodeState}}"
+
+        if ($swarmStatus -ne "active") {
+            Write-Warning "Docker Swarm is not active. Initializing swarm..."
+            docker swarm init
+        }
+
+        $serviceCommand = "docker service create --name $TaskName $dockerRunOptions $Command"
+        Write-Verbose "Running GPU-accelerated task in Swarm: $serviceCommand"
+        Invoke-Expression $serviceCommand
+    }
+    else {
+        $runCommand = "docker run --name $TaskName $dockerRunOptions $Command"
+        Write-Verbose "Running GPU-accelerated task: $runCommand"
+        Invoke-Expression $runCommand
+    }
+}
+
 function Optimize-DockerConfiguration {
     [CmdletBinding()]
     param(
@@ -9,6 +95,9 @@ function Optimize-DockerConfiguration {
 
         [Parameter(Mandatory = $false)]
         [switch]$PreserveExisting,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$EnableSwarm,
 
         [Parameter(Mandatory = $false)]
         [ValidateRange(1, 100)]
@@ -111,9 +200,7 @@ function Optimize-DockerConfiguration {
     if (-not (Get-Member -InputObject $config -Name "max-concurrent-uploads" -MemberType Properties)) {
         Add-Member -InputObject $config -MemberType NoteProperty -Name "max-concurrent-uploads" -Value $MaxConcurrentUploads
         $modified = $true
-    }
-
-    # Configure GPU support if requested
+    }    # Configure GPU support if requested
     if ($EnableGPU) {
         if (-not (Get-Member -InputObject $config -Name "runtimes" -MemberType Properties)) {
             Add-Member -InputObject $config -MemberType NoteProperty -Name "runtimes" -Value @{
@@ -142,6 +229,25 @@ function Optimize-DockerConfiguration {
             else {
                 Add-Member -InputObject $config -MemberType NoteProperty -Name "default-runtime" -Value "nvidia"
             }
+            $modified = $true
+        }
+
+        # Configure nvidia-container-runtime
+        if (-not (Get-Member -InputObject $config -Name "nvidia-container-runtime" -MemberType Properties)) {
+            Add-Member -InputObject $config -MemberType NoteProperty -Name "nvidia-container-runtime" -Value @{
+                "debug" = "0"
+                "log-level" = "info"
+                "no-cgroups" = "false"
+                "swarm-resource" = "DOCKER_RESOURCE_GPU"
+            }
+            $modified = $true
+        }
+
+        # Configure node-generic-resources for Swarm
+        if ($EnableSwarm -and (-not (Get-Member -InputObject $config -Name "node-generic-resources" -MemberType Properties))) {
+            Add-Member -InputObject $config -MemberType NoteProperty -Name "node-generic-resources" -Value @(
+                "DOCKER_RESOURCE_GPU=0,1,2,3"  # Assumes up to 4 GPUs, will be adjusted based on actual hardware
+            )
             $modified = $true
         }
     }

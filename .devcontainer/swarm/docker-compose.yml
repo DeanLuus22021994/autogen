@@ -1,0 +1,59 @@
+<!-- filepath: c:\Projects\autogen\.devcontainer\swarm\docker-compose.yml -->
+# Docker Swarm configuration for AutoGen with GPU support
+version: '3.8'
+
+services:
+  autogen-dev:
+    image: ${AUTOGEN_IMAGE:-autogen/dev-env:latest}
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          memory: 1G
+        # GPU resources for Docker Swarm mode
+        generic_resources:
+          - discrete_resource_spec:
+              kind: gpus
+              value: 1
+    volumes:
+      - type: bind
+        source: ${PWD}
+        target: /workspaces/autogen
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      - type: volume
+        source: autogen-python-packages
+        target: /workspaces/autogen/python/.venv
+      - type: volume
+        source: autogen-dotnet-packages
+        target: /workspaces/autogen/dotnet/artifacts
+      - type: volume
+        source: autogen-model-cache
+        target: /opt/autogen/models
+    environment:
+      - MODEL_RUNNER_ENDPOINT=http://model-runner.docker.internal/engines/v1/chat/completions
+      - MODEL_RUNNER_MODELS_ENDPOINT=http://model-runner.docker.internal/engines
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - CUDA_VISIBLE_DEVICES=0
+    extra_hosts:
+      - "model-runner.docker.internal:host-gateway"
+    networks:
+      - autogen-network
+
+networks:
+  autogen-network:
+    driver: overlay
+    attachable: true
+
+volumes:
+  autogen-python-packages:
+    external: true
+  autogen-dotnet-packages:
+    external: true
+  autogen-model-cache:
+    external: true

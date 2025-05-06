@@ -1,0 +1,77 @@
+// filepath: c:\Projects\autogen\.devcontainer\swarm\gpu-configuration.yml
+# GPU Configuration for Docker Swarm
+version: '3.8'
+
+# This file contains configuration for GPU-accelerated workloads in Docker Swarm
+# It can be included in other compose files with the 'extends' functionality
+
+x-gpu-options: &gpu-options
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: 1
+            capabilities: [gpu, compute, utility]
+      limits:
+        cpus: '4'
+        memory: 8G
+  environment:
+    - NVIDIA_VISIBLE_DEVICES=all
+    - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    - CUDA_VISIBLE_DEVICES=0
+    - GPU_MEMORY_FRACTION=0.8
+
+services:
+  # Base configuration for GPU-accelerated model runners
+  gpu-model-runner:
+    <<: *gpu-options
+    image: ${GPU_MODEL_RUNNER_IMAGE:-autogen/model-runner:latest-gpu}
+    volumes:
+      - type: volume
+        source: model-cache
+        target: /opt/autogen/models
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+    networks:
+      - autogen-network
+    healthcheck:
+      test: ["CMD", "nvidia-smi"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # GPU-accelerated development environment
+  gpu-dev-environment:
+    <<: *gpu-options
+    image: ${GPU_DEV_ENV_IMAGE:-autogen/dev-env:latest-gpu}
+    volumes:
+      - type: bind
+        source: ${PWD}
+        target: /workspaces/autogen
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      - type: volume
+        source: python-packages
+        target: /workspaces/autogen/python/.venv
+      - type: volume
+        source: dotnet-packages
+        target: /workspaces/autogen/dotnet/artifacts
+    networks:
+      - autogen-network
+    command: sleep infinity
+
+volumes:
+  model-cache:
+    external: true
+  python-packages:
+    external: true
+  dotnet-packages:
+    external: true
+
+networks:
+  autogen-network:
+    external: true

@@ -1,4 +1,5 @@
-# Docker Compose configuration for AutoGen Enhanced DevContainer
+# filepath: c:\Projects\autogen\.devcontainer\docker-compose.gpu.yml
+# Docker Compose configuration for GPU-accelerated DevContainer
 version: '3.8'
 
 services:
@@ -21,6 +22,9 @@ services:
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
       - CUDA_VISIBLE_DEVICES=0
+      - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128
+      - OMP_NUM_THREADS=8
+      - MKL_NUM_THREADS=8
 
     # DevContainer features - keep container running
     command: sleep infinity
@@ -35,6 +39,7 @@ services:
       resources:
         limits:
           memory: 8G
+          cpus: '4'
           # GPU resource for Docker Swarm mode
           generic_resources:
             - resource_type: gpu
@@ -44,9 +49,12 @@ services:
         reservations:
           memory: 1G
 
-    # Health check for Docker Model Runner connectivity
+    # Add runtime for standalone Docker mode
+    runtime: nvidia
+
+    # Health check for container
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://model-runner.docker.internal/engines"]
+      test: ["CMD-SHELL", "nvidia-smi > /dev/null 2>&1 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
