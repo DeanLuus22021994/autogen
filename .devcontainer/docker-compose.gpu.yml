@@ -40,12 +40,11 @@ services:
         limits:
           memory: 8G
           cpus: '4'
-          # GPU resource for Docker Swarm mode
-          generic_resources:
-            - resource_type: gpu
-              discrete_resource_spec:
-                kind: gpus
-                value: 1  # Number of GPUs to use
+          # GPU resource using the newer devices syntax
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
         reservations:
           memory: 1G
 

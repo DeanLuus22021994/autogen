@@ -1,0 +1,67 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "CUDA",
+    "dirtag",
+    "dirtags",
+    "DirTag",
+    "DirTagGroup",
+    "DirTagGroupManagement",
+    "DirTagGroupOperation",
+    "DirTagManagement",
+    "DirTagProblemIntegration",
+    "DirTagStatusCode",
+    "GUID",
+    "LLM",
+    "NVIDIA",
+    "PrecompiledFactory",
+    "RAMDisk",
+    "smoll2",
+    "Smoll2",
+    "tmpfs",
+    "CONTAINERID",
+    "autogen",
+    "dedupe",
+    "powershell",
+    "pwsh",
+    "ramdisk",
+    "precache",
+    "Precaching",
+    "precaching"
+  ],
+  "ignoreWords": [],
+  "patterns": [
+    {
+      "name": "dir-tags",
+      "pattern": "DIR\\.TAG"
+    },
+    {
+      "name": "markdown-code-block",
+      "pattern": "/^```[\\s\\S]*?^```/gm"
+    },
+    {
+      "name": "guid-pattern",
+      "pattern": "/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi"
+    }
+  ],
+  "ignorePaths": [
+    "node_modules/**",
+    "venv/**",
+    "**/*.min.js",
+    "**/*.min.css",
+    "artifacts/**",
+    "bin/**",
+    "obj/**"
+  ],
+  "languageSettings": [
+    {
+      "languageId": "markdown",
+      "dictionaries": ["powershell", "docker", "python"]
+    },
+    {
+      "languageId": "powershell",
+      "dictionaries": ["powershell"]
+    }
+  ]
+}

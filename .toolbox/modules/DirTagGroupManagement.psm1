@@ -485,7 +485,7 @@ function Invoke-DirTagGroupOperation {
                     $subdirs = Get-ChildItem -Path $dir -Directory -Recurse
 
                     foreach ($subdir in $subdirs) {
-                        $subdirResult = Invoke-DirTagGroupOperation -Group (New-DirTagGroup -Name "TempSub" -DirectoryPaths @($subdir.FullName)) -Operation ([DirTagGroupOperation]::Add) -TodoItem $TodoItem -Force:$Force
+                        $subdirResult = Invoke-DirTagGroupOperation -Group (New-DirTagGroup -Name "TempSub" -DirectoryPaths @($subdir.FullName)) -Operation ([DirTagGroupOperation]::Add) -TodoItem $TodoItem -Force $Force
 
                         if (-not $subdirResult[0].Success) {
                             $result.Success = $false
@@ -495,7 +495,7 @@ function Invoke-DirTagGroupOperation {
                     }
 
                     # Add to the current directory too
-                    $currentResult = Invoke-DirTagGroupOperation -Group (New-DirTagGroup -Name "TempCurrent" -DirectoryPaths @($dir)) -Operation ([DirTagGroupOperation]::Add) -TodoItem $TodoItem -Force:$Force
+                    $currentResult = Invoke-DirTagGroupOperation -Group (New-DirTagGroup -Name "TempCurrent" -DirectoryPaths @($dir)) -Operation ([DirTagGroupOperation]::Add) -TodoItem $TodoItem -Force $Force
 
                     $result.Success = $currentResult[0].Success
                     $result.Message = "Propagated todo item to $dir and subdirectories"
@@ -657,7 +657,7 @@ function Sync-GPURelatedDirTags {
     )
 
     $gpuGroup = Get-GPUConfigurationDirTagGroup
-    $result = Invoke-DirTagGroupOperation -Group $gpuGroup -Operation ([DirTagGroupOperation]::Sync) -Force:$Force -WhatIf:$WhatIf
+    $result = Invoke-DirTagGroupOperation -Group $gpuGroup -Operation ([DirTagGroupOperation]::Sync) -Force $Force -WhatIf $WhatIf
 
     return $result
 }
@@ -685,7 +685,7 @@ function Add-GPUTaskToDirTags {
         $TaskDescription = "$TaskDescription [$Status]"
     }
 
-    $result = Invoke-DirTagGroupOperation -Group $gpuGroup -Operation ([DirTagGroupOperation]::Add) -TodoItem $TaskDescription -Force:$Force -WhatIf:$WhatIf
+    $result = Invoke-DirTagGroupOperation -Group $gpuGroup -Operation ([DirTagGroupOperation]::Add) -TodoItem $TaskDescription -Force $Force -WhatIf $WhatIf
 
     return $result
 }
@@ -708,7 +708,7 @@ function Update-GPUTaskStatus {
     )
 
     $gpuGroup = Get-GPUConfigurationDirTagGroup
-    $result = Invoke-DirTagGroupOperation -Group $gpuGroup -Operation ([DirTagGroupOperation]::Update) -TodoItem $TaskDescription -Status $Status -Force:$Force -WhatIf:$WhatIf
+    $result = Invoke-DirTagGroupOperation -Group $gpuGroup -Operation ([DirTagGroupOperation]::Update) -TodoItem $TaskDescription -Status $Status -Force $Force -WhatIf $WhatIf
 
     return $result
 }
@@ -727,7 +727,7 @@ function Remove-GPUTaskFromDirTags {
     )
 
     $gpuGroup = Get-GPUConfigurationDirTagGroup
-    $result = Invoke-DirTagGroupOperation -Group $gpuGroup -Operation ([DirTagGroupOperation]::Remove) -TodoItem $TaskDescription -Force:$Force -WhatIf:$WhatIf
+    $result = Invoke-DirTagGroupOperation -Group $gpuGroup -Operation ([DirTagGroupOperation]::Remove) -TodoItem $TaskDescription -Force $Force -WhatIf $WhatIf
 
     return $result
 }
@@ -948,7 +948,7 @@ function Sync-Smoll2RelatedDirTags {
     # Process each task
     foreach ($task in $tasksToSync) {
         try {
-            $addResult = Invoke-DirTagGroupOperation -Group $smoll2Group -Operation ([DirTagGroupOperation]::Add) -TodoItem $task -Force:$Force -WhatIf:$WhatIf
+            $addResult = Invoke-DirTagGroupOperation -Group $smoll2Group -Operation ([DirTagGroupOperation]::Add) -TodoItem $task -Force $Force -WhatIf $WhatIf
             $results += $addResult
 
             Write-Verbose "Added task: $task to $($addResult.Count) directories"
@@ -960,7 +960,7 @@ function Sync-Smoll2RelatedDirTags {
 
     # Set the overall status for DIR.TAG files
     try {
-        $statusResult = Invoke-DirTagGroupOperation -Group $smoll2Group -Operation ([DirTagGroupOperation]::SetStatus) -Status "PARTIALLY_COMPLETE" -Force:$Force -WhatIf:$WhatIf
+        $statusResult = Invoke-DirTagGroupOperation -Group $smoll2Group -Operation ([DirTagGroupOperation]::SetStatus) -Status "PARTIALLY_COMPLETE" -Force $Force -WhatIf $WhatIf
         $results += $statusResult
     }
     catch {
@@ -969,7 +969,7 @@ function Sync-Smoll2RelatedDirTags {
 
     # Reorganize tasks
     try {
-        $reorganizeResult = Invoke-DirTagGroupOperation -Group $smoll2Group -Operation ([DirTagGroupOperation]::Reorganize) -Force:$Force -WhatIf:$WhatIf
+        $reorganizeResult = Invoke-DirTagGroupOperation -Group $smoll2Group -Operation ([DirTagGroupOperation]::Reorganize) -Force $Force -WhatIf $WhatIf
         $results += $reorganizeResult
     }
     catch {
@@ -1090,7 +1090,7 @@ function Update-Smoll2PrecompiledCachedFactoryTasks {
     # Update status for each task
     foreach ($task in $tasksToUpdate) {
         try {
-            $updateResult = Invoke-DirTagGroupOperation -Group $smoll2Group -Operation ([DirTagGroupOperation]::Update) -TodoItem $task -Status $Status -Force:$Force -WhatIf:$WhatIf
+            $updateResult = Invoke-DirTagGroupOperation -Group $smoll2Group -Operation ([DirTagGroupOperation]::Update) -TodoItem $task -Status $Status -Force $Force -WhatIf $WhatIf
             $results += $updateResult
 
             Write-Verbose "Updated task: '$task' with status: $Status in $($updateResult.Count) directories"
@@ -1180,7 +1180,7 @@ function Add-ExtensionPrecacheTaskToDirTags {
     $results = @()
     foreach ($group in $groups) {
         try {
-            $result = Invoke-DirTagGroupOperation -Group $group -Operation ([DirTagGroupOperation]::Add) -TodoItem $task -Force:$Force -WhatIf:$WhatIf
+            $result = Invoke-DirTagGroupOperation -Group $group -Operation ([DirTagGroupOperation]::Add) -TodoItem $task -Force $Force -WhatIf $WhatIf
             $results += $result
             Write-Verbose "Processed group '$($group.Name)': $($result.Count) directories updated."
         }

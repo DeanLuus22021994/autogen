@@ -1,3 +1,5 @@
+# DIR.TAG Management Pattern
+
 ## Pattern: DIR.TAG Management
 
 **Purpose**: Standardize tracking of development status, technical debt, and component documentation through DIR.TAG files.

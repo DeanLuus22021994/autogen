@@ -1,3 +1,5 @@
+# DIR.TAG System Vocabulary
+
 ## Domain Vocabulary: DIR.TAG System
 
 | Term | Definition | Example Usage |
