@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mistral_gpu_settings>
+  <model>
+    <name>mistral-nemo</name>
+    <image>nvcr.io/nvidia/nemo-fw:24.02.01</image>
+    <description>NVIDIA NeMo implementation of Mistral LLM</description>
+  </model>
+  <runtime>
+    <docker_model_runner>
+      <enabled>true</enabled>
+      <version>beta</version>
+    </docker_model_runner>
+    <gpu>
+      <min_count>1</min_count>
+      <recommended_count>2</recommended_count>
+      <cuda_version>12.0</cuda_version>
+      <driver_version>525.0</driver_version>
+    </gpu>
+    <inference>
+      <port>8000</port>
+      <endpoint>/v1/chat/completions</endpoint>
+      <tensor_parallel_size>1</tensor_parallel_size>
+      <max_batch_size>8</max_batch_size>
+      <max_input_length>4096</max_input_length>
+      <max_output_length>2048</max_output_length>
+    </inference>
+  </runtime>
+  <networking>
+    <overlay_network>mistral-network</overlay_network>
+    <expose_port>8000:8000</expose_port>
+    <endpoint_mode>vip</endpoint_mode>
+  </networking>
+  <service>
+    <name>mistral-inference</name>
+    <replicas>1</replicas>
+    <placement>
+      <constraint>node.role==manager</constraint>
+    </placement>
+  </service>
+</mistral_gpu_settings>
