@@ -5,56 +5,39 @@ services:
     build:
       context: .
       dockerfile: Enhanced-Dockerfile
-
+      args:
+        PYTHON_VERSION: "3.10"
+        DOTNET_VERSION: "8.0"
     volumes:
-      # Forwards the local Docker socket to the container
-      - /var/run/docker.sock:/var/run/docker-host.sock
-      # Mount the project code
-      - ../..:/workspaces:cached
-      # Persistent volumes for fast access to precompiled code
-      - autogen-python-packages:/opt/autogen/python/packages
-      - autogen-dotnet-artifacts:/opt/autogen/dotnet/artifacts
-      - autogen-models:/opt/autogen/models
-      # Mount specific directories for dev team
-      - ../../dotnet/samples/dev-team:/workspaces/autogen/dotnet/samples/dev-team:cached
-
-    # Setting environment variables for development
+      - ..:/workspaces/autogen:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - python-packages:/workspaces/autogen/python/.venv
+      - dotnet-packages:/workspaces/autogen/dotnet/artifacts
+      - model-cache:/opt/autogen/models
     environment:
-      - DOTNET_ENVIRONMENT=Development
-      - ASPNETCORE_ENVIRONMENT=Development
       - MODEL_RUNNER_ENDPOINT=http://model-runner.docker.internal/engines/v1/chat/completions
-      - PYTHONPATH=/workspaces/autogen/python
-      - PRECOMPILED_PACKAGES_PATH=/opt/autogen/python/packages
-      - DOTNET_ARTIFACTS_PATH=/opt/autogen/dotnet/artifacts
-      - MODEL_CACHE_PATH=/opt/autogen/models
+      - MODEL_RUNNER_MODELS_ENDPOINT=http://model-runner.docker.internal/engines
 
-    # Enable GPU passthrough if available (no driver installation needed)
+    # DevContainer features - keep container running
+    command: sleep infinity
+    user: root
+
+    # Add extra host for Docker Model Runner
+    extra_hosts:
+      - "model-runner.docker.internal:host-gateway"
+
+    # Resource limits - adjust as needed
     deploy:
       resources:
+        limits:
+          memory: 8G
         reservations:
-          devices:
-            - driver: nvidia
-              capabilities: [gpu]
-              count: all
-
-    # Support for ptrace-based debuggers
-    cap_add:
-      - SYS_PTRACE
-    security_opt:
-      - seccomp:unconfined
-
-    # Overrides default command so things don't shut down after the process ends
-    entrypoint: /usr/local/share/docker-init.sh
-    command: sleep infinity
-
-    # Configure restart policy to run permanently
-    restart: unless-stopped
+          memory: 1G
 
 volumes:
-  # Define named volumes that persist between container restarts
-  autogen-python-packages:
+  python-packages:
     name: autogen-python-packages
-  autogen-dotnet-artifacts:
-    name: autogen-dotnet-artifacts
-  autogen-models:
-    name: autogen-models
+  dotnet-packages:
+    name: autogen-dotnet-packages
+  model-cache:
+    name: autogen-model-cache

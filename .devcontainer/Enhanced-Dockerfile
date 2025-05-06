@@ -16,68 +16,189 @@ ENV PYTHONUNBUFFERED=1 \
     PATH="${PATH}:/home/${USERNAME}/.local/bin" \
     DEBIAN_FRONTEND=noninteractive \
     MODEL_RUNNER_ENDPOINT="http://model-runner.docker.internal/engines/v1/chat/completions" \
+    MODEL_RUNNER_MODELS_ENDPOINT="http://model-runner.docker.internal/engines" \
     DOTNET_SKIP_FIRST_TIME_EXPERIENCE=true
 
 # Install system packages
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    git curl wget unzip zip bzip2 \
-    make build-essential libssl-dev zlib1g-dev \
-    libbz2-dev libreadline-dev libsqlite3-dev \
-    libncursesw5-dev xz-utils tk-dev libxml2-dev \
-    libxmlsec1-dev libffi-dev liblzma-dev \
-    python3-openssl libpq-dev && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
+    && apt-get -y install --no-install-recommends \
+        build-essential \
+        curl \
+        git \
+        gnupg \
+        lsb-release \
+        software-properties-common \
+        wget \
+        jq \
+        unzip \
+        apt-transport-https \
+        ca-certificates \
+        netcat \
+        libicu-dev \
+        iputils-ping \
+        dnsutils \
+        tmux \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Python
-RUN if [ "${PYTHON_VERSION}" != "system" ]; then \
-        curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -o /tmp/miniconda.sh && \
-        bash /tmp/miniconda.sh -bfp /usr/local && \
-        rm -rf /tmp/miniconda.sh && \
-        conda install -y python=${PYTHON_VERSION} && \
-        conda clean -ya && \
-        pip install --no-cache-dir --upgrade pip setuptools wheel; \
-    fi
+RUN add-apt-repository ppa:deadsnakes/ppa \
+    && apt-get update \
+    && apt-get install -y python${PYTHON_VERSION} python${PYTHON_VERSION}-dev python${PYTHON_VERSION}-venv python3-pip \
+    && update-alternatives --install /usr/bin/python python /usr/bin/python${PYTHON_VERSION} 1 \
+    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python${PYTHON_VERSION} 1 \
+    && ln -sf /usr/bin/pip3 /usr/bin/pip \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install .NET SDK
-RUN curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel ${DOTNET_VERSION} --install-dir /usr/share/dotnet && \
-    ln -s /usr/share/dotnet/dotnet /usr/local/bin
+RUN wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
+    && dpkg -i packages-microsoft-prod.deb \
+    && rm packages-microsoft-prod.deb \
+    && apt-get update \
+    && apt-get install -y dotnet-sdk-${DOTNET_VERSION} \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Create a non-root user with sudo access
-RUN groupadd --gid $USER_GID $USERNAME && \
-    useradd --uid $USER_UID --gid $USER_GID -m $USERNAME && \
-    apt-get update && \
-    apt-get install -y sudo && \
-    echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME && \
-    chmod 0440 /etc/sudoers.d/$USERNAME && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Install PowerShell for cross-platform shell support
+RUN curl -sSL https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
+    && echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-$(lsb_release -rs)-prod $(lsb_release -rs) main" > /etc/apt/sources.list.d/microsoft.list \
+    && apt-get update \
+    && apt-get install -y powershell \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Set up docker CLI
-COPY --from=docker:latest /usr/local/bin/docker /usr/local/bin/
+# Set up model cache directory with proper permissions
+RUN mkdir -p /opt/autogen/models && chmod 777 /opt/autogen/models
 
-# Create directories for persisting data
-RUN mkdir -p /opt/autogen/python/packages/.compiled && \
-    mkdir -p /opt/autogen/dotnet/artifacts && \
-    mkdir -p /opt/autogen/models/cache && \
-    chown -R ${USERNAME}:${USERNAME} /opt/autogen
+# Set up symlinks for quick access to volumes
+RUN ln -sf /workspaces/autogen/python/.venv /opt/python-env \
+    && ln -sf /workspaces/autogen/dotnet/artifacts /opt/dotnet-artifacts
 
-# Add script for Docker Model Runner verification
-COPY verify-model-runner.sh /usr/local/bin/verify-model-runner.sh
-RUN chmod +x /usr/local/bin/verify-model-runner.sh
+# Create script to check Docker Model Runner with proper error handling
+RUN echo '#!/bin/bash\n\
+set -e\n\
+\n\
+echo "Checking Docker Model Runner availability..."\n\
+\n\
+# First check network connectivity to Docker host\n\
+if ! ping -c 1 -W 2 host.docker.internal > /dev/null 2>&1; then\n\
+  echo "❌ Cannot reach host.docker.internal - check Docker network configuration"\n\
+  echo "This is required for Docker Model Runner to function properly."\n\
+  exit 1\n\
+fi\n\
+\n\
+# Check if the Model Runner endpoint is accessible\n\
+if curl -s --head --fail --max-time 5 "http://model-runner.docker.internal/engines" > /dev/null; then\n\
+  echo "✅ Docker Model Runner is accessible"\n\
+  \n\
+  # Get available models\n\
+  MODELS=$(curl -s --max-time 5 "http://model-runner.docker.internal/engines")\n\
+  if [ $? -eq 0 ] && [ -n "$MODELS" ]; then\n\
+    echo "Available models:"\n\
+    echo "$MODELS" | jq -r ".[] | .id" 2>/dev/null || echo "$MODELS"\n\
+  else\n\
+    echo "⚠️ Could not retrieve models list. Docker Model Runner is running but may not have models."\n\
+    echo "Run the following to pull a model:"\n\
+    echo "  docker model pull ai/mistral"\n\
+  fi\n\
+else\n\
+  echo "❌ Docker Model Runner is not accessible."\n\
+  echo "Please ensure:"\n\
+  echo "  1. Docker Desktop 4.40+ is running"\n\
+  echo "  2. Model Runner is enabled in Docker Desktop settings"\n\
+  echo "  3. Network connectivity to Docker host is working"\n\
+  echo "  4. No firewall is blocking connections to model-runner.docker.internal"\n\
+fi\n\
+\n\
+# Check Docker version\n\
+if command -v docker &> /dev/null; then\n\
+  DOCKER_VERSION=$(docker version --format "{{.Server.Version}}" 2>/dev/null || docker --version | cut -d" " -f3 | sed "s/,//")\n\
+  echo "Docker version: $DOCKER_VERSION"\n\
+  if [[ "$DOCKER_VERSION" =~ ^([0-9]+)\.([0-9]+) ]]; then\n\
+    MAJOR=${BASH_REMATCH[1]}\n\
+    MINOR=${BASH_REMATCH[2]}\n\
+    if (( MAJOR < 4 || ( MAJOR == 4 && MINOR < 40 ) )); then\n\
+      echo "⚠️ Warning: Docker Model Runner requires Docker Desktop 4.40+"\n\
+    fi\n\
+  fi\n\
+else\n\
+  echo "⚠️ Docker CLI not available - cannot check Docker version"\n\
+fi\n\
+' > /usr/local/bin/check-model-runner \
+    && chmod +x /usr/local/bin/check-model-runner
 
-# Switch to non-root user
-USER $USERNAME
+# Create model-runner-check.sh in .devcontainer for more comprehensive checks
+COPY model-runner-check.sh /usr/local/bin/model-runner-check
+RUN chmod +x /usr/local/bin/model-runner-check
 
-# Install Python package management tools
-RUN pip install --no-cache-dir uv
+# Add Docker helper functions to ~/.bashrc for Bash shell
+RUN echo '\n\
+# Docker Model Runner helper functions\n\
+model_pull() {\n\
+  docker model pull "$@"\n\
+}\n\
+model_run() {\n\
+  docker model run "$@"\n\
+}\n\
+model_ls() {\n\
+  docker model ls\n\
+}\n\
+' >> /home/${USERNAME}/.bashrc
 
-# Cleanup and finalization
-USER root
-RUN apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+# Add Docker helper functions to PowerShell profile
+RUN mkdir -p /home/${USERNAME}/.config/powershell && \
+    echo '\n\
+# Docker Model Runner helper functions\n\
+function Invoke-ModelPull { docker model pull $args }\n\
+function Invoke-ModelRun { docker model run $args }\n\
+function Invoke-ModelList { docker model ls }\n\
+\n\
+# Create aliases\n\
+New-Alias -Name model_pull -Value Invoke-ModelPull\n\
+New-Alias -Name model_run -Value Invoke-ModelRun\n\
+New-Alias -Name model_ls -Value Invoke-ModelList\n\
+' > /home/${USERNAME}/.config/powershell/Microsoft.PowerShell_profile.ps1
 
-# Switch back to non-root user for security
-USER $USERNAME
-WORKDIR /workspaces
+# Set up enhanced welcome message for Bash
+RUN echo '\n\
+echo ""\n\
+echo "🚀 Welcome to AutoGen Enhanced DevContainer with Docker Model Runner integration!"\n\
+echo ""\n\
+echo "📋 Quick commands:"\n\
+echo "  • check-model-runner     - Check Docker Model Runner availability"\n\
+echo "  • model-runner-check     - Comprehensive check for Docker Model Runner setup"\n\
+echo "  • model_pull MODEL_NAME  - Pull a model from Docker Model Runner"\n\
+echo "  • model_run MODEL_NAME   - Run a model from Docker Model Runner"\n\
+echo "  • model_ls               - List available models"\n\
+echo ""\n\
+echo "📋 Available models include:"\n\
+echo "  • ai/mistral              - Mistral base model"\n\
+echo "  • ai/mistral-nemo         - Mistral NeMo-enhanced model"\n\
+echo "  • ai/mxbai-embed-large    - MxbAI embedding model"\n\
+echo "  • ai/smollm2              - Smol LM2 model"\n\
+echo ""\n\
+echo "📋 Volumes and persistence:"\n\
+echo "  • Python packages: /workspaces/autogen/python/.venv (persistent)"\n\
+echo "  • .NET packages: /workspaces/autogen/dotnet/artifacts (persistent)"\n\
+echo "  • Model cache: /opt/autogen/models (persistent)"\n\
+echo ""\n\
+if [ ! -z "$INVOCATION_ID" ]; then\n\
+  # Only run this check on first login to avoid performance impact\n\
+  check-model-runner\n\
+fi\n\
+' >> /home/${USERNAME}/.bashrc
+
+# Set ownership for the user
+RUN chown -R ${USERNAME}:${USER_GID} /home/${USERNAME}
+
+# Clean up
+RUN apt-get autoremove -y \
+    && apt-get clean -y \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspaces/autogen
+
+# Create healthcheck script
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD curl -s --fail "http://model-runner.docker.internal/engines" > /dev/null || exit 1

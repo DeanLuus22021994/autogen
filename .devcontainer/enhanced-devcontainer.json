@@ -4,7 +4,6 @@
     "service": "devcontainer",
     "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 
-    // Environment variables with appropriate passthrough
     "remoteEnv": {
         "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}",
         "FORK_AUTOGEN_OWNER": "${localEnv:FORK_AUTOGEN_OWNER}",
@@ -15,26 +14,20 @@
         "FORK_HUGGINGFACE_ACCESS_TOKEN": "${localEnv:FORK_HUGGINGFACE_ACCESS_TOKEN}"
     },
 
-    // Container features - minimal to reduce footprint
     "features": {
-        // Docker access from within container
         "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
             "moby": true,
             "installDockerBuildx": true,
             "version": "latest",
             "dockerDashComposeVersion": "none"
         },
-        // Git is essential
         "ghcr.io/devcontainers/features/git:1": {}
     },
 
-    // Use enhanced startup script
     "postCreateCommand": "bash .devcontainer/enhanced-startup.sh",
 
-    // Run as root for appropriate permissions
     "remoteUser": "root",
 
-    // VS Code customizations
     "customizations": {
         "vscode": {
             "extensions": [
@@ -52,18 +45,17 @@
                 "python.linting.pylintEnabled": true,
                 "dotnet.preferCSharpExtension": true,
                 "editor.formatOnSave": true,
-                "editor.rulers": [100],
+                "editor.rulers": [101],
                 "files.insertFinalNewline": true,
                 "files.trimTrailingWhitespace": true
             }
         }
     },
 
-    // Lifecycle and shutdown handling
-    "shutdownAction": "none", // Prevents automatic container shutdown
-    "waitFor": "onCreateCommand", // Wait for container creation to complete
+    "shutdownAction": "none",
 
-    // Additional metadata
+    "waitFor": "onCreateCommand",
+
     "portsAttributes": {
         "5000": {
             "label": "Web App",

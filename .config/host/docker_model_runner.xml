@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<docker_model_runner>
+  <metadata>
+    <generated_timestamp>2025-05-06T10:00:00Z</generated_timestamp>
+    <version>1.0</version>
+    <description>Docker Model Runner configuration for AutoGen</description>
+  </metadata>
+
+  <configuration>
+    <enabled>true</enabled>
+    <endpoint>http://model-runner.docker.internal/engines/v1/chat/completions</endpoint>
+    <models_endpoint>http://model-runner.docker.internal/engines</models_endpoint>
+    <cache_path>/opt/autogen/models</cache_path>
+  </configuration>
+
+  <recommended_models>
+    <model>
+      <name>ai/mistral</name>
+      <description>Mistral AI foundation model</description>
+      <purpose>General text generation, code assistance</purpose>
+      <pull_command>docker model pull ai/mistral</pull_command>
+    </model>
+    <model>
+      <name>ai/mistral-nemo</name>
+      <description>NVIDIA NeMo-optimized Mistral model</description>
+      <purpose>High-performance text generation</purpose>
+      <pull_command>docker model pull ai/mistral-nemo</pull_command>
+    </model>
+    <model>
+      <name>ai/mxbai-embed-large</name>
+      <description>Text embedding model</description>
+      <purpose>Text embeddings for similarity searches</purpose>
+      <pull_command>docker model pull ai/mxbai-embed-large</pull_command>
+    </model>
+    <model>
+      <name>ai/smollm2</name>
+      <description>Lightweight language model</description>
+      <purpose>Fast responses for simple queries</purpose>
+      <pull_command>docker model pull ai/smollm2</pull_command>
+    </model>
+  </recommended_models>
+
+  <usage>
+    <setup>
+      <step>Enable Docker Model Runner in Docker Desktop settings</step>
+      <step>Pull recommended models using docker model pull commands</step>
+      <step>Use the Docker Model Runner client in autogen_extensions/docker</step>
+    </setup>
+    <python_example>
+      <code>
+        from autogen_extensions.docker.model_client import ModelClient
+
+        # Create a client
+        client = ModelClient(model_name="ai/mistral")
+
+        # Get a completion
+        response = client.complete(
+            prompt="Explain how Docker Model Runner works",
+            system_message="You are a helpful assistant",
+            temperature=0.7
+        )
+
+        print(response)
+      </code>
+    </python_example>
+  </usage>
+</docker_model_runner>

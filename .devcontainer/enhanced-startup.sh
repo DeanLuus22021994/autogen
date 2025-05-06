@@ -93,3 +93,108 @@ END_TIME=$(date +%s)
 EXECUTION_TIME=$((END_TIME - START_TIME))
 echo "✅ Enhanced DevContainer setup completed in ${EXECUTION_TIME} seconds!"
 echo "   Container is now ready for development with Docker Model Runner integration."
+
+# Enhanced DevContainer initialization script
+
+set -e
+
+echo "🚀 Starting enhanced DevContainer initialization..."
+
+# Function to display status messages
+status() {
+    echo "🔵 $1"
+}
+
+# Function to display success messages
+success() {
+    echo "✅ $1"
+}
+
+# Function to display error messages
+error() {
+    echo "❌ $1"
+    exit 1
+}
+
+# Check Docker Model Runner access
+status "Checking Docker Model Runner access..."
+if curl -s --head --fail "http://model-runner.docker.internal/engines" > /dev/null; then
+    success "Docker Model Runner is accessible"
+else
+    echo "⚠️ Docker Model Runner is not accessible. Some features may not work."
+    echo "   Please ensure Docker Desktop is running with Model Runner enabled."
+fi
+
+# Set up Python environment
+status "Setting up Python environment..."
+if [ -d "/workspaces/autogen/python/.venv" ]; then
+    status "Python virtual environment exists, checking packages..."
+    # Activate the virtual environment
+    source /workspaces/autogen/python/.venv/bin/activate
+    # Install/update packages
+    cd /workspaces/autogen
+    pip install -e ./python/packages/autogen-core
+    pip install -e ./python/packages/autogen-agentchat
+    pip install -e ./python/packages/autogen-ext[openai]
+    success "Python packages updated"
+else
+    status "Creating new Python virtual environment..."
+    cd /workspaces/autogen
+    python -m venv python/.venv
+    source /workspaces/autogen/python/.venv/bin/activate
+    pip install --upgrade pip
+    pip install -e ./python/packages/autogen-core
+    pip install -e ./python/packages/autogen-agentchat
+    pip install -e ./python/packages/autogen-ext[openai]
+    pip install -e ./python/packages/autogen-studio
+    success "Python environment created and packages installed"
+fi
+
+# Set up .NET environment
+status "Setting up .NET environment..."
+if [ -d "/workspaces/autogen/dotnet/artifacts" ]; then
+    status ".NET artifacts exist, rebuilding solution..."
+else
+    status "Creating .NET artifacts directory..."
+    mkdir -p /workspaces/autogen/dotnet/artifacts
+fi
+
+cd /workspaces/autogen/dotnet
+dotnet build -c Debug
+success ".NET solution built"
+
+# Verify Docker Model Runner integration
+status "Verifying Docker Model Runner extension..."
+if [ -d "/workspaces/autogen/autogen_extensions/docker" ]; then
+    success "Docker Model Runner extension found"
+else
+    echo "⚠️ Docker Model Runner extension not found at /workspaces/autogen/autogen_extensions/docker"
+    echo "   This might affect Docker Model Runner functionality."
+fi
+
+# Create symlinks for quick access
+status "Creating symlinks for quick access..."
+ln -sf /workspaces/autogen/.devcontainer/ENHANCED-CONTAINER.md /workspaces/autogen/CONTAINER-HELP.md
+success "Quick access symlinks created"
+
+# Display container information
+echo ""
+echo "🚀 Enhanced DevContainer setup complete!"
+echo "📋 Available Docker Model Runner models:"
+curl -s "http://model-runner.docker.internal/engines" | python -m json.tool || echo "  No models available. Run 'docker model pull ai/mistral' to get started."
+echo ""
+echo "📋 Container specifications:"
+echo "  • OS: $(cat /etc/os-release | grep PRETTY_NAME | cut -d= -f2 | tr -d '"')"
+echo "  • Python: $(python --version)"
+echo "  • .NET: $(dotnet --version)"
+echo "  • Docker: $(docker --version)"
+echo ""
+echo "📋 Volume mounts:"
+echo "  • Python packages: /workspaces/autogen/python/.venv"
+echo "  • .NET packages: /workspaces/autogen/dotnet/artifacts"
+echo "  • Model cache: /opt/autogen/models"
+echo ""
+echo "📋 Documentation:"
+echo "  • Enhanced DevContainer: /workspaces/autogen/.devcontainer/ENHANCED-CONTAINER.md"
+echo "  • Docker Model Runner: /workspaces/autogen/autogen_extensions/docker/README.md"
+echo ""

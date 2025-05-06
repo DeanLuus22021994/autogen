@@ -19,7 +19,30 @@ AutoGen requires **Python 3.10 or later**.
 pip install -U "autogen-agentchat" "autogen-ext[openai]"
 ```
 
-## Troubleshooting
+## Development Environment
+
+### Enhanced DevContainer with Docker Model Runner
+
+AutoGen provides an enhanced DevContainer setup with Docker Model Runner integration for local AI model hosting:
+
+1. Set up the enhanced DevContainer:
+
+   ```powershell
+   # Set up the enhanced DevContainer with Docker Model Runner support
+   .\Setup-EnhancedDevContainer.ps1
+   ```
+
+2. Rebuild and reopen in the container:
+   - Open VS Code command palette (Ctrl+Shift+P)
+   - Run "Dev Containers: Rebuild and Reopen in Container"
+
+Features:
+- Persistent container with precompiled code in volumes
+- Docker Model Runner integration with local AI models
+- Low-footprint container with GPU passthrough
+- DIR.TAG tracking system integration
+
+For more details, see the [DevContainer documentation](./.devcontainer/ENHANCED-CONTAINER.md).
 
 ### Environment and Security Setup
 
