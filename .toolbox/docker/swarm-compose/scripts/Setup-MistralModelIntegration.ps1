@@ -36,8 +36,25 @@ $CYAN = [ConsoleColor]::Cyan
 $WHITE = [ConsoleColor]::White
 
 function Write-Log {
+    <#
+    .SYNOPSIS
+        Writes a log message to both the console and a log file.
+
+    .DESCRIPTION
+        Writes a timestamped log message to both the console with the specified color
+        and to the log file specified in the script parameters.
+
+    .PARAMETER Message
+        The message to log.
+
+    .PARAMETER Color
+        The console color to use for the message. Default is White.
+    #>
     param (
+        [Parameter(Mandatory = $true)]
         [string]$Message,
+
+        [Parameter(Mandatory = $false)]
         [ConsoleColor]$Color = [ConsoleColor]::White
     )
 
@@ -52,10 +69,37 @@ function Write-Log {
 }
 
 function Set-DirTagEntry {
+    <#
+    .SYNOPSIS
+        Creates or updates a DIR.TAG file with specified TODO items and status.
+
+    .DESCRIPTION
+        Creates a new DIR.TAG file if it doesn't exist, or updates an existing one,
+        with specified TODO items, status, and description according to the project standards.
+
+    .PARAMETER DirTagPath
+        The full path to the DIR.TAG file to create or update.
+
+    .PARAMETER TodoItem
+        The TODO item to add or update in the DIR.TAG file.
+
+    .PARAMETER Status
+        The status of the TODO item (e.g., "DONE", "NOT_STARTED", "PARTIALLY_COMPLETE").
+
+    .PARAMETER Description
+        A description of the directory or TODO item to include in the DIR.TAG file.
+    #>
     param (
+        [Parameter(Mandatory = $true)]
         [string]$DirTagPath,
+
+        [Parameter(Mandatory = $true)]
         [string]$TodoItem,
+
+        [Parameter(Mandatory = $true)]
         [string]$Status,
+
+        [Parameter(Mandatory = $true)]
         [string]$Description
     )
 
@@ -280,6 +324,14 @@ function Test-ModelIntegration {
 }
 
 function Update-MainDirTag {
+    <#
+    .SYNOPSIS
+        Updates the main DIR.TAG file with Mistral integration status.
+
+    .DESCRIPTION
+        Updates the main DIR.TAG file in the swarm-compose directory to indicate
+        that the Mistral model integration has been completed.
+    #>
     # Update main DIR.TAG file with Mistral integration status
     $mainDirTagPath = Join-Path $PSScriptRoot "..\DIR.TAG"
 
@@ -294,9 +346,8 @@ try {
     # Initialize log file
     if (Test-Path $LogFile) {
         Remove-Item -Path $LogFile -Force
-    }
-
-    Write-Log "Starting Mistral Model integration setup..." -Color $CYAN    Write-Log "Timestamp: $(Get-Date)" -Color $WHITE
+    }    Write-Log "Starting Mistral Model integration setup..." -Color $CYAN
+    Write-Log "Timestamp: $(Get-Date)" -Color $WHITE
 
     # Check Docker Model Runner setup
     $modelRunnerSetup = Test-DockerModelRunner
@@ -312,10 +363,11 @@ try {
         $modelIntegrationDir = Join-Path $PSScriptRoot "..\model-integration"
 
         if (Test-Path $modelIntegrationDir) {
-            Remove-Item -Path $modelIntegrationDir -Recurse -Force
-            Write-Log "Cleared existing model integration cache." -Color $GREEN
+            Remove-Item -Path $modelIntegrationDir -Recurse -Force            Write-Log "Cleared existing model integration cache." -Color $GREEN
         }
-    }    # Set up model integration
+    }
+
+    # Set up model integration
     $integrationSetup = Initialize-ModelIntegration
 
     if ($integrationSetup) {
@@ -323,11 +375,10 @@ try {
         $integrationTest = Test-ModelIntegration
 
         if ($integrationTest) {
-            # Update main DIR.TAG file
-            Update-MainDirTag
+            # Update main DIR.TAG file            Update-MainDirTag
 
             Write-Log "🎉 Mistral Model integration setup completed successfully!" -Color $GREEN
-            Write-Log "You can now deploy the optimized Mistral model using the Initialize-MistralGPURunner.ps1 script." -Color $CYAN
+            Write-Log "You can now deploy the optimized Mistral model using the Start-MistralGPURunner.ps1 script." -Color $CYAN
         } else {
             Write-Log "⚠️ Mistral Model integration setup completed, but integration test failed." -Color $YELLOW
             Write-Log "You may need to manually set up Docker Model Runner with the required Mistral models." -Color $YELLOW

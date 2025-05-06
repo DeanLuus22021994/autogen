@@ -23,11 +23,17 @@
 .PARAMETER VerifyDeployment
     Optional. If specified, verifies that the service has been successfully scaled before exiting.
 
+.PARAMETER TestMode
+    Optional. If specified, runs in test mode which simulates operations without making any actual changes.
+
 .EXAMPLE
     .\Set-SwarmServiceScale.ps1 -StackName autogen -ServiceName inference -ReplicaCount 5
 
 .EXAMPLE
     .\Set-SwarmServiceScale.ps1 -StackName ml-inference -ServiceName backend -ReplicaCount 10 -GradualScale -VerifyDeployment
+
+.EXAMPLE
+    .\Set-SwarmServiceScale.ps1 -StackName test-stack -ServiceName api -ReplicaCount 3 -TestMode
 #>
 [CmdletBinding()]
 param (
@@ -44,7 +50,10 @@ param (
     [switch]$GradualScale,
 
     [Parameter(Mandatory = $false)]
-    [switch]$VerifyDeployment
+    [switch]$VerifyDeployment,
+
+    [Parameter(Mandatory = $false)]
+    [switch]$TestMode
 )
 
 function Get-ServiceFullName {
@@ -67,6 +76,13 @@ function Get-CurrentReplicas {
     )
 
     $currentCommand = "docker service inspect $ServiceFullName --format `"{{.Spec.Mode.Replicated.Replicas}}`""
+
+    if ($TestMode) {
+        Write-Host "[TEST MODE] Would execute: $currentCommand" -ForegroundColor Yellow
+        # In test mode, return a simulated value
+        return 1
+    }
+
     $currentReplicas = Invoke-Expression $currentCommand
 
     if ($null -eq $currentReplicas -or $currentReplicas -eq "") {
@@ -77,7 +93,7 @@ function Get-CurrentReplicas {
     return [int]$currentReplicas
 }
 
-function Verify-Deployment {
+function Test-Deployment {
     param (
         [string]$ServiceFullName,
         [int]$TargetReplicas,
@@ -90,20 +106,33 @@ function Verify-Deployment {
 
     while ((Get-Date) - $startTime -lt $timeout) {
         $statusCommand = "docker service ls --filter `"name=$ServiceFullName`" --format `"{{.Name}} {{.Replicas}}`""
-        $status = Invoke-Expression $statusCommand
 
-        if ($status -match "$ServiceFullName\s+(\d+)/(\d+)") {
-            $current = [int]$Matches[1]
-            $expected = [int]$Matches[2]
+        if ($TestMode) {
+            Write-Host "[TEST MODE] Would execute: $statusCommand" -ForegroundColor Yellow
+            # Simulate successful response in test mode
+            $current = $TargetReplicas
+            $expected = $TargetReplicas
 
-            if ($current -eq $expected -and $expected -eq $TargetReplicas) {
-                Write-Host "Deployment verified: $current/$expected replicas are running" -ForegroundColor Green
-                return $true
+            Write-Host "Deployment verified: $current/$expected replicas are running (simulated)" -ForegroundColor Green
+            return $true
+        }
+        else {
+            $status = Invoke-Expression $statusCommand
+
+            if ($status -match "$ServiceFullName\s+(\d+)/(\d+)") {
+                $current = [int]$Matches[1]
+                $expected = [int]$Matches[2]
+
+                if ($current -eq $expected -and $expected -eq $TargetReplicas) {
+                    Write-Host "Deployment verified: $current/$expected replicas are running" -ForegroundColor Green
+                    return $true
+                }
+
+                Write-Host "Deployment in progress: $current/$expected replicas are running..." -ForegroundColor Yellow
             }
-
-            Write-Host "Deployment in progress: $current/$expected replicas are running..." -ForegroundColor Yellow
-        } else {
-            Write-Host "Could not determine service status. Retrying..." -ForegroundColor Yellow
+            else {
+                Write-Host "Could not determine service status. Retrying..." -ForegroundColor Yellow
+            }
         }
 
         Start-Sleep -Seconds 5
@@ -115,6 +144,10 @@ function Verify-Deployment {
 
 # Main script
 try {
+    if ($TestMode) {
+        Write-Host "[TEST MODE] Running in test mode. No actual changes will be made." -ForegroundColor Yellow
+    }
+
     $serviceFullName = Get-ServiceFullName -StackName $StackName -ServiceName $ServiceName
     $currentReplicas = Get-CurrentReplicas -ServiceFullName $serviceFullName
 
@@ -135,40 +168,59 @@ try {
 
         Write-Host "Gradually scaling $stepDescription..." -ForegroundColor Yellow
 
-        for ($i = $currentReplicas + $step; $isScalingUp ? ($i -le $ReplicaCount) : ($i -ge $ReplicaCount); $i += $step) {
+        for ($i = $currentReplicas + $step; ($isScalingUp -and $i -le $ReplicaCount) -or (-not $isScalingUp -and $i -ge $ReplicaCount); $i += $step) {
             Write-Host "Scaling to $i replicas..." -ForegroundColor Yellow
             $scaleCommand = "docker service scale $serviceFullName=$i"
-            Invoke-Expression $scaleCommand | Out-Null
+
+            if ($TestMode) {
+                Write-Host "[TEST MODE] Would execute: $scaleCommand" -ForegroundColor Yellow
+            }
+            else {
+                Invoke-Expression $scaleCommand | Out-Null
+            }
 
             if ($VerifyDeployment) {
                 $verificationTimeout = 60  # shorter timeout for interim steps
-                Verify-Deployment -ServiceFullName $serviceFullName -TargetReplicas $i -TimeoutSeconds $verificationTimeout | Out-Null
-            } else {
+                Test-Deployment -ServiceFullName $serviceFullName -TargetReplicas $i -TimeoutSeconds $verificationTimeout | Out-Null
+            }
+            else {
                 # Brief pause between scaling operations
                 Start-Sleep -Seconds 5
             }
         }
 
         Write-Host "Gradual scaling complete" -ForegroundColor Green
-    } else {
+    }
+    else {
         # Scale directly to target
         Write-Host "Scaling to $ReplicaCount replicas..." -ForegroundColor Yellow
         $scaleCommand = "docker service scale $serviceFullName=$ReplicaCount"
-        Invoke-Expression $scaleCommand | Out-Null
+
+        if ($TestMode) {
+            Write-Host "[TEST MODE] Would execute: $scaleCommand" -ForegroundColor Yellow
+        }
+        else {
+            Invoke-Expression $scaleCommand | Out-Null
+        }
     }
 
     # Verify final deployment if requested
     if ($VerifyDeployment) {
-        $success = Verify-Deployment -ServiceFullName $serviceFullName -TargetReplicas $ReplicaCount
+        $success = Test-Deployment -ServiceFullName $serviceFullName -TargetReplicas $ReplicaCount
 
         if (-not $success) {
             Write-Warning "Service may not have scaled correctly. Please check manually with 'docker service ls'"
             exit 1
-        }
-    } else {
+        }    }
+    else {
         Write-Host "Scale command sent successfully" -ForegroundColor Green
         Write-Host "Run 'docker service ls' to verify the deployment" -ForegroundColor Cyan
     }
+}
+catch {
+    Write-Error "Error scaling service: $_"
+    exit 1
+}
 
 } catch {
     Write-Error "Error scaling service: $_"
