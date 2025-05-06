@@ -1,4 +1,7 @@
-# DIR.TAG Management Pattern
+# filepath: c:\Projects\autogen\.github\copilot\patterns\dirtag-management.md
+---
+applyTo: '**'
+---
 
 **Purpose**: Track development status and technical debt at the directory level.
 

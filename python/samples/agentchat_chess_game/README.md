@@ -39,7 +39,7 @@ config:
   api_key: replace with your API key or skip it if you have environment variable OPENAI_API_KEY set
 ```
 
-To use a locally hosted DeepSeek-R1:8b model using Ollama throught its compatibility endpoint,
+To use a locally hosted DeepSeek-R1:8b model through its local HTTP endpoint,
 you can use the following configuration:
 
 ```yaml
@@ -47,7 +47,7 @@ provider: autogen_ext.models.openai.OpenAIChatCompletionClient
 config:
   model: deepseek-r1:8b
   base_url: http://localhost:11434/v1
-  api_key: ollama
+  api_key: your_api_key_here
   model_info:
     function_calling: false
     json_output: false
