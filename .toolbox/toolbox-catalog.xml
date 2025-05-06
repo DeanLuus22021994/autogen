@@ -1,68 +1,87 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <toolbox_catalog>
   <metadata>
-    <updated>2025-05-06T00:00:00Z</updated>
-    <version>1.0.0</version>
+    <version>2.0.0</version>
     <description>
       Catalog of toolbox scripts and utilities for the AutoGen project.
-      Used for discovery and documentation of available tools.
+      This catalog uses GUIDs and sequence numbers for precise tool ordering.
     </description>
+    <updated>2024-07-10T12:00:00Z</updated>
   </metadata>
   <categories>
-    <category id="docker">
-      <name>Docker Tools</name>
-      <description>Tools for Docker integration and management</description>
+    <category id="b2a0c8e0-3f1a-4e5b-9c7d-8b2e6f0a1d3c">
+      <name>docker</name>
+      <description>Tools for Docker integration and configuration</description>
       <tools>
-        <tool id="fix_docker_model_integration">
-          <name>Fix-DockerModelIntegration.ps1</name>
+        <tool>
+          <id>f1a2b3c4-5d6e-7f8g-9h0i-j1k2l3m4n5o6</id>
+          <name>Fix-DockerModelIntegration</name>
           <description>Fixes issues with Docker Model Runner integration</description>
           <path>.toolbox/docker/Fix-DockerModelIntegration.ps1</path>
+          <sequence>10</sequence>
           <tags>docker,model-runner,integration,xml</tags>
         </tool>
-        <tool id="update_docker_extension_model_runner">
-          <name>Update-DockerExtensionModelRunner.ps1</name>
+        <tool>
+          <id>a1b2c3d4-5e6f-7g8h-9i0j-k1l2m3n4o5p6</id>
+          <name>Update-DockerExtensionModelRunner</name>
           <description>Updates Docker extension for Model Runner compatibility</description>
           <path>.toolbox/docker/Update-DockerExtensionModelRunner.ps1</path>
+          <sequence>20</sequence>
           <tags>docker,model-runner,extension</tags>
+          <dependencies>
+            <dependency>f1a2b3c4-5d6e-7f8g-9h0i-j1k2l3m4n5o6</dependency>
+          </dependencies>
         </tool>
-        <tool id="update_docker_extension">
-          <name>Update-DockerExtension.ps1</name>
+        <tool>
+          <id>b1c2d3e4-5f6g-7h8i-9j0k-l1m2n3o4p5q6</id>
+          <name>Update-DockerExtension</name>
           <description>Updates general Docker extension components</description>
           <path>.toolbox/docker/Update-DockerExtension.ps1</path>
+          <sequence>30</sequence>
           <tags>docker,extension</tags>
         </tool>
       </tools>
     </category>
-    <category id="github">
-      <name>GitHub Tools</name>
-      <description>Tools for GitHub workflows and integration</description>
+
+    <category id="c3b4a5d6-7e8f-9g0h-1i2j-3k4l5m6n7o8">
+      <name>github</name>
+      <description>Tools for GitHub integration and workflows</description>
       <tools>
-        <tool id="fix_github_workflows">
-          <name>Fix-GitHubWorkflows.ps1</name>
+        <tool>
+          <id>c1d2e3f4-5g6h-7i8j-9k0l-m1n2o3p4q5r6</id>
+          <name>Fix-GitHubWorkflows</name>
           <description>Fixes issues with GitHub workflow files</description>
           <path>.toolbox/github/Fix-GitHubWorkflows.ps1</path>
+          <sequence>10</sequence>
           <tags>github,workflows,yaml</tags>
         </tool>
-        <tool id="setup_github_ssh">
-          <name>Setup-GitHubSSH.ps1</name>
+        <tool>
+          <id>d1e2f3g4-5h6i-7j8k-9l0m-n1o2p3q4r5s6</id>
+          <name>Setup-GitHubSSH</name>
           <description>Sets up SSH access for GitHub</description>
           <path>.toolbox/github/Setup-GitHubSSH.ps1</path>
+          <sequence>20</sequence>
           <tags>github,ssh,security</tags>
         </tool>
-        <tool id="setup_git_secure_environment">
-          <name>Setup-GitSecureEnvironment.ps1</name>
+        <tool>
+          <id>e1f2g3h4-5i6j-7k8l-9m0n-o1p2q3r4s5t6</id>
+          <name>Setup-GitSecureEnvironment</name>
           <description>Configures a secure Git environment</description>
           <path>.toolbox/github/Setup-GitSecureEnvironment.ps1</path>
+          <sequence>30</sequence>
           <tags>github,security,git</tags>
         </tool>
-        <tool id="resolve_push_blocked_by_token">
-          <name>Resolve-PushBlockedByToken.ps1</name>
+        <tool>
+          <id>f1g2h3i4-5j6k-7l8m-9n0o-p1q2r3s4t5u6</id>
+          <name>Resolve-PushBlockedByToken</name>
           <description>Resolves issues with push operations blocked by token</description>
           <path>.toolbox/github/Resolve-PushBlockedByToken.ps1</path>
+          <sequence>40</sequence>
           <tags>github,token,authentication</tags>
         </tool>
       </tools>
     </category>
+
     <category id="markdown">
       <name>Markdown Tools</name>
       <description>Tools for markdown linting and fixing</description>
