@@ -1,13 +1,15 @@
 # Fix Docker Model Integration Issues
 # This script fixes issues with Docker Model Runner integration, XML schema validation,
+# and removes references to unsupported models Docker Model Integration Issues
+# This script fixes issues with Docker Model Runner integration, XML schema validation,
 # and removes references to unsupported modelsix Docker Model Integration Issues
 # This script fixes issues        Write-Host "Replaced <name> with <n> for category: $($nElement.InnerText)" -ForegroundColor Yellowwith Docker Model Runner integration, XML schema validation,
 # and removes references to unsupported models
 
 # Define paths
-$modelSettingsPath = "\$PSScriptRoot\..\..\\.config\host\model_settings.xml"
-$dockerDocPath = "\$PSScriptRoot\..\..\\.config\host\docker_documentation.xml"
-$schemaPath = "\$PSScriptRoot\..\..\\.github\schemas\docker_documentation_schema.xsd"
+$modelSettingsPath = "$PSScriptRoot\..\..\\.config\host\model_settings.xml"
+$dockerDocPath = "$PSScriptRoot\..\..\\.config\host\docker_documentation.xml"
+$schemaPath = "$PSScriptRoot\..\..\\.github\schemas\docker_documentation_schema.xsd"
 
 Write-Host "Starting Docker Model Integration fixes..." -ForegroundColor Cyan
 
@@ -90,7 +92,7 @@ if ($categories.Count -gt 0) {
 
 # Update custom dictionary to include Docker Model terms
 Write-Host "Updating custom dictionary..." -ForegroundColor Yellow
-$dictionaryPath = "\$PSScriptRoot\..\..\\.config\cspell-dictionary.txt"
+$dictionaryPath = "$PSScriptRoot\..\..\\.config\cspell-dictionary.txt"
 $dictionary = Get-Content -Path $dictionaryPath
 
 # Add Docker Model Runner specific terms if they don't exist
