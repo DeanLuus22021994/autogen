@@ -32,7 +32,7 @@ jobs:
       - name: Set up PowerShell
         uses: azure/powershell@v1
         with:
-          # Using a specific version is recommended for reproducibility
+          # Using latest LTS version for Azure PowerShell per best practices
           azPSVersion: '10.4.0'
           # Following Azure best practices for PowerShell scripts
           inlineScript: |
@@ -60,7 +60,7 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          # Enable error handling
+          # Enable error handling according to Azure best practices
           $ErrorActionPreference = "Stop"
 
           # Log start of build

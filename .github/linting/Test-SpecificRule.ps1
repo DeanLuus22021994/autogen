@@ -1,126 +1,112 @@
-# Test-SpecificRule.ps1
-# Script to test a specific markdown rule against example files
-
 <#
 .SYNOPSIS
-    Tests a specific markdown linting rule against example files.
-
+    Tests a specific markdown rule.
 .DESCRIPTION
-    This script runs a specific markdown linting rule against example markdown files
-    to verify its behavior. It's useful for rule development and validation.
-
+    This script tests a specific markdown rule from the rules directory
+    with options for Docker execution and different testing modes.
 .PARAMETER RuleName
     The name of the rule to test (without .js extension).
-
-.PARAMETER ExampleDir
-    The directory containing example markdown files.
-    Defaults to .github/linting/examples.
-
 .PARAMETER UseDocker
-    If specified, runs the test in Docker. Otherwise, runs locally.
-
+    Switch to run tests in a Docker container instead of directly on the host.
 .PARAMETER Verbose
-    If specified, shows detailed output from the testing process.
-
+    Switch to enable verbose output during rule testing.
 .EXAMPLE
-    .\Test-SpecificRule.ps1 -RuleName sample-rule
-    Tests the sample-rule against example files using local Node.js.
-
-.EXAMPLE
-    .\Test-SpecificRule.ps1 -RuleName http-urls -UseDocker -Verbose
-    Tests the http-urls rule in Docker with verbose output.
+    .\Test-SpecificRule.ps1 -RuleName "no-trailing-spaces" -UseDocker
+    Tests the no-trailing-spaces rule using Docker.
 #>
-
-.EXAMPLE
-    .\Test-SpecificRule.ps1 -RuleName "custom-rule-sample"
-    Tests the custom-rule-sample against example files.
-
-.EXAMPLE
-    .\Test-SpecificRule.ps1 -RuleName "no-http-urls" -ExampleDir "docs/examples" -UseDocker
-    Tests the no-http-urls rule against example files in docs/examples using Docker.
-#>
-
 [CmdletBinding()]
-param(
-    [Parameter(Mandatory = $true)]
+param (
+    [Parameter(Mandatory=$true)]
     [string]$RuleName,
 
-    [Parameter(Mandatory = $false)]
-    [string]$ExampleDir,
+    [switch]$UseDocker,
 
-    [Parameter(Mandatory = $false)]
-    [switch]$UseDocker
+    [switch]$Verbose
 )
 
-# Get the directory of the current script
-$scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
-$repoRoot = Split-Path -Parent (Split-Path -Parent $scriptPath)
+# Azure PowerShell best practices
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+$ProgressPreference = "SilentlyContinue" # Speeds up operations
 
-# Set default values if not specified
-if (-not $ExampleDir) {
-    $ExampleDir = Join-Path -Path $scriptPath -ChildPath "examples"
-}
+# Constants
+$DOCKER_IMAGE_NAME = "autogen-markdown-rules-tester"
+$RULES_DIR = Join-Path $PSScriptRoot "rules"
+$TEST_RESULTS_DIR = Join-Path $PSScriptRoot "test-results"
 
-# Create examples directory if it doesn't exist
-if (-not (Test-Path -Path $ExampleDir)) {
-    New-Item -Path $ExampleDir -ItemType Directory -Force | Out-Null
-    Write-Host "Created examples directory: $ExampleDir" -ForegroundColor Yellow
-}
+Write-Host "Testing Specific Markdown Rule: $RuleName" -ForegroundColor Cyan
+Write-Host "--------------------------------------" -ForegroundColor Cyan
 
-# Path to rule file
-$ruleFile = Join-Path -Path $scriptPath -ChildPath "rules\$RuleName.js"
-
-# Check if rule file exists
-if (-not (Test-Path -Path $ruleFile)) {
-    Write-Error "Rule file not found: $ruleFile"
+# Validate rule exists
+$rulePath = Join-Path $RULES_DIR "$RuleName.js"
+if (-not (Test-Path $rulePath)) {
+    Write-Error "Rule file not found: $rulePath"
     exit 1
 }
 
-# Create a temporary directory for rule testing
-$tempRuleDir = Join-Path -Path $env:TEMP -ChildPath "markdown-rule-test-$RuleName"
-if (Test-Path -Path $tempRuleDir) {
-    Remove-Item -Path $tempRuleDir -Recurse -Force
-}
-New-Item -Path $tempRuleDir -ItemType Directory -Force | Out-Null
-
-# Copy the rule to the temp directory
-Copy-Item -Path $ruleFile -Destination $tempRuleDir
-
-# Create a minimal config file for testing just this rule
-$configContent = @"
-{
-  "config": {
-    "default": false
-  },
-  "customRules": ["$($RuleName).js"]
-}
-"@
-$configFile = Join-Path -Path $tempRuleDir -ChildPath ".markdownlint-cli2.json"
-$configContent | Out-File -FilePath $configFile -Encoding utf8
-
-# Run the test
-$testArgs = @{
-    Path = $ExampleDir
-    RulesDirectory = $tempRuleDir
-    ConfigFile = $configFile
-    Detailed = $true
+# Ensure test results directory exists
+if (-not (Test-Path $TEST_RESULTS_DIR)) {
+    New-Item -Path $TEST_RESULTS_DIR -ItemType Directory -Force | Out-Null
 }
 
-if ($UseDocker) {
-    $testArgs.Add("BuildContainer", $true)
-} else {
-    $testArgs.Add("Local", $true)
+function Run-RuleTest {
+    param (
+        [string]$RuleName,
+        [switch]$Verbose
+    )
+
+    $verboseFlag = if ($Verbose) { "--verbose" } else { "" }
+
+    if ($UseDocker) {
+        Write-Host "Running test in Docker container..." -ForegroundColor Magenta
+
+        # Check if Docker image exists
+        $imageExists = docker images -q $DOCKER_IMAGE_NAME 2>$null
+        if (-not $imageExists) {
+            Write-Host "Docker image not found, building first..." -ForegroundColor Yellow
+            & "$PSScriptRoot/Test-MarkdownRules.ps1" -BuildContainer
+
+            if ($LASTEXITCODE -ne 0) {
+                Write-Error "Failed to build Docker image"
+                exit $LASTEXITCODE
+            }
+        }
+
+        # Map repository root as volume in container with read-only flag for security
+        $repoRoot = Resolve-Path (Join-Path $PSScriptRoot ".." "..")
+        $containerResultsDir = "/app/test-results"
+
+        docker run --rm `
+            -v "${repoRoot}:/repo:ro" `
+            -v "${TEST_RESULTS_DIR}:${containerResultsDir}" `
+            -w /app `
+            $DOCKER_IMAGE_NAME `
+            node test-rule.js --rule=$RuleName $verboseFlag
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "Rule test failed with exit code: $LASTEXITCODE"
+            exit $LASTEXITCODE
+        }
+    }
+    else {
+        Write-Host "Running test directly on host..." -ForegroundColor Magenta
+
+        # Install dependencies if needed
+        npm install --prefix $PSScriptRoot
+
+        # Run the specific rule test
+        node $PSScriptRoot/test-rule.js --rule=$RuleName $verboseFlag
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "Rule test failed with exit code: $LASTEXITCODE"
+            exit $LASTEXITCODE
+        }
+    }
+
+    Write-Host "Rule test completed successfully" -ForegroundColor Green
 }
 
-Write-Host "🧪 Testing rule: $RuleName" -ForegroundColor Cyan
-Write-Host "📂 Examples directory: $ExampleDir" -ForegroundColor Cyan
-Write-Host "🔍 Testing mode: $(if ($UseDocker) { "Docker" } else { "Local" })" -ForegroundColor Cyan
+# Main execution
+Run-RuleTest -RuleName $RuleName -Verbose:$Verbose
 
-# Call the main testing script
-$testScript = Join-Path -Path $scriptPath -ChildPath "Test-MarkdownRules.ps1"
-& $testScript @testArgs
-
-# Clean up
-Remove-Item -Path $tempRuleDir -Recurse -Force
-
-exit $LASTEXITCODE
+Write-Host "Operation completed successfully" -ForegroundColor Green
