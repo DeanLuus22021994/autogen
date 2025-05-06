@@ -13,10 +13,9 @@ function Remove-FileWithConfirmation {
         }
         if ($PSCmdlet.ShouldProcess($FilePath, 'Remove')) {
             try {
-                Remove-Item $FilePath -Force:$Force.IsPresent -WhatIf:$WhatIf.IsPresent
-                Write-Host "Removed: $FilePath" -ForegroundColor Green
+                Remove-Item $FilePath -Force:$Force.IsPresent -WhatIf:$WhatIf.IsPresent                Write-Host "Removed: $FilePath" -ForegroundColor Green
             } catch {
-                Write-Host ("Error removing {0}: {1}" -f $FilePath, $_) -ForegroundColor Red
+                Write-Host ("Error removing {0}: {1}" -f $FilePath, $_.Exception.Message) -ForegroundColor Red
             }
         } else {
             Write-Host "Skipped: $FilePath" -ForegroundColor Yellow

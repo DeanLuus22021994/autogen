@@ -317,31 +317,60 @@
       "problemMatcher": []
     },
     {
-      "label": "Toolbox: Docker Model Integration Fix",
-      "group": "build",
-      "type": "shell",      "args": [
+      "command": "pwsh",
+      "label": "Toolbox: Update DIR.TAG Files",
+      "args": [
         "-File",
-        "${workspaceFolder}\\.toolbox\\docker\\Fix-DockerModelIntegration.ps1"
+        "${workspaceFolder}\\.toolbox\\config\\Sync-DirTagConfig.ps1",
+        "-UpdateAll"
       ],
-      "command": "pwsh"
+      "type": "shell",
+      "group": {
+        "isDefault": false,
+        "kind": "build"
+      }
     },
     {
-      "label": "Toolbox: GitHub Workflows Fix",
-      "group": "build",
-      "type": "shell",      "args": [
+      "command": "pwsh",
+      "label": "Toolbox: Sync DIR.TAG with Problems",
+      "args": [
         "-File",
-        "${workspaceFolder}\\.toolbox\\github\\Fix-GitHubWorkflows.ps1"
+        "${workspaceFolder}\\.toolbox\\config\\Sync-DirTagProblems.ps1"
       ],
-      "command": "pwsh"
+      "type": "shell",
+      "group": {
+        "isDefault": false,
+        "kind": "test"
+      }
     },
     {
-      "label": "Toolbox: List Available Tools",
-      "group": "none",
-      "type": "shell",      "args": [
+      "command": "pwsh",
+      "label": "Toolbox: Generate DIR.TAG Report",
+      "args": [
         "-File",
-        "${workspaceFolder}\\.scripts\\toolbox\\Get-AvailableTools.ps1"
+        "${workspaceFolder}\\.toolbox\\config\\Generate-DirTagReport.ps1"
       ],
-      "command": "pwsh"
+      "type": "shell",
+      "group": "test"
+    },
+    {
+      "command": "pwsh",
+      "label": "Toolbox: Run All Tests",
+      "args": [
+        "-Command",
+        "Invoke-Pester -Path ${workspaceFolder}\\.toolbox\\modules\\*.Tests.ps1 -Output Detailed"
+      ],
+      "type": "shell",
+      "group": "test"
+    },
+    {
+      "command": "code",
+      "label": "Toolbox: Open Workspace",
+      "args": [
+        "${workspaceFolder}\\.toolbox\\workspace\\toolbox.code-workspace"
+      ],
+      "type": "shell",
+      "group": "none"
     }
   ],
   "inputs": [

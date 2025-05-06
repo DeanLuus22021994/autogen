@@ -117,19 +117,18 @@ function Get-PowerShellProblems {
                 }
             }
         }
-        else {
-            # Simple syntax check if PSScriptAnalyzer is not available
+        else {            # Simple syntax check if PSScriptAnalyzer is not available
             $errors = $null
             $tokens = $null
             $parseResult = [System.Management.Automation.Language.Parser]::ParseFile($FilePath, [ref]$tokens, [ref]$errors)
 
-            foreach ($error in $errors) {
+            foreach ($parseError in $errors) {
                 $problems += [PSCustomObject]@{
                     FilePath = $FilePath
-                    Line = $error.Extent.StartLineNumber
-                    Column = $error.Extent.StartColumnNumber
+                    Line = $parseError.Extent.StartLineNumber
+                    Column = $parseError.Extent.StartColumnNumber
                     Type = 'error'
-                    Message = $error.Message
+                    Message = $parseError.Message
                     RuleId = 'SyntaxError'
                 }
             }

@@ -1,4 +1,3 @@
-# FileRemoval.Tests.ps1
 # Pester tests for Remove-FileWithConfirmation
 
 
@@ -19,7 +18,7 @@ Describe "Remove-FileWithConfirmation" {
         try {
             New-Item -Path $tempDir -ItemType Directory -Force | Out-Null
         } catch {
-            throw "Failed to create temp directory: $tempDir. Error: $_"
+            throw "Failed to create temp directory: $tempDir. Error: $($_.Exception.Message)"
         }
     }
     # Fallback to $PWD/tmp if $tempDir is still not valid
@@ -37,7 +36,7 @@ Describe "Remove-FileWithConfirmation" {
         try {
             Set-Content -Path $testFile -Value "test"
         } catch {
-            throw "Failed to create test file: $testFile. Error: $_"
+            throw "Failed to create test file: $testFile. Error: $($_.Exception.Message)"
         }
     }
     It "Removes an existing file" {

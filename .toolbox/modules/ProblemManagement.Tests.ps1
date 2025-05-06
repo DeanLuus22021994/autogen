@@ -23,7 +23,7 @@ Describe "ProblemManagement Module" {
         try {
             New-Item -Path $tempDir -ItemType Directory -Force | Out-Null
         } catch {
-            throw "Failed to create temp directory: $tempDir. Error: $_"
+            throw "Failed to create temp directory: $tempDir. Error: $($_.Exception.Message)"
         }
     }
 

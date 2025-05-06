@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dir_tag_schema>
+  <version>1.0</version>
+  <format>
+    <property name="INDEX" required="true" description="Relative path from repository root" />
+    <property name="GUID" required="true" description="Unique identifier for state tracking" />
+    <property name="TODO" required="true" description="List of todo items with status" format="list" />
+    <property name="status" required="true" description="Overall status" enum="NOT_STARTED,PARTIALLY_COMPLETE,DONE,OUTSTANDING" />
+    <property name="updated" required="true" description="Timestamp of last update" format="yyyy-MM-ddTHH:mm:ssZ" />
+    <property name="description" required="true" description="Description of directory purpose" format="multiline" />
+  </format>
+  <todo_statuses>
+    <status value="NOT_STARTED" color="#888888" />
+    <status value="IN_PROGRESS" color="#FFA500" />
+    <status value="DONE" color="#00AA00" />
+    <status value="BLOCKED" color="#FF00FF" />
+    <status value="OUTSTANDING" color="#FF0000" />
+  </todo_statuses>
+  <integration>
+    <vscode>
+      <task name="Update DIR.TAG Files" command=".toolbox/config/Sync-DirTagConfig.ps1" args="-UpdateAll" />
+      <task name="Validate DIR.TAG Files" command=".toolbox/config/Sync-DirTagConfig.ps1" />
+      <task name="Sync DIR.TAG with Problems" command=".toolbox/config/Sync-DirTagProblems.ps1" />
+      <task name="Generate DIR.TAG Report" command=".toolbox/config/Generate-DirTagReport.ps1" />
+    </vscode>
+    <github>
+      <workflow name="validate-dir-tags" path=".github/workflows/validate-dir-tags.yml" />
+    </github>
+  </integration>
+  <validation>
+    <rule name="GuidFormat" description="GUID must be a valid format" pattern="^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" />
+    <rule name="StatusEnum" description="Status must be a valid value" pattern="^(NOT_STARTED|PARTIALLY_COMPLETE|DONE|OUTSTANDING)$" />
+    <rule name="TodoFormat" description="TODO items must be properly formatted" pattern="^\s*-\s+.+\s+\[.+\]$" />
+    <rule name="TimestampFormat" description="Timestamp must be in ISO 8601 format" pattern="^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$" />
+  </validation>
+</dir_tag_schema>
