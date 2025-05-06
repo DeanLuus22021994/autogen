@@ -5,6 +5,8 @@
   - Implement automatic fix suggestions for common issues PARTIALLY_COMPLETE
   - Document custom rule development process DONE
   - Create visualization for rule dependencies OUTSTANDING
+  - Integrate Azure best practices for PowerShell scripts DONE
+  - Add Docker Model Runner integration for AI-enhanced linting DONE
 status: PARTIALLY_COMPLETE
 updated: 2025-05-06T12:00:00Z
 description: |
@@ -18,3 +20,5 @@ description: |
   - Automated validation in CI/CD pipelines
   - Local development validation
   - Docker-based isolated testing
+  - Azure PowerShell best practices integration
+  - Docker Model Runner for AI-enhanced validation
