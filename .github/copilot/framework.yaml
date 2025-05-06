@@ -1,4 +1,26 @@
 ---
+title: Enhanced Prompt Engineering Framework
+description: Standardized AI-assisted development patterns for AutoGen project
+version: 2.0.0
+updated: 2025-05-06T12:00:00Z
+
+containerizationPrinciples:
+  - name: Path Independence
+    description: Use relative paths and environment variables
+    patternFile: patterns/containerization-best-practices.md
+  - name: Extension Pre-caching
+    description: Improve container startup with extension caching
+    patternFile: patterns/extension-precaching.md
+
+implementationPrinciples:
+  - name: Single Responsibility (SRP)
+    description: Each function should do one thing well
+  - name: Don't Repeat Yourself (DRY)
+    description: Avoid code duplication through abstraction
+  - name: Path Standardization
+    description: Always use container-compatible paths
+
+---
 applyTo: '**'
 # ---
 

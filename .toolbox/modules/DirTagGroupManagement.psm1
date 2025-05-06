@@ -182,28 +182,21 @@ function New-DirTagGroup {
         [string[]]$ExcludePatterns = @('node_modules', '.git', 'bin', 'obj'),
 
         [Parameter(Mandatory = $false)]
-        [switch]$IncludeSubdirectories,
-
-        [Parameter(Mandatory = $false)]
-        [hashtable]$Metadata = @{}
+        [switch]$IncludeSubdirectories
     )
 
-    $group = [DirTagGroup]::new($Name)
-    $group.Description = $Description
-    $group.IncludeSubdirectories = $IncludeSubdirectories
-    $group.Metadata = $Metadata
+    # Always use repository-relative paths
+    $repoRoot = $env:REPO_ROOT
+    $normalize = { param($p) if ([System.IO.Path]::IsPathRooted($p)) { $p.Substring($repoRoot.Length).TrimStart('\','/') } else { $p } }
 
-    # Add directories and patterns
-    foreach ($dir in $DirectoryPaths) {
-        $group.AddDirectory($dir)
+    $group = [PSCustomObject]@{
+        Name = $Name
+        Description = $Description
+        DirectoryPaths = $DirectoryPaths | ForEach-Object { &$normalize $_ }
+        DirectoryPatterns = $DirectoryPatterns | ForEach-Object { &$normalize $_ }
+        ExcludePatterns = $ExcludePatterns
+        IncludeSubdirectories = $IncludeSubdirectories
     }
-
-    foreach ($pattern in $DirectoryPatterns) {
-        $group.AddDirectoryPattern($pattern)
-    }
-
-    $group.ExcludePatterns = $ExcludePatterns
-
     return $group
 }
 
@@ -1139,3 +1132,21 @@ Export-ModuleMember -Function New-DirTagGroup, Get-GPUConfigurationDirTagGroup, 
                              Remove-GPUTaskFromDirTags, Test-GPUDirTags, Get-StdDirTagGroup,
                              Get-Smoll2ConfigurationDirTagGroup, Sync-Smoll2RelatedDirTags,
                              Update-Smoll2PrecompiledCachedFactoryTasks
+
+# Example: Add extension pre-caching task to all relevant DIR.TAGs
+function Add-ExtensionPrecacheTaskToDirTags {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $false)]
+        [switch]$Force
+    )
+    $task = "Pre-cache VS Code extensions (including Vim) for containerized development [OUTSTANDING]"
+    $groups = @(
+        Get-StdDirTagGroup -GroupName "DevContainer",
+        Get-StdDirTagGroup -GroupName "Docker",
+        Get-StdDirTagGroup -GroupName "Toolbox"
+    )
+    foreach ($group in $groups) {
+        Invoke-DirTagGroupOperation -Group $group -Operation ([DirTagGroupOperation]::Add) -TodoItem $task -Force:$Force
+    }
+}
