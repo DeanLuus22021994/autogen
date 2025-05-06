@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpu_settings>
+  <nvidia>
+    <enabled>true</enabled>
+    <preferred_device>RTX 3060</preferred_device>
+    <settings>
+      <memory_allocation>dynamic</memory_allocation>
+      <compute_capability>7.5</compute_capability>
+      <precision>fp16</precision>
+    </settings>
+  </nvidia>
+  <tensorflow>
+    <enabled>true</enabled>
+    <version>2.12.0</version>
+    <memory_growth>true</memory_growth>
+    <models>
+      <model>
+        <name>text-embedding</name>
+        <path>/app/models/embed</path>
+        <accelerated>true</accelerated>
+      </model>
+    </models>
+  </tensorflow>
+  <performance>
+    <benchmarking>
+      <enabled>true</enabled>
+      <interval_seconds>300</interval_seconds>
+      <output_path>/app/test-results/perf</output_path>
+    </benchmarking>
+    <thresholds>
+      <cpu_fallback_utilization>80</cpu_fallback_utilization>
+      <min_batch_size>8</min_batch_size>
+    </thresholds>
+  </performance>
+</gpu_settings>
