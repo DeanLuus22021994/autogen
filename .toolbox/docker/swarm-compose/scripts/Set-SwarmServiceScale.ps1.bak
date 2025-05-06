@@ -211,14 +211,18 @@ try {
         if (-not $success) {
             Write-Warning "Service may not have scaled correctly. Please check manually with 'docker service ls'"
             exit 1
-        }
-    }
+        }    }
     else {
         Write-Host "Scale command sent successfully" -ForegroundColor Green
         Write-Host "Run 'docker service ls' to verify the deployment" -ForegroundColor Cyan
     }
 }
 catch {
+    Write-Error "Error scaling service: $_"
+    exit 1
+}
+
+} catch {
     Write-Error "Error scaling service: $_"
     exit 1
 }

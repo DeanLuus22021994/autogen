@@ -106,7 +106,20 @@ function Load-RequiredModules {
 }
 
 # Check Docker Model Runner is available
-function Verify-DockerModelRunner {
+function Test-DockerModelRunner {
+    <#
+    .SYNOPSIS
+        Verifies that Docker Model Runner is available.
+
+    .DESCRIPTION
+        Tests if Docker is running and the model-runner endpoint is available.
+        Returns $true if the service is available, otherwise $false.
+
+    .EXAMPLE
+        if (Test-DockerModelRunner) {
+            # Model runner is available, proceed with deployment
+        }
+    #>
     Write-Host "Verifying Docker Model Runner..." -ForegroundColor $CYAN
 
     try {
@@ -1187,13 +1200,11 @@ try {
     # Create output folder if it doesn't exist
     if (-not (Test-Path $OutputFolder)) {
         New-Item -ItemType Directory -Path $OutputFolder -Force | Out-Null
-    }
-
-    # Load required modules
+    }    # Load required modules
     Load-RequiredModules
 
     # Verify Docker Model Runner
-    $modelRunnerAvailable = Verify-DockerModelRunner
+    $modelRunnerAvailable = Test-DockerModelRunner
 
     if (-not $modelRunnerAvailable) {
         Write-Host "Docker Model Runner is not available or the requested model is not accessible. Please fix the issues before proceeding." -ForegroundColor $RED

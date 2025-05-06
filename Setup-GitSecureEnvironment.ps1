@@ -24,7 +24,15 @@ function Write-ColorMessage {
     Write-Host $Message -ForegroundColor $Color
 }
 
-function Setup-Git {
+function Initialize-Git {
+    <#
+    .SYNOPSIS
+        Sets up Git with secure configuration settings.
+
+    .DESCRIPTION
+        Configures Git to use credential manager, sets user name and email from environment variables,
+        and configures other security-related settings to ensure secure Git operation.
+    #>
     Write-ColorMessage "Setting up Git configuration..." $colors.Info
 
     # Configure Git to use the credential manager
@@ -141,7 +149,15 @@ function Install-GitSecrets {
     }
 }
 
-function Clean-GitHistory {
+function Remove-GitHistory {
+    <#
+    .SYNOPSIS
+        Removes sensitive information from Git history.
+
+    .DESCRIPTION
+        Uses BFG Repo Cleaner to clean sensitive information from Git history
+        to prevent accidental exposure of tokens or credentials.
+    #>
     Write-ColorMessage "Cleaning Git history of sensitive information..." $colors.Warning
 
     # Download BFG Repo Cleaner if not already present
