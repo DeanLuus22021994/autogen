@@ -112,7 +112,10 @@ function Update-DirTag {
         [string[]]$TodoItems,
 
         [Parameter(Mandatory = $false)]
-        [switch]$PreserveGuid = $true
+        [switch]$PreserveGuid = $true,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$Force
     )
 
     $tagFilePath = Join-Path -Path $DirectoryPath -ChildPath "DIR.TAG"
@@ -202,10 +205,22 @@ status: $Status
 updated: $currentDate
 description: |
   $Description
-"@
-
-    # Write the content to the DIR.TAG file
+"@    # Write the content to the DIR.TAG file
     try {
+        # If Force is not specified, check if the file should be updated
+        if (-not $Force) {
+            # Verify the file exists and compare with current content
+            if (Test-Path -Path $tagFilePath) {
+                $existingContent = Get-Content -Path $tagFilePath -Raw
+                # If content is the same, no need to update
+                if ($existingContent.Trim() -eq $updatedContent.Trim()) {
+                    Write-Verbose "DIR.TAG at $tagFilePath is already up to date"
+                    return $true
+                }
+            }
+        }
+
+        # Update the file
         $updatedContent | Set-Content -Path $tagFilePath -Force
         Write-Verbose "Updated DIR.TAG at $tagFilePath"
         return $true
@@ -374,4 +389,4 @@ function Find-DirTags {
 }
 
 # Export the functions
-Export-ModuleMember -Function New-DirTag, Update-DirTag, Test-DirTag, Find-DirTags
+Export-ModuleMember -Function New-DirTag, Update-DirTag, Test-DirTag, Find-DirTags, Get-DirTag, Set-DirTag

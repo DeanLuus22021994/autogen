@@ -34,7 +34,9 @@ foreach ($module in $requiredModules) {
     if (-not (Test-Path $modulePath)) {
         throw "$module.psm1 not found at $modulePath. Ensure the module exists in .toolbox/modules/."
     }
-    Import-Module $modulePath -Force
+    # Use -Global flag to ensure functions are available across the script
+    Import-Module $modulePath -Force -Global -Verbose
+    Write-Host "Imported module: $module" -ForegroundColor Green
 }
 
 # Determine repository root if not provided

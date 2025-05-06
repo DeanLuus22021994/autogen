@@ -317,60 +317,60 @@
       "problemMatcher": []
     },
     {
-      "command": "pwsh",
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "type": "shell",
       "label": "Toolbox: Update DIR.TAG Files",
+      "command": "pwsh",
       "args": [
         "-File",
         "${workspaceFolder}\\.toolbox\\config\\Sync-DirTagConfig.ps1",
         "-UpdateAll"
-      ],
-      "type": "shell",
-      "group": {
-        "isDefault": false,
-        "kind": "build"
-      }
+      ]
     },
     {
-      "command": "pwsh",
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "type": "shell",
       "label": "Toolbox: Sync DIR.TAG with Problems",
+      "command": "pwsh",
       "args": [
         "-File",
         "${workspaceFolder}\\.toolbox\\config\\Sync-DirTagProblems.ps1"
-      ],
-      "type": "shell",
-      "group": {
-        "isDefault": false,
-        "kind": "test"
-      }
+      ]
     },
     {
-      "command": "pwsh",
+      "group": "test",
+      "type": "shell",
       "label": "Toolbox: Generate DIR.TAG Report",
+      "command": "pwsh",
       "args": [
         "-File",
         "${workspaceFolder}\\.toolbox\\config\\Generate-DirTagReport.ps1"
-      ],
-      "type": "shell",
-      "group": "test"
+      ]
     },
     {
-      "command": "pwsh",
+      "group": "test",
+      "type": "shell",
       "label": "Toolbox: Run All Tests",
+      "command": "pwsh",
       "args": [
         "-Command",
         "Invoke-Pester -Path ${workspaceFolder}\\.toolbox\\modules\\*.Tests.ps1 -Output Detailed"
-      ],
-      "type": "shell",
-      "group": "test"
+      ]
     },
     {
-      "command": "code",
+      "group": "none",
+      "type": "shell",
       "label": "Toolbox: Open Workspace",
+      "command": "code",
       "args": [
         "${workspaceFolder}\\.toolbox\\workspace\\toolbox.code-workspace"
-      ],
-      "type": "shell",
-      "group": "none"
+      ]
     }
   ],
   "inputs": [

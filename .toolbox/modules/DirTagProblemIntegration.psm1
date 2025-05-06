@@ -28,7 +28,8 @@ function Update-DirTagStatusFromProblems {
     foreach ($module in $modulesToCheck) {
         if (-not (Get-Module -Name $module.Name)) {
             if (Test-Path -Path $module.Path) {
-                Import-Module $module.Path -Force
+                Import-Module $module.Path -Force -Global -Verbose
+                Write-Host "Imported module: $($module.Name)" -ForegroundColor Green
             } else {
                 Write-Error "Required module $($module.Name) not found at $($module.Path)"
                 return $false
@@ -47,9 +48,7 @@ function Update-DirTagStatusFromProblems {
                 @{id = "info"; status = "NOT_STARTED"}
             )
         }
-    }
-
-    # Get DIR.TAG file path
+    }    # Get DIR.TAG file path
     $dirTagPath = Join-Path -Path $DirectoryPath -ChildPath "DIR.TAG"
 
     # Check if DIR.TAG exists
@@ -164,11 +163,10 @@ function Get-DirTagProblemSummary {
     # Get all DIR.TAG files
     $dirTagFiles = Get-ChildItem -Path $RootPath -Filter "DIR.TAG" -Recurse -File
 
-    $summary = @()
-
-    foreach ($file in $dirTagFiles) {
+    $summary = @()    foreach ($file in $dirTagFiles) {
         $dirPath = Split-Path -Path $file.FullName -Parent
-        $dirName = Split-Path -Path $dirPath -Leaf
+        # Not using dirName but keeping for future reference
+        # $dirName = Split-Path -Path $dirPath -Leaf
         $relativePath = $dirPath.Substring($RootPath.Length).TrimStart('\', '/')
         if ($relativePath -eq "") { $relativePath = "." }
 
