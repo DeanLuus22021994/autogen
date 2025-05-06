@@ -88,7 +88,15 @@ function Initialize-Swarm {
     Write-Host "Docker Swarm initialized successfully" -ForegroundColor Green
 }
 
-function Configure-GPUSupport {
+function Set-GPUSupport {
+    <#
+    .SYNOPSIS
+        Configures Docker for GPU support.
+
+    .DESCRIPTION
+        Sets up Docker daemon configuration to support NVIDIA GPU runtime
+        by modifying the daemon.json file.
+    #>
     # Check if Docker Daemon is configured for NVIDIA GPU runtime
     $daemonConfigPath = if ($IsWindows) { "$env:ProgramData\Docker\config\daemon.json" } else { "/etc/docker/daemon.json" }
 
@@ -164,7 +172,7 @@ try {
         if (Test-GPUSupport) {
             Write-Host "GPU support is already configured and functioning" -ForegroundColor Green
         } else {
-            Configure-GPUSupport
+            Set-GPUSupport
             Write-Host "After restarting Docker, verify GPU support with: docker run --rm --gpus all nvidia/cuda:12.0.1-base-ubuntu22.04 nvidia-smi" -ForegroundColor Yellow
         }
     }

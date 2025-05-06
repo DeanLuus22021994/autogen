@@ -203,7 +203,15 @@ GITHUB_PERSONAL_ACCESS_TOKEN.*=.*"[^"]*"==>GITHUB_PERSONAL_ACCESS_TOKEN="\${env:
     Write-ColorMessage "Backup of original repository is at: $backupDir" $colors.Info
 }
 
-function Configure-GitHubCLI {
+function Initialize-GitHubCLI {
+    <#
+    .SYNOPSIS
+        Initializes and configures GitHub CLI for use with the repository.
+
+    .DESCRIPTION
+        Checks if GitHub CLI is installed and sets up authentication using the
+        personal access token from environment variables.
+    #>
     Write-ColorMessage "Setting up GitHub CLI..." $colors.Info
 
     # Check if GitHub CLI is installed
@@ -247,12 +255,12 @@ function Configure-GitHubCLI {
 
 # Main script execution
 if ($SetupGit) {
-    Setup-Git
+    Initialize-Git
     Install-GitSecrets
 } elseif ($CleanHistory) {
-    Clean-GitHistory
+    Remove-GitHistory
 } elseif ($ConfigureGitHubCLI) {
-    Configure-GitHubCLI
+    Initialize-GitHubCLI
 } else {
     Write-ColorMessage "Please specify an operation: -SetupGit, -CleanHistory, or -ConfigureGitHubCLI" $colors.Warning
 }
