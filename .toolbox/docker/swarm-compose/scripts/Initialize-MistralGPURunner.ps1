@@ -1,246 +1,324 @@
 # Initialize-MistralGPURunner.ps1
 <#
 .SYNOPSIS
-    Sets up a highly optimized Mistral NeMo model on NVIDIA GPUs using Docker Model Runner.
+    Initializes the Mistral GPU model runner for Docker Swarm.
 
 .DESCRIPTION
-    This script initializes Docker Swarm, configures GPU support, pulls the required Mistral NeMo model
-    from Docker Model Runner, and deploys it as a Swarm service optimized for high-performance inference.
+    This script initializes and configures the Mistral GPU model runner for use with Docker Swarm.
+    It verifies NVIDIA GPU support, initializes Docker Swarm if not active, and sets up
+    the Mistral model for inference.
 
-.PARAMETER StackName
-    Optional. The name of the stack to deploy. Default is "autogen-mistral".
+.PARAMETER GpuCount
+    The number of GPUs to use for the model. Default is 1.
 
-.PARAMETER ModelType
-    Optional. The specific Mistral model to use. Default is "ai/mistral-nemo".
+.PARAMETER TensorParallelSize
+    The tensor parallel size for model inference. Default is 1.
 
-.PARAMETER GPUCount
-    Optional. The number of GPUs to allocate. Default is 1.
-
-.PARAMETER Quantization
-    Optional. The quantization level to use. Default is "int8". Options: "none", "int8", "int4".
-
-.PARAMETER ContextLength
-    Optional. The context length for the model. Default is 8192.
+.PARAMETER Verbose
+    When specified, provides more detailed output during operation.
 
 .EXAMPLE
     .\Initialize-MistralGPURunner.ps1
 
 .EXAMPLE
-    .\Initialize-MistralGPURunner.ps1 -StackName custom-mistral -ModelType ai/mistral-nemo -GPUCount 2 -Quantization int4 -ContextLength 16384
+    .\Initialize-MistralGPURunner.ps1 -GpuCount 2 -TensorParallelSize 2
 #>
 [CmdletBinding()]
-param (
+param(
     [Parameter(Mandatory = $false)]
-    [string]$StackName = "autogen-mistral",
+    [int]$GpuCount = 1,
 
     [Parameter(Mandatory = $false)]
-    [ValidateSet("ai/mistral", "ai/mistral-nemo")]
-    [string]$ModelType = "ai/mistral-nemo",
+    [int]$TensorParallelSize = 1,
 
     [Parameter(Mandatory = $false)]
-    [int]$GPUCount = 1,
-
-    [Parameter(Mandatory = $false)]
-    [ValidateSet("none", "int8", "int4")]
-    [string]$Quantization = "int8",
-
-    [Parameter(Mandatory = $false)]
-    [int]$ContextLength = 8192
+    [switch]$Verbose
 )
 
-$ErrorActionPreference = 'Stop'
-$GREEN = [ConsoleColor]::Green
-$YELLOW = [ConsoleColor]::Yellow
-$RED = [ConsoleColor]::Red
-$CYAN = [ConsoleColor]::Cyan
-$WHITE = [ConsoleColor]::White
+# Console colors for better readability
+$CYAN = "Cyan"
+$GREEN = "Green"
+$YELLOW = "Yellow"
+$RED = "Red"
 
-Write-Host "🚀 Initializing Mistral GPU Runner" -ForegroundColor $CYAN
-Write-Host "===============================" -ForegroundColor $CYAN
-Write-Host "Stack Name: $StackName" -ForegroundColor $WHITE
-Write-Host "Model Type: $ModelType" -ForegroundColor $WHITE
-Write-Host "GPU Count: $GPUCount" -ForegroundColor $WHITE
-Write-Host "Quantization: $Quantization" -ForegroundColor $WHITE
-Write-Host "Context Length: $ContextLength" -ForegroundColor $WHITE
-Write-Host "===============================" -ForegroundColor $CYAN
+# Execution directory tracking
+$scriptPath = $MyInvocation.MyCommand.Path
+$scriptDir = Split-Path -Parent $scriptPath
+$rootDir = Split-Path -Parent (Split-Path -Parent $scriptDir)
 
-# Check Docker installation and version
-Write-Host "`n🔍 Checking Docker installation..." -ForegroundColor $CYAN
-try {
-    $dockerVersion = docker --version
-    if ($dockerVersion -match 'version (\d+\.\d+\.\d+)') {
-        $version = $matches[1]
-        Write-Host "✅ Found Docker version: $version" -ForegroundColor $GREEN
+# Load DIR.TAG properties
+$dirTagPath = Join-Path -Path (Split-Path -Parent $scriptDir) -ChildPath "DIR.TAG"
+$dirTagExists = Test-Path -Path $dirTagPath
 
-        # Check if version meets requirements
-        $dockerVersionObj = [Version]$version
-        $requiredVersionObj = [Version]"4.40.0"
-
-        if ($dockerVersionObj -lt $requiredVersionObj) {
-            Write-Host "❌ Docker version is less than 4.40.0" -ForegroundColor $RED
-            Write-Host "   Docker Model Runner requires Docker Desktop 4.40+." -ForegroundColor $RED
-            Write-Host "   Please upgrade Docker Desktop to use Docker Model Runner." -ForegroundColor $RED
-            exit 1
+if ($dirTagExists) {
+    try {
+        $dirTagContent = Get-Content -Path $dirTagPath -Raw
+        # Extract the status and description from DIR.TAG
+        if ($dirTagContent -match 'status:\s*(.+)') {
+            $status = $matches[1].Trim()
         }
-    } else {
-        Write-Host "⚠️ Could not determine Docker version." -ForegroundColor $YELLOW
-    }
-} catch {
-    Write-Host "❌ Docker is not installed or not in PATH." -ForegroundColor $RED
-    Write-Host "   Please install Docker Desktop 4.40+ before continuing." -ForegroundColor $RED
-    exit 1
-}
-
-# Check if Docker Swarm is initialized
-Write-Host "`n🔍 Checking Docker Swarm status..." -ForegroundColor $CYAN
-$swarmStatus = docker info --format '{{.Swarm.LocalNodeState}}'
-
-if ($swarmStatus -ne "active") {
-    Write-Host "🔄 Initializing Docker Swarm..." -ForegroundColor $YELLOW
-    $initCommand = "docker swarm init"
-    Invoke-Expression $initCommand
-
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "❌ Failed to initialize Docker Swarm." -ForegroundColor $RED
-        exit 1
-    }
-
-    Write-Host "✅ Docker Swarm initialized successfully." -ForegroundColor $GREEN
-} else {
-    Write-Host "✅ Docker Swarm is already active." -ForegroundColor $GREEN
-}
-
-# Configure GPU support
-Write-Host "`n🔍 Checking NVIDIA GPU support..." -ForegroundColor $CYAN
-try {
-    $gpuCheck = docker run --rm --gpus all nvidia/cuda:12.0.1-base-ubuntu22.04 nvidia-smi
-    Write-Host "✅ NVIDIA GPU support is configured correctly." -ForegroundColor $GREEN
-} catch {
-    Write-Host "⚠️ NVIDIA GPU support is not properly configured." -ForegroundColor $YELLOW
-    Write-Host "   Setting up GPU support for Docker..." -ForegroundColor $YELLOW
-
-    # Configure Docker daemon for NVIDIA GPU support
-    $daemonConfigPath = if ($IsWindows) { "$env:ProgramData\Docker\config\daemon.json" } else { "/etc/docker/daemon.json" }
-
-    if (Test-Path $daemonConfigPath) {
-        $daemonConfig = Get-Content -Path $daemonConfigPath -Raw | ConvertFrom-Json
-    } else {
-        $daemonConfig = [PSCustomObject]@{}
-    }
-
-    # Add NVIDIA runtime if not present
-    $modified = $false
-
-    if (-not ($daemonConfig.PSObject.Properties.Name -contains "runtimes")) {
-        Add-Member -InputObject $daemonConfig -MemberType NoteProperty -Name "runtimes" -Value @{}
-        $modified = $true
-    }
-
-    if (-not ($daemonConfig.runtimes.PSObject.Properties.Name -contains "nvidia")) {
-        $daemonConfig.runtimes | Add-Member -MemberType NoteProperty -Name "nvidia" -Value @{
-            "path" = if ($IsWindows) { "nvidia-container-runtime" } else { "/usr/bin/nvidia-container-runtime" }
+        if ($dirTagContent -match 'description:\s*\|\s*(.+)') {
+            $description = $matches[1].Trim()
         }
-        $modified = $true
     }
-
-    # Save changes if any were made
-    if ($modified) {
-        if (-not (Test-Path (Split-Path $daemonConfigPath -Parent))) {
-            New-Item -Path (Split-Path $daemonConfigPath -Parent) -ItemType Directory -Force | Out-Null
-        }
-
-        $daemonConfig | ConvertTo-Json -Depth 10 | Set-Content -Path $daemonConfigPath
-        Write-Host "✅ Docker daemon configured for NVIDIA GPU support." -ForegroundColor $GREEN
-        Write-Host "⚠️ Please restart Docker for the changes to take effect." -ForegroundColor $YELLOW
-        Write-Host "   After restarting Docker, run this script again." -ForegroundColor $YELLOW
-        exit 0
+    catch {
+        Write-Warning "Error reading DIR.TAG file: $_"
     }
 }
 
-# Check Docker Model Runner
-Write-Host "`n🔍 Checking Docker Model Runner..." -ForegroundColor $CYAN
-try {
-    # Try to access the model runner endpoint
-    $modelRunnerEndpoint = "http://model-runner.docker.internal/engines"
-    $response = Invoke-WebRequest -Uri $modelRunnerEndpoint -UseBasicParsing -ErrorAction SilentlyContinue
+function Write-Log {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Message,
 
-    if ($response.StatusCode -eq 200) {
-        Write-Host "✅ Docker Model Runner is available and responding!" -ForegroundColor $GREEN
+        [Parameter(Mandatory = $false)]
+        [string]$ForegroundColor = "White",
 
-        # Parse the JSON response to get available models
-        $availableModels = $response.Content | ConvertFrom-Json
+        [Parameter(Mandatory = $false)]
+        [switch]$NoNewline
+    )
 
-        # Check if our required model is available
-        if ($availableModels -contains $ModelType) {
-            Write-Host "✅ Required model '$ModelType' is available." -ForegroundColor $GREEN
-        } else {
-            Write-Host "🔄 Required model '$ModelType' is not available. Pulling model..." -ForegroundColor $YELLOW
-            docker model pull $ModelType
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $logMessage = "[$timestamp] $Message"
+
+    if ($NoNewline) {
+        Write-Host $logMessage -ForegroundColor $ForegroundColor -NoNewline
+    }
+    else {
+        Write-Host $logMessage -ForegroundColor $ForegroundColor
+    }
+}
+
+function Test-DockerInstallation {
+    <#
+    .SYNOPSIS
+        Tests if Docker is installed and running.
+    .DESCRIPTION
+        Verifies that Docker is installed and the service is running by checking
+        the Docker CLI and attempting to run a simple Docker command.
+    #>
+    Write-Log "🔍 Checking Docker installation..." -ForegroundColor $CYAN
+
+    try {
+        $dockerVersion = docker version --format '{{.Server.Version}}'
+        if ($LASTEXITCODE -ne 0) {
+            throw "Docker command failed. Exit code: $LASTEXITCODE"
+        }
+        Write-Log "✅ Docker is installed (version: $dockerVersion)" -ForegroundColor $GREEN
+        return $true
+    }
+    catch {
+        Write-Log "❌ Docker is not installed or not running. Error: $_" -ForegroundColor $RED
+        Write-Log "   Please install Docker Desktop from https://www.docker.com/products/docker-desktop/" -ForegroundColor $YELLOW
+        return $false
+    }
+}
+
+function Test-GPUSupport {
+    <#
+    .SYNOPSIS
+        Tests if NVIDIA GPU support is available and properly configured.
+    .DESCRIPTION
+        Verifies NVIDIA GPU support by running a test container that uses nvidia-smi.
+        Returns true if GPU support is available, false otherwise.
+    #>
+    Write-Log "🔍 Checking NVIDIA GPU support..." -ForegroundColor $CYAN
+
+    try {
+        # Test GPU support by running nvidia-smi in a container
+        $gpuCheck = docker run --rm --gpus all nvidia/cuda:12.0.1-base-ubuntu22.04 nvidia-smi
+
+        if ($LASTEXITCODE -eq 0) {
+            Write-Log "✅ NVIDIA GPU support is configured correctly." -ForegroundColor $GREEN
+            Write-Log "GPU Information:" -ForegroundColor $CYAN
+            Write-Log "$gpuCheck" -ForegroundColor $CYAN
+            return $true
+        }
+        else {
+            Write-Log "❌ NVIDIA GPU test failed with exit code: $LASTEXITCODE" -ForegroundColor $RED
+            return $false
+        }
+    }
+    catch {
+        Write-Log "❌ NVIDIA GPU support is not configured. Error: $_" -ForegroundColor $RED
+        Write-Log "   Please ensure NVIDIA drivers are installed and Docker GPU runtime is enabled." -ForegroundColor $YELLOW
+        Write-Log "   See: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html" -ForegroundColor $YELLOW
+        return $false
+    }
+}
+
+function Initialize-DockerSwarm {
+    <#
+    .SYNOPSIS
+        Initializes Docker Swarm if it's not already active.
+    .DESCRIPTION
+        Checks if Docker Swarm is already initialized. If not, initializes a new swarm.
+        Returns true if swarm is active (either already or after initialization), false otherwise.
+    #>
+    Write-Log "🔍 Checking Docker Swarm status..." -ForegroundColor $CYAN
+
+    try {
+        $swarmStatus = docker info --format '{{.Swarm.LocalNodeState}}'
+
+        if ($swarmStatus -ne "active") {
+            Write-Log "🔄 Initializing Docker Swarm..." -ForegroundColor $YELLOW
+            $initCommand = "docker swarm init"
+            Invoke-Expression $initCommand
 
             if ($LASTEXITCODE -ne 0) {
-                Write-Host "❌ Failed to pull model '$ModelType'." -ForegroundColor $RED
-                exit 1
+                Write-Log "❌ Failed to initialize Docker Swarm. Exit code: $LASTEXITCODE" -ForegroundColor $RED
+                return $false
             }
 
-            Write-Host "✅ Model '$ModelType' pulled successfully." -ForegroundColor $GREEN
+            Write-Log "✅ Docker Swarm initialized successfully." -ForegroundColor $GREEN
+        }
+        else {
+            Write-Log "✅ Docker Swarm is already active." -ForegroundColor $GREEN
+        }
+
+        return $true
+    }
+    catch {
+        Write-Log "❌ Error checking or initializing Docker Swarm: $_" -ForegroundColor $RED
+        return $false
+    }
+}
+
+function Initialize-MistralModel {
+    <#
+    .SYNOPSIS
+        Initializes the Mistral GPU model for inference.
+    .DESCRIPTION
+        Pulls the Mistral model image, configures it, and prepares it for inference
+        using Docker Model Runner.
+    .PARAMETER GpuCount
+        The number of GPUs to allocate for the model.
+    .PARAMETER TensorParallelSize
+        The tensor parallel size for model inference.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [int]$GpuCount,
+
+        [Parameter(Mandatory = $true)]
+        [int]$TensorParallelSize
+    )
+
+    Write-Log "🚀 Initializing Mistral GPU model..." -ForegroundColor $CYAN
+
+    try {
+        # Check if Docker Model Runner is available
+        $modelRunnerCheck = docker model ls 2>&1
+        if ($LASTEXITCODE -ne 0 -or $modelRunnerCheck -match "not enabled") {
+            Write-Log "❌ Docker Model Runner is not enabled. Please enable it in Docker Desktop settings." -ForegroundColor $RED
+            Write-Log "   Go to Docker Desktop > Settings > Features in development > Enable Docker Model Runner" -ForegroundColor $YELLOW
+            return $false
+        }
+
+        # Pull the Mistral model
+        Write-Log "📥 Pulling Mistral model (this may take a while)..." -ForegroundColor $YELLOW
+        docker model pull ai/mistral-nemo
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-Log "❌ Failed to pull Mistral model. Exit code: $LASTEXITCODE" -ForegroundColor $RED
+            return $false
+        }
+
+        # Configure model settings
+        Write-Log "⚙️ Configuring Mistral model with $GpuCount GPU(s) and tensor parallel size $TensorParallelSize..." -ForegroundColor $CYAN
+
+        # Create necessary overlay networks for Docker Swarm
+        docker network create --driver overlay mistral-network
+
+        # Create and configure the Mistral service
+        $mistralService = docker service create `
+            --name mistral-inference `
+            --network mistral-network `
+            --publish 8000:8000 `
+            --constraint 'node.role==manager' `
+            --limit-gpu $GpuCount `
+            --label ai.model=mistral-nemo `
+            --env GPU_COUNT=$GpuCount `
+            --env TENSOR_PARALLEL_SIZE=$TensorParallelSize `
+            --endpoint-mode vip `
+            --mode replicated `
+            --replicas 1 `
+            nvcr.io/nvidia/nemo-fw:24.02.01
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-Log "❌ Failed to create Mistral service. Exit code: $LASTEXITCODE" -ForegroundColor $RED
+            return $false
+        }
+
+        # Wait for service to become available
+        Write-Log "⏳ Waiting for Mistral service to initialize (this may take several minutes)..." -ForegroundColor $YELLOW
+        $attempts = 0
+        $maxAttempts = 20
+        $success = $false
+
+        while ($attempts -lt $maxAttempts -and -not $success) {
+            $attempts++
+            Write-Log "   Checking service status (attempt $attempts/$maxAttempts)..." -ForegroundColor $CYAN -NoNewline
+            $serviceStatus = docker service ps mistral-inference --format '{{.CurrentState}}' | Select-Object -First 1
+
+            if ($serviceStatus -match "Running") {
+                Write-Log " Running!" -ForegroundColor $GREEN
+                Start-Sleep -Seconds 10  # Give a bit more time for the model to initialize
+                $success = $true
+            }
+            else {
+                Write-Log " $serviceStatus" -ForegroundColor $YELLOW
+                Start-Sleep -Seconds 15
+            }
+        }
+
+        if ($success) {
+            Write-Log "✅ Mistral GPU model initialized successfully!" -ForegroundColor $GREEN
+            Write-Log "   Model is available for inference at http://localhost:8000" -ForegroundColor $CYAN
+            return $true
+        }
+        else {
+            Write-Log "❌ Mistral service initialization timed out. Check 'docker service logs mistral-inference' for details." -ForegroundColor $RED
+            return $false
         }
     }
-} catch {
-    Write-Host "❌ Docker Model Runner endpoint is not accessible." -ForegroundColor $RED
-    Write-Host "   Please ensure Docker Desktop is running with Model Runner enabled:" -ForegroundColor $RED
-    Write-Host "   1. Open Docker Desktop" -ForegroundColor $WHITE
-    Write-Host "   2. Go to Settings > Features in development > Beta" -ForegroundColor $WHITE
-    Write-Host "   3. Enable 'Docker Model Runner'" -ForegroundColor $WHITE
-    Write-Host "   4. Click 'Apply & restart'" -ForegroundColor $WHITE
+    catch {
+        Write-Log "❌ Error initializing Mistral model: $_" -ForegroundColor $RED
+        return $false
+    }
+}
+
+# Main execution
+Write-Log "🔧 Starting Mistral GPU Runner initialization..." -ForegroundColor $CYAN
+Write-Log "   GPU Count: $GpuCount" -ForegroundColor $CYAN
+Write-Log "   Tensor Parallel Size: $TensorParallelSize" -ForegroundColor $CYAN
+
+# Check Docker installation
+if (-not (Test-DockerInstallation)) {
     exit 1
 }
 
-# Label current node for GPU
-Write-Host "`n🔍 Configuring node labels for GPU..." -ForegroundColor $CYAN
-$nodeID = docker node ls --filter "role=manager" --format "{{.ID}}"
-docker node update --label-add gpu=true $nodeID
-Write-Host "✅ Node labeled for GPU allocation." -ForegroundColor $GREEN
-
-# Create config file for deployment
-Write-Host "`n🔍 Preparing deployment configuration..." -ForegroundColor $CYAN
-$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$configDir = Join-Path $scriptDir ".." "configs"
-$configPath = Join-Path $configDir "mistral-gpu.config.json"
-
-if (Test-Path $configPath) {
-    $config = Get-Content -Path $configPath -Raw | ConvertFrom-Json
-
-    # Update config with parameters
-    $config.stackName = $StackName
-    $config.environment.MISTRAL_IMAGE = $ModelType
-    $config.environment.GPU_COUNT = $GPUCount.ToString()
-    $config.environment.QUANTIZATION = $Quantization
-    $config.environment.CONTEXT_LENGTH = $ContextLength.ToString()
-
-    # Save updated config
-    $config | ConvertTo-Json -Depth 10 | Set-Content -Path $configPath
-    Write-Host "✅ Deployment configuration updated." -ForegroundColor $GREEN
-} else {
-    Write-Host "❌ Configuration file not found: $configPath" -ForegroundColor $RED
+# Initialize Docker Swarm if needed
+if (-not (Initialize-DockerSwarm)) {
+    Write-Log "❌ Failed to initialize Docker Swarm. Exiting." -ForegroundColor $RED
     exit 1
 }
 
-# Deploy the stack
-Write-Host "`n🚀 Deploying Mistral GPU stack..." -ForegroundColor $CYAN
-$deployScriptPath = Join-Path $scriptDir "Deploy-SwarmStack.ps1"
-$deployCommand = "& '$deployScriptPath' -ConfigFile '$configPath' -StackName '$StackName'"
-Invoke-Expression $deployCommand
-
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "❌ Failed to deploy Mistral GPU stack." -ForegroundColor $RED
+# Check GPU support
+$gpuSupport = Test-GPUSupport
+if (-not $gpuSupport) {
+    Write-Log "❌ NVIDIA GPU support is required for Mistral GPU Runner. Exiting." -ForegroundColor $RED
     exit 1
 }
 
-# SUCCESS!
-Write-Host "`n✅ Mistral GPU stack deployed successfully!" -ForegroundColor $GREEN
-Write-Host "   StackName: $StackName" -ForegroundColor $WHITE
-Write-Host "   Model: $ModelType" -ForegroundColor $WHITE
-Write-Host "   Check the status of your deployment with:" -ForegroundColor $CYAN
-Write-Host "   docker service ls --filter 'name=$StackName'" -ForegroundColor $WHITE
-Write-Host "`n   To access the model, use the endpoint:" -ForegroundColor $CYAN
-Write-Host "   http://localhost:8080/v1/chat/completions" -ForegroundColor $WHITE
+# Initialize Mistral model
+if (-not (Initialize-MistralModel -GpuCount $GpuCount -TensorParallelSize $TensorParallelSize)) {
+    Write-Log "❌ Failed to initialize Mistral model. Exiting." -ForegroundColor $RED
+    exit 1
+}
+
+Write-Log "✅ Mistral GPU Runner initialization completed successfully!" -ForegroundColor $GREEN
+Write-Log "   Use 'docker service logs mistral-inference' to view model logs." -ForegroundColor $CYAN
+Write-Log "   Use 'docker service rm mistral-inference' to stop the service." -ForegroundColor $CYAN
