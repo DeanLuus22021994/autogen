@@ -1,11 +1,13 @@
-#INDEX: .devcontainer
+#INDEX: C:/Projects/autogen/.devcontainer
+#GUID: d31607f9-f66f-4e19-8d9b-18aa682fc139
 #TODO:
   - Implement container health checks [OUTSTANDING]
   - Configure volume persistence for model cache [PARTIALLY_COMPLETE]
   - Pre-cache VS Code extensions (including Vim) for containerized development [OUTSTANDING]
   - Enable GPU passthrough for containerized model inference [OUTSTANDING]
+
 status: PARTIALLY_COMPLETE
-updated: 2025-05-06T12:00:00Z
+updated: 2025-05-06T08:32:11Z
 description: |
   Development container configuration for AutoGen project.
   Supports Docker and Docker Swarm deployment with GPU acceleration.

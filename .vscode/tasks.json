@@ -297,59 +297,64 @@
       "problemMatcher": []
     },
     {
-      "label": "Update DIR.TAG Files",
+      "label": "Toolbox: Update DIR.TAG Files",
       "type": "shell",
-      "command": "${workspaceFolder}/.devcontainer/manage-dir-tags.sh",
+      "command": "pwsh",
       "args": [
-        "--action",
-        "update",
-        "--verbose"
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\.toolbox\\config\\Sync-DirTagConfig.ps1",
+        "-UpdateAll"
       ],
-      "group": {
-        "kind": "build",
-        "isDefault": false
-      },
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
+      "group": { "kind": "build", "isDefault": false },
+      "presentation": { "reveal": "always" },
       "problemMatcher": []
     },
     {
-      "label": "Create New Config Directory",
+      "label": "Toolbox: Sync DIR.TAG with Problems",
       "type": "shell",
-      "command": "${workspaceFolder}/.devcontainer/manage-dir-tags.sh",
+      "command": "pwsh",
       "args": [
-        "--action",
-        "create",
-        "--dir",
-        "${input:configDirectoryPath}",
-        "--verbose"
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\.toolbox\\config\\Sync-DirTagProblems.ps1"
       ],
-      "group": "none",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
+      "group": { "kind": "test", "isDefault": false },
+      "presentation": { "reveal": "always" },
       "problemMatcher": []
     },
     {
-      "label": "Check DIR.TAG Consistency",
+      "label": "Toolbox: Generate DIR.TAG Report",
       "type": "shell",
-      "command": "${workspaceFolder}/.devcontainer/manage-dir-tags.sh",
+      "command": "pwsh",
       "args": [
-        "--action",
-        "check",
-        "--verbose"
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\.toolbox\\config\\Generate-DirTagReport.ps1"
       ],
-      "group": {
-        "kind": "test",
-        "isDefault": false
-      },
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
+      "group": { "kind": "test", "isDefault": false },
+      "presentation": { "reveal": "always" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Toolbox: Run All DIR.TAG Tests",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "Invoke-Pester -Path \"${workspaceFolder}\\.toolbox\\modules\\*.Tests.ps1\" -Output Detailed"
+      ],
+      "group": { "kind": "test", "isDefault": false },
+      "presentation": { "reveal": "always" },
       "problemMatcher": []
     },
     {
