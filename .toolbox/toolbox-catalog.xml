@@ -6,7 +6,7 @@
       Catalog of toolbox scripts and utilities for the AutoGen project.
       This catalog uses GUIDs and sequence numbers for precise tool ordering.
     </description>
-    <updated>2024-07-10T12:00:00Z</updated>
+    <updated>2025-05-06T12:00:00Z</updated>
   </metadata>
   <categories>
     <category id="b2a0c8e0-3f1a-4e5b-9c7d-8b2e6f0a1d3c">
@@ -44,17 +44,9 @@
     </category>
 
     <category id="c3b4a5d6-7e8f-9g0h-1i2j-3k4l5m6n7o8">
-      <name>github</name>
-      <description>Tools for GitHub integration and workflows</description>
+      <name>GitHub Tools</name>
+      <description>Tools for GitHub integration and management</description>
       <tools>
-        <tool>
-          <id>c1d2e3f4-5g6h-7i8j-9k0l-m1n2o3p4q5r6</id>
-          <name>Fix-GitHubWorkflows</name>
-          <description>Fixes issues with GitHub workflow files</description>
-          <path>.toolbox/github/Fix-GitHubWorkflows.ps1</path>
-          <sequence>10</sequence>
-          <tags>github,workflows,yaml</tags>
-        </tool>
         <tool>
           <id>d1e2f3g4-5h6i-7j8k-9l0m-n1o2p3q4r5s6</id>
           <name>Setup-GitHubSSH</name>
@@ -77,68 +69,211 @@
           <description>Resolves issues with push operations blocked by token</description>
           <path>.toolbox/github/Resolve-PushBlockedByToken.ps1</path>
           <sequence>40</sequence>
-          <tags>github,token,authentication</tags>
+          <tags>github,token,troubleshooting</tags>
         </tool>
       </tools>
     </category>
 
-    <category id="markdown">
+    <category id="g1h2i3j4-5k6l-7m8n-9o0p-q1r2s3t4u5v6">
       <name>Markdown Tools</name>
       <description>Tools for markdown linting and fixing</description>
       <tools>
         <tool id="add_markdown_rules_function">
-          <name>Add-MarkdownRulesFunction.ps1</name>
+          <name>Add-MarkdownRulesFunction</name>
           <description>Adds custom functions for markdown rule validation</description>
           <path>.toolbox/markdown/Add-MarkdownRulesFunction.ps1</path>
+          <sequence>10</sequence>
           <tags>markdown,linting,rules</tags>
+        </tool>
+        <tool id="h1i2j3k4-5l6m-7n8o-9p0q-r1s2t3u4v5w6">
+          <name>Invoke-MarkdownLinting</name>
+          <description>Runs markdown linting on documentation files</description>
+          <path>.toolbox/markdown/Invoke-MarkdownLinting.ps1</path>
+          <sequence>20</sequence>
+          <tags>markdown,linting,validation</tags>
         </tool>
       </tools>
     </category>
-    <category id="environment">
+
+    <category id="i1j2k3l4-5m6n-7o8p-9q0r-s1t2u3v4w5x6">
       <name>Environment Tools</name>
       <description>Tools for environment setup and validation</description>
       <tools>
         <tool id="setup_autogen_environment">
-          <name>Setup-AutogenEnvironment.ps1</name>
+          <name>Setup-AutogenEnvironment</name>
           <description>Sets up the AutoGen development environment</description>
           <path>.toolbox/environment/Setup-AutogenEnvironment.ps1</path>
+          <sequence>10</sequence>
           <tags>environment,setup</tags>
         </tool>
         <tool id="reset_vscode_environment">
-          <name>Reset-VSCodeEnvironment.ps1</name>
+          <name>Reset-VSCodeEnvironment</name>
           <description>Resets the VS Code environment settings</description>
           <path>.toolbox/environment/Reset-VSCodeEnvironment.ps1</path>
+          <sequence>20</sequence>
           <tags>vscode,environment,reset</tags>
         </tool>
       </tools>
     </category>
-    <category id="security">
+
+    <category id="j1k2l3m4-5n6o-7p8q-9r0s-t1u2v3w4x5y6">
       <name>Security Tools</name>
       <description>Tools for security management</description>
       <tools>
         <tool id="validate_env_secrets">
-          <name>Validate-EnvSecrets.ps1</name>
+          <name>Validate-EnvSecrets</name>
           <description>Validates environment secrets</description>
           <path>.toolbox/security/Validate-EnvSecrets.ps1</path>
+          <sequence>10</sequence>
           <tags>security,secrets,environment</tags>
         </tool>
         <tool id="verify_github_secrets">
-          <name>Verify-GitHubSecrets.ps1</name>
+          <name>Verify-GitHubSecrets</name>
           <description>Verifies GitHub secrets are configured correctly</description>
           <path>.toolbox/security/Verify-GitHubSecrets.ps1</path>
+          <sequence>20</sequence>
           <tags>security,github,secrets</tags>
         </tool>
       </tools>
     </category>
-    <category id="config">
+
+    <category id="k1l2m3n4-5o6p-7q8r-9s0t-u1v2w3x4y5z6">
       <name>Configuration Tools</name>
       <description>Tools for configuration management</description>
       <tools>
         <tool id="commit_safe_vscode_config">
-          <name>Commit-SafeVsCodeConfig.ps1</name>
+          <name>Commit-SafeVsCodeConfig</name>
           <description>Commits VS Code configuration files safely</description>
           <path>.toolbox/config/Commit-SafeVsCodeConfig.ps1</path>
+          <sequence>10</sequence>
           <tags>vscode,config,git</tags>
+        </tool>
+        <tool id="l1m2n3o4-5p6q-7r8s-9t0u-v1w2x3y4z5a6">
+          <name>Update-ConfigurationFiles</name>
+          <description>Updates configuration files with project standards</description>
+          <path>.toolbox/config/Update-ConfigurationFiles.ps1</path>
+          <sequence>20</sequence>
+          <tags>config,standards,update</tags>
+        </tool>
+      </tools>
+    </category>
+
+    <category id="m1n2o3p4-5q6r-7s8t-9u0v-w1x2y3z4a5b6">
+      <name>DIR.TAG Management</name>
+      <description>Tools for managing DIR.TAG files and development traceability</description>
+      <tools>
+        <tool>
+          <id>n1o2p3q4-5r6s-7t8u-9v0w-x1y2z3a4b5c6</id>
+          <name>Add-ExtensionPrecacheTaskToDirTags</name>
+          <description>Adds VS Code extension pre-caching tasks to relevant DIR.TAG files</description>
+          <path>.toolbox/modules/DirTagGroupManagement.psm1</path>
+          <sequence>10</sequence>
+          <tags>dirtag,vscode,extensions,precaching</tags>
+          <type>module-function</type>
+        </tool>
+        <tool>
+          <id>o1p2q3r4-5s6t-7u8v-9w0x-y1z2a3b4c5d6</id>
+          <name>Sync-DirTagGroup</name>
+          <description>Synchronizes DIR.TAG files across a specified group of directories</description>
+          <path>.toolbox/modules/DirTagGroupManagement.psm1</path>
+          <sequence>20</sequence>
+          <tags>dirtag,sync,group</tags>
+          <type>module-function</type>
+        </tool>
+        <tool>
+          <id>p1q2r3s4-5t6u-7v8w-9x0y-z1a2b3c4d5e6</id>
+          <name>New-DirTagGroup</name>
+          <description>Creates a new DIR.TAG group for batch operations</description>
+          <path>.toolbox/modules/DirTagGroupManagement.psm1</path>
+          <sequence>30</sequence>
+          <tags>dirtag,group,create</tags>
+          <type>module-function</type>
+        </tool>
+        <tool>
+          <id>q1r2s3t4-5u6v-7w8x-9y0z-a1b2c3d4e5f6</id>
+          <name>Get-StdDirTagGroup</name>
+          <description>Retrieves standard DIR.TAG groups for common directory patterns</description>
+          <path>.toolbox/modules/DirTagGroupManagement.psm1</path>
+          <sequence>40</sequence>
+          <tags>dirtag,group,standard</tags>
+          <type>module-function</type>
+        </tool>
+      </tools>
+    </category>
+    
+    <category id="r1s2t3u4-5v6w-7x8y-9z0a-b1c2d3e4f5g6">
+      <name>Container Management</name>
+      <description>Tools for Docker, DevContainer, and containerization operations</description>
+      <tools>
+        <tool>
+          <id>s1t2u3v4-5w6x-7y8z-9a0b-c1d2e3f4g5h6</id>
+          <name>Sync-GPURelatedDirTags</name>
+          <description>Synchronizes GPU-related configuration tasks in DIR.TAG files</description>
+          <path>.toolbox/modules/DirTagGroupManagement.psm1</path>
+          <sequence>10</sequence>
+          <tags>dirtag,gpu,container,sync</tags>
+          <type>module-function</type>
+        </tool>
+        <tool>
+          <id>t1u2v3w4-5x6y-7z8a-9b0c-d1e2f3g4h5i6</id>
+          <name>Sync-Smoll2RelatedDirTags</name>
+          <description>Synchronizes Smoll2 model configuration in DIR.TAG files</description>
+          <path>.toolbox/modules/DirTagGroupManagement.psm1</path>
+          <sequence>20</sequence>
+          <tags>dirtag,smoll2,model,sync</tags>
+          <type>module-function</type>
+        </tool>
+        <tool>
+          <id>u1v2w3x4-5y6z-7a8b-9c0d-e1f2g3h4i5j6</id>
+          <name>Update-Smoll2PrecompiledCachedFactoryTasks</name>
+          <description>Updates Smoll2 precompiled cache tasks in DIR.TAG files</description>
+          <path>.toolbox/modules/DirTagGroupManagement.psm1</path>
+          <sequence>30</sequence>
+          <tags>dirtag,smoll2,cache,precompiled</tags>
+          <type>module-function</type>
+        </tool>
+        <tool>
+          <id>v1w2x3y4-5z6a-7b8c-9d0e-f1g2h3i4j5k6</id>
+          <name>Update-DockerModelRunnerConfiguration</name>
+          <description>Updates Docker Model Runner configuration for AI model integration</description>
+          <path>.toolbox/docker/Update-DockerModelRunnerConfiguration.ps1</path>
+          <sequence>40</sequence>
+          <tags>docker,model-runner,configuration,ai</tags>
+          <type>script</type>
+        </tool>
+      </tools>
+    </category>
+
+    <category id="w1x2y3z4-5a6b-7c8d-9e0f-g1h2i3j4k5l6">
+      <name>Dotnet Tools</name>
+      <description>Tools for .NET development and management</description>
+      <tools>
+        <tool>
+          <id>x1y2z3a4-5b6c-7d8e-9f0g-h1i2j3k4l5m6</id>
+          <name>Update-DotnetTools</name>
+          <description>Updates .NET tools configuration</description>
+          <path>.toolbox/dotnet/Update-DotnetTools.ps1</path>
+          <sequence>10</sequence>
+          <tags>dotnet,tools,update</tags>
+          <type>script</type>
+        </tool>
+        <tool>
+          <id>y1z2a3b4-5c6d-7e8f-9g0h-i1j2k3l4m5n6</id>
+          <name>Install-DotnetTools</name>
+          <description>Installs .NET tools from configuration</description>
+          <path>.toolbox/dotnet/Install-DotnetTools.ps1</path>
+          <sequence>20</sequence>
+          <tags>dotnet,tools,install</tags>
+          <type>script</type>
+        </tool>
+        <tool>
+          <id>z1a2b3c4-5d6e-7f8g-9h0i-j1k2l3m4n5o6</id>
+          <name>Add-DotnetToolToJson</name>
+          <description>Adds a new .NET tool to the dotnet-tools.json file</description>
+          <path>.toolbox/dotnet/Add-DotnetToolToJson.ps1</path>
+          <sequence>30</sequence>
+          <tags>dotnet,tools,configuration,json</tags>
+          <type>script</type>
         </tool>
       </tools>
     </category>

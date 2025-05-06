@@ -1,20 +1,13 @@
 # DIR.TAG Management Pattern
 
-## Pattern: DIR.TAG Management
+**Purpose**: Track development status and technical debt at the directory level.
 
-**Purpose**: Standardize tracking of development status, technical debt, and component documentation through DIR.TAG files.
-
-**When to use**:
-- When creating new directories that need development tracking
-- When implementing new features across multiple components
-- When managing technical debt across a project
-- When optimizing infrastructure configurations
+**When to use**: In any directory where you want to document requirements, progress, or TODOs.
 
 **Implementation template**:
 
 ```plaintext
 #INDEX: [directory-path]
-#GUID: [auto-generated-guid]
 #TODO:
   - [Task description] [STATUS]
   - [Task description] [STATUS]
