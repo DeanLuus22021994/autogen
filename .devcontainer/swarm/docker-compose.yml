@@ -13,11 +13,23 @@ services:
           memory: 8G
         reservations:
           memory: 1G
-        # GPU resources for Docker Swarm mode
-        generic_resources:
-          - discrete_resource_spec:
-              kind: gpus
-              value: 1
+          # Reserve GPU resources for high-priority workloads
+          generic_resources:
+            - discrete_resource_spec:
+                kind: gpus
+                value: 1
+      placement:
+        constraints:
+          - node.labels.gpu == true
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
     volumes:
       - type: bind
         source: ${PWD}
