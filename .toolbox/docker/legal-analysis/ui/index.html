@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Legal Document Analysis Dashboard for analyzing sentiments in legal documents">
     <title>Legal Document Analysis Dashboard</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -10,10 +11,10 @@
 <body>
     <header>
         <div class="header-content">
-            <div class="logo">Legal Document Analysis System</div>
-            <nav>
+            <div class="logo" role="banner">Legal Document Analysis System</div>
+            <nav aria-label="Main Navigation">
                 <ul>
-                    <li><a href="#dashboard">Dashboard</a></li>
+                    <li><a href="#dashboard" aria-current="page">Dashboard</a></li>
                     <li><a href="#documents">Documents</a></li>
                     <li><a href="#timeline">Timeline</a></li>
                     <li><a href="#settings">Settings</a></li>
@@ -22,13 +23,14 @@
         </div>
     </header>
 
-    <div class="container">
-        <section id="dashboard" class="dashboard">
+    <main class="container">
+        <section id="dashboard" class="dashboard" aria-labelledby="dashboard-heading">
+            <h1 id="dashboard-heading" class="visually-hidden">Dashboard</h1>
             <div class="card">
                 <div class="card-header">Document Processing</div>
                 <div class="card-content">
                     <div class="chart-container">
-                        <canvas id="documentChart"></canvas>
+                        <canvas id="documentChart" aria-label="Document type distribution chart" role="img"></canvas>
                     </div>
                     <div class="stats">
                         <div class="stat-item">
@@ -50,7 +52,7 @@
             <div class="card">
                 <div class="card-header">Recent Documents</div>
                 <div class="card-content">
-                    <ul class="document-list" id="recent-documents">
+                    <ul class="document-list" id="recent-documents" aria-live="polite">
                         <li class="document-item">
                             <div>
                                 <div class="document-title">No documents processed yet</div>
@@ -66,17 +68,18 @@
                 <div class="card-header">Sentiment Overview</div>
                 <div class="card-content">
                     <div class="chart-container">
-                        <canvas id="sentimentChart"></canvas>
+                        <canvas id="sentimentChart" aria-label="Sentiment analysis chart" role="img"></canvas>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="timeline-section">
+        <section id="timeline-section" aria-labelledby="timeline-heading">
+            <h2 id="timeline-heading" class="visually-hidden">Document Timeline</h2>
             <div class="card">
                 <div class="card-header">Latest Document Timeline</div>
                 <div class="card-content">
-                    <div class="timeline" id="document-timeline">
+                    <div class="timeline" id="document-timeline" aria-live="polite">
                         <div class="timeline-item">
                             <div class="timeline-date">Select a document to view its timeline</div>
                             <div class="timeline-event">
@@ -88,8 +91,9 @@
             </div>
         </section>
 
-        <section id="upload-section">
-            <div class="upload-area" id="dropzone">
+        <section id="upload-section" aria-labelledby="upload-heading">
+            <h2 id="upload-heading" class="visually-hidden">Upload Documents</h2>
+            <div class="upload-area" id="dropzone" tabindex="0" aria-label="Upload area. Drag and drop files here or click to browse">
                 <div class="upload-message">Drag &amp; Drop documents here</div>
                 <div>or</div>
                 <button class="upload-button" id="file-select" type="button">Select Files</button>
@@ -105,7 +109,7 @@
                 <div class="upload-info">Supported formats: PDF, DOCX, TXT</div>
             </div>
         </section>
-    </div>
+    </main>
 
     <footer>
         <div class="footer-content">
@@ -181,32 +185,53 @@
             }
         });
 
+        // Connect to API and get initial data
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize API connection
+            initializeApiConnection();
+
+            // Set up file upload handling
+            setupFileUploadHandlers();
+        });
+
         // File upload handling
-        const dropzone = document.getElementById('dropzone');
-        const fileInput = document.getElementById('file-input');
-        const fileSelect = document.getElementById('file-select');
+        function setupFileUploadHandlers() {
+            const dropzone = document.getElementById('dropzone');
+            const fileInput = document.getElementById('file-input');
+            const fileSelect = document.getElementById('file-select');
 
-        fileSelect.addEventListener('click', () => {
-            fileInput.click();
-        });
+            fileSelect.addEventListener('click', () => {
+                fileInput.click();
+            });
 
-        fileInput.addEventListener('change', handleFileSelect);
+            fileInput.addEventListener('change', handleFileSelect);
 
-        dropzone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropzone.classList.add('dragover');
-        });
-        dropzone.addEventListener('dragleave', () => {
-            dropzone.classList.remove('dragover');
-        });
-        dropzone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropzone.classList.remove('dragover');
+            dropzone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropzone.classList.add('dragover');
+            });
 
-            if (e.dataTransfer.files.length > 0) {
-                handleFiles(e.dataTransfer.files);
-            }
-        });
+            dropzone.addEventListener('dragleave', () => {
+                dropzone.classList.remove('dragover');
+            });
+
+            dropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('dragover');
+
+                if (e.dataTransfer.files.length > 0) {
+                    handleFiles(e.dataTransfer.files);
+                }
+            });
+
+            // Make dropzone focusable and respond to keyboard events
+            dropzone.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    fileInput.click();
+                }
+            });
+        }
 
         function handleFileSelect(e) {
             if (fileInput.files.length > 0) {
@@ -215,11 +240,11 @@
         }
 
         function handleFiles(files) {
-            // Placeholder for actual file upload handling
-            // In a real implementation, this would send files to the API
-
             const recentDocuments = document.getElementById('recent-documents');
             recentDocuments.innerHTML = '';
+
+            // Update document types chart
+            updateDocumentTypesChart(files);
 
             Array.from(files).forEach(file => {
                 const listItem = document.createElement('li');
@@ -238,19 +263,169 @@
                 // Update counts
                 document.getElementById('pending-count').textContent =
                     parseInt(document.getElementById('pending-count').textContent) + 1;
+
+                // Send file to the local API for processing
+                submitFileForAnalysis(file);
             });
 
             // Reset file input for next upload
             fileInput.value = '';
-
-            alert(`Files received for processing: ${Array.from(files).map(f => f.name).join(', ')}`);
         }
 
-        // Connect to API and get initial data
-        document.addEventListener('DOMContentLoaded', () => {
-            // This would be replaced with actual API calls
-            console.log('Dashboard initialized. Connecting to API...');
-        });
+        function updateDocumentTypesChart(files) {
+            const fileTypes = {
+                'pdf': 0,
+                'docx': 0,
+                'txt': 0
+            };
+
+            Array.from(files).forEach(file => {
+                const extension = file.name.split('.').pop().toLowerCase();
+                if (fileTypes.hasOwnProperty(extension)) {
+                    fileTypes[extension]++;
+                }
+            });
+
+            documentChart.data.datasets[0].data = [
+                fileTypes.pdf,
+                fileTypes.docx,
+                fileTypes.txt
+            ];
+            documentChart.update();
+        }
+
+        function initializeApiConnection() {
+            // In a real implementation, this would establish a connection to the local API
+            console.log('Initializing API connection...');
+
+            // Check if Docker Swarm service is running
+            checkApiStatus()
+                .then(status => {
+                    if (status === 'active') {
+                        console.log('Connected to Legal Document Analysis API');
+                        fetchDocumentStats();
+                    } else {
+                        console.error('API service is not available');
+                        showApiUnavailableMessage();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error connecting to API:', error);
+                    showApiUnavailableMessage();
+                });
+        }
+
+        function checkApiStatus() {
+            // In a real implementation, this would check if the Docker service is running
+            // For this demo, we'll simulate the API being active
+            return new Promise(resolve => {
+                setTimeout(() => resolve('active'), 500);
+            });
+        }
+
+        function fetchDocumentStats() {
+            // In a real implementation, this would fetch actual stats from the API
+            console.log('Fetching document statistics...');
+
+            // For the demo, we'll use placeholder data
+            setTimeout(() => {
+                // Update document count
+                document.getElementById('processed-count').textContent = '0';
+                document.getElementById('pending-count').textContent = '0';
+                document.getElementById('error-count').textContent = '0';
+
+                // Update sentiment chart with placeholder data
+                sentimentChart.data.datasets[0].data = [0, 0, 0];
+                sentimentChart.update();
+            }, 1000);
+        }
+
+        function submitFileForAnalysis(file) {
+            // In a real implementation, this would send the file to the API
+            console.log(`Submitting file for analysis: ${file.name}`);
+
+            // For the demo, we'll simulate processing
+            setTimeout(() => {
+                // Update UI to show processing completed
+                const items = document.querySelectorAll('.document-item');
+                const item = Array.from(items).find(i =>
+                    i.querySelector('.document-title').textContent === file.name
+                );
+
+                if (item) {
+                    const statusEl = item.querySelector('.document-status');
+                    statusEl.textContent = 'Completed';
+                    statusEl.className = 'document-status status-completed';
+
+                    // Update counters
+                    document.getElementById('processed-count').textContent =
+                        parseInt(document.getElementById('processed-count').textContent) + 1;
+                    document.getElementById('pending-count').textContent =
+                        Math.max(0, parseInt(document.getElementById('pending-count').textContent) - 1);
+
+                    // Update timeline for the most recently processed document
+                    updateTimelineForDocument(file.name);
+
+                    // Update sentiment chart with random data for demo
+                    const randomData = [
+                        Math.floor(Math.random() * 5),
+                        Math.floor(Math.random() * 10),
+                        Math.floor(Math.random() * 5)
+                    ];
+                    sentimentChart.data.datasets[0].data = randomData;
+                    sentimentChart.update();
+                }
+            }, 3000);
+        }
+
+        function updateTimelineForDocument(filename) {
+            const timeline = document.getElementById('document-timeline');
+
+            // Generate a timeline with random events for demo purposes
+            const events = [
+                { date: '2025-05-06 09:15', event: 'Document received', type: 'neutral' },
+                { date: '2025-05-06 09:16', event: 'Text extraction begun', type: 'neutral' },
+                { date: '2025-05-06 09:17', event: 'Found reference to defendant testimony', type: 'negative' },
+                { date: '2025-05-06 09:18', event: 'Located witness statement corroborating defense', type: 'positive' },
+                { date: '2025-05-06 09:19', event: 'Identified procedural inconsistency in charging documents', type: 'positive' },
+                { date: '2025-05-06 09:20', event: 'Analysis complete', type: 'neutral' }
+            ];
+
+            timeline.innerHTML = '';
+
+            events.forEach(event => {
+                const item = document.createElement('div');
+                item.className = `timeline-item ${event.type}`;
+
+                item.innerHTML = `
+                    <div class="timeline-date">${event.date}</div>
+                    <div class="timeline-event">${event.event}</div>
+                `;
+
+                timeline.appendChild(item);
+            });
+        }
+
+        function showApiUnavailableMessage() {
+            const recentDocuments = document.getElementById('recent-documents');
+            recentDocuments.innerHTML = `
+                <li class="document-item error">
+                    <div>
+                        <div class="document-title">API Service Unavailable</div>
+                        <div class="document-date">Just now</div>
+                    </div>
+                    <span class="document-status status-error">Error</span>
+                </li>
+                <li class="document-item">
+                    <div class="error-message">
+                        The Local Document Analysis API is not running. Please start the Docker service using:
+                        <code>.\Start-LegalAnalysisSystem.ps1</code> in PowerShell.
+                    </div>
+                </li>
+            `;
+
+            document.getElementById('error-count').textContent = '1';
+        }
     </script>
 </body>
 </html>
