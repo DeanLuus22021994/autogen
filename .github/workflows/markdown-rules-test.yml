@@ -15,34 +15,124 @@ jobs:
   test-markdown-rules:
     runs-on: ubuntu-latest
 
+    # Ensure we don't run this job in parallel on the same ref
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Docker
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Set up PowerShell
         uses: azure/powershell@v1
         with:
-          azPSVersion: 'latest'
+          # Using a specific version is recommended for reproducibility
+          azPSVersion: '10.4.0'
+          # Following Azure best practices for PowerShell scripts
           inlineScript: |
+            # Enable strict mode for better error detection
+            Set-StrictMode -Version Latest
+            $ErrorActionPreference = "Stop"
+
+            # Validate environment
+            if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+                Write-Error "Docker is not available"
+                exit 1
+            }
+
             Write-Host "PowerShell setup complete"
+            Write-Host "Using PowerShell version: $($PSVersionTable.PSVersion)"
+            Write-Host "Az Module version: $(Get-Module -Name Az -ListAvailable | Select-Object -First 1 -ExpandProperty Version)"
+
+      - name: Cache Docker images
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.docker-cache
+          key: ${{ runner.os }}-docker-${{ hashFiles('.github/linting/dockerfile') }}
+          restore-keys: |
+            ${{ runner.os }}-docker-
 
       - name: Build Docker Image
         run: |
-          pwsh -File .github/linting/Test-MarkdownRules.ps1 -BuildContainer
+          # Enable error handling
+          $ErrorActionPreference = "Stop"
+
+          # Log start of build
+          Write-Host "::group::Building Docker container for markdown rule testing"
+
+          try {
+            pwsh -File .github/linting/Test-MarkdownRules.ps1 -BuildContainer
+            Write-Host "✅ Docker container built successfully"
+          }
+          catch {
+            Write-Host "::error::Failed to build Docker container: $_"
+            exit 1
+          }
+
+          Write-Host "::endgroup::"
 
       - name: Test Markdown Rules
         run: |
-          pwsh -File .github/linting/Test-MarkdownRules.ps1 -Detailed
+          # Enable error handling
+          $ErrorActionPreference = "Stop"
+
+          # Log start of tests
+          Write-Host "::group::Running markdown rule tests"
+
+          try {
+            pwsh -File .github/linting/Test-MarkdownRules.ps1 -Detailed
+            Write-Host "✅ Markdown rules test completed successfully"
+          }
+          catch {
+            Write-Host "::error::Markdown rules test failed: $_"
+            exit 1
+          }
+
+          Write-Host "::endgroup::"
 
       - name: Test Custom Rules
         run: |
+          # Enable error handling
+          $ErrorActionPreference = "Stop"
+
+          # Log start of custom rule tests
+          Write-Host "::group::Testing custom markdown rules"
+
+          $testsFailed = $false
+
           # Test each custom rule individually
           Get-ChildItem -Path .github/linting/rules -Filter *.js |
           ForEach-Object {
             $ruleName = $_.BaseName
             Write-Host "Testing rule: $ruleName"
-            pwsh -File .github/linting/Test-SpecificRule.ps1 -RuleName $ruleName -UseDocker
+
+            try {
+              pwsh -File .github/linting/Test-SpecificRule.ps1 -RuleName $ruleName -UseDocker
+              Write-Host "✅ Rule '$ruleName' passed tests"
+            }
+            catch {
+              Write-Host "::error::Rule '$ruleName' failed tests: $_"
+              $testsFailed = $true
+            }
           }
+
+          if ($testsFailed) {
+            Write-Host "::error::One or more custom rules failed testing"
+            exit 1
+          }
+
+          Write-Host "::endgroup::"
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: markdown-test-results
+          path: .github/linting/test-results/
+          retention-days: 7
