@@ -673,7 +673,7 @@ function Get-StdDirTagGroup {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]
-        [ValidateSet("DevContainer", "Toolbox", "Docker", "Swarm", "BuildKit", "All")]
+        [ValidateSet("DevContainer", "Toolbox", "Docker", "Swarm", "BuildKit", "All", "Smoll2")]
         [string]$GroupName
     )
 
@@ -699,8 +699,7 @@ function Get-StdDirTagGroup {
             ) -DirectoryPatterns @(
                 "c:\Projects\autogen\**\*docker*"
             )
-        }
-        "Swarm" {
+        }        "Swarm" {
             return New-DirTagGroup -Name "Swarm" -Description "Docker Swarm configuration files" -DirectoryPaths @(
                 "c:\Projects\autogen\.devcontainer\swarm",
                 "c:\Projects\autogen\.devcontainer\swarm\utils",
@@ -713,6 +712,14 @@ function Get-StdDirTagGroup {
                 "c:\Projects\autogen\.devcontainer\buildkit"
             )
         }
+        "Smoll2" {
+            return New-DirTagGroup -Name "Smoll2" -Description "smoll2 LLM configuration files" -DirectoryPaths @(
+                "c:\Projects\autogen\.devcontainer\docker",
+                "c:\Projects\autogen\.devcontainer\swarm",
+                "c:\Projects\autogen\.toolbox\docker",
+                "c:\Projects\autogen\docs"
+            ) -Tags "smoll2,LLM,Performance,RAMDisk"
+        }
         "All" {
             return New-DirTagGroup -Name "All" -Description "All DIR.TAG files" -DirectoryPatterns @(
                 "c:\Projects\autogen\**"
@@ -724,4 +731,6 @@ function Get-StdDirTagGroup {
 # Export module members
 Export-ModuleMember -Function New-DirTagGroup, Get-GPUConfigurationDirTagGroup, Invoke-DirTagGroupOperation,
                              Sync-GPURelatedDirTags, Add-GPUTaskToDirTags, Update-GPUTaskStatus,
-                             Remove-GPUTaskFromDirTags, Test-GPUDirTags, Get-StdDirTagGroup
+                             Remove-GPUTaskFromDirTags, Test-GPUDirTags, Get-StdDirTagGroup,
+                             Get-Smoll2ConfigurationDirTagGroup, Sync-Smoll2RelatedDirTags,
+                             Update-Smoll2PrecompiledCachedFactoryTasks
