@@ -9,7 +9,13 @@ param (
     [switch]$WhatIf,
 
     [Parameter(Mandatory = $false)]
-    [switch]$Verbose
+    [switch]$Verbose,
+
+    [Parameter(Mandatory = $false)]
+    [switch]$IncludeSmoll2,
+
+    [Parameter(Mandatory = $false)]
+    [switch]$UpdateStatus
 )
 
 # Set VerbosePreference based on the Verbose switch
@@ -104,6 +110,16 @@ $commonGpuTasks = @(
     "Implement auto-scaling based on GPU usage metrics"
 )
 
+# Add smoll2-specific tasks if requested
+if ($IncludeSmoll2) {
+    $commonGpuTasks += @(
+        "Configure smoll2:latest LLM on RAM disk for high-performance inference",
+        "Implement memory optimization for smoll2 model with GPU acceleration",
+        "Set up performance monitoring for smoll2 model inference",
+        "Create RAM disk configuration for optimal model loading performance"
+    )
+}
+
 $gpuGroup = Get-GPUConfigurationDirTagGroup
 $directories = $gpuGroup.ResolveDirectories()
 
@@ -149,7 +165,34 @@ if ($missingTasks.Count -gt 0) {
         }
     }
 } else {
-    Write-Host "All common GPU tasks are well represented across directories." -ForegroundColor Green
+    Write-Host "All common GPU tasks are well-represented across directories." -ForegroundColor Green
+}
+
+# Update task statuses if requested
+if ($UpdateStatus -and -not $WhatIf) {
+    Write-Host "Updating task statuses for smoll2 implementation..." -ForegroundColor Cyan
+
+    # Define task statuses
+    $taskStatuses = @{
+        "Configure smoll2:latest LLM on RAM disk for high-performance inference" = "DONE"
+        "Implement memory optimization for smoll2 model with GPU acceleration" = "DONE"
+        "Set up performance monitoring for smoll2 model inference" = "DONE"
+        "Create RAM disk configuration for optimal model loading performance" = "DONE"
+        "Configure NVIDIA GPU passthrough for Docker containers" = "DONE"
+        "Implement GPU resource allocation for AI model inference" = "DONE"
+        "Set up container health checks for GPU availability" = "DONE"
+    }
+
+    # Update each task status
+    foreach ($task in $taskStatuses.Keys) {
+        $status = $taskStatuses[$task]
+        $updateResults = Update-GPUTaskStatus -TaskDescription $task -Status $status -Force
+
+        $updatedCount = ($updateResults | Where-Object { $_.Success -and $_.Message -match "Updated" }).Count
+        if ($updatedCount -gt 0) {
+            Write-Host "  - Updated status of '$task' to [$status] in $updatedCount directories" -ForegroundColor Green
+        }
+    }
 }
 
 Write-Host "GPU DIR.TAG synchronization completed!" -ForegroundColor Green
