@@ -263,3 +263,78 @@ function Optimize-DockerConfiguration {
         return $false
     }
 }
+
+# Retrieves problem configuration mapping from XML file
+function Get-ProblemConfig {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][string]$ConfigPath
+    )
+    if (-not (Test-Path -Path $ConfigPath -PathType Leaf)) {
+        return $null
+    }
+    try {
+        $xml = [xml](Get-Content -Path $ConfigPath -Raw)
+        $mappings = @()
+        foreach ($pt in $xml.dir_tag_configuration.problem_mapping.problem_type) {
+            $mappings += [PSCustomObject]@{
+                name   = $pt.name
+                status = $pt.status
+            }
+        }
+        return @{ problem_type = $mappings }
+    }
+    catch {
+        Write-Warning "Failed to parse problem config: $_"
+        return $null
+    }
+}
+
+# Scans a directory for common problems (syntax errors, trailing whitespace)
+function Get-DirectoryProblems {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][string]$DirectoryPath,
+        [string]$ProblemTypesFilter
+    )
+    $results = @()
+    if (-not (Test-Path -Path $DirectoryPath -PathType Container)) {
+        return @()
+    }
+    # PowerShell syntax errors
+    Get-ChildItem -Path $DirectoryPath -Filter '*.ps1' -Recurse -File | ForEach-Object {
+        $file = $_.FullName
+        $tokens = $null; $errors = @()
+        [void][System.Management.Automation.Language.Parser]::ParseFile($file, [ref]$tokens, [ref]$errors)
+        foreach ($err in $errors) {
+            $obj = [PSCustomObject]@{
+                FilePath = $file
+                Type     = 'error'
+                RuleId   = 'ParsingError'
+                Message  = $err.Message
+            }
+            $results += $obj
+        }
+    }
+    # Trailing whitespace in text files
+    Get-ChildItem -Path $DirectoryPath -Filter '*.txt' -Recurse -File | ForEach-Object {
+        $file = $_.FullName
+        Get-Content -Path $file | ForEach-Object -Begin {$ln=0} -Process {
+            $ln++
+            if ($_ -match '\s+$') {
+                $results += [PSCustomObject]@{
+                    FilePath = $file
+                    Type     = 'warning'
+                    RuleId   = 'TrailingWhitespace'
+                    Message  = "Trailing whitespace on line $ln"
+                }
+            }
+        }
+    }
+    # Apply filter by Type if provided
+    if ($ProblemTypesFilter) {
+        $regex = $ProblemTypesFilter
+        $results = $results | Where-Object { $_.Type -match $regex }
+    }
+    return $results
+}

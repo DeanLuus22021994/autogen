@@ -27,6 +27,13 @@ if (-not (Test-Path $problemModulePath)) {
 }
 Import-Module $problemModulePath -Force
 
+# Import DirTag-Problem integration module for Get-DirectoryProblems and Update-DirTagFromProblems
+ $integrationModulePath = Join-Path -Path $PSScriptRoot -ChildPath '..\modules\DirTagProblemIntegration.psm1'
+ if (-not (Test-Path $integrationModulePath)) {
+     throw "DirTagProblemIntegration.psm1 not found at $integrationModulePath. Ensure the module exists in .toolbox/modules/."
+ }
+ Import-Module $integrationModulePath -Force
+
 # Determine repository root if not provided
 if (-not $RootPath) {
     $RootPath = Split-Path -Path $PSScriptRoot -Parent
@@ -87,10 +94,11 @@ foreach ($dir in $Directories) {
     if ($WhatIf) {
         Write-Host "  WhatIf: Would update DIR.TAG in $dir based on problems" -ForegroundColor Cyan
     }
-    else {
-        $result = Update-DirTagFromProblems -DirectoryPath $dir -Force:$Force
+        else {
+            # Update DIR.TAG from problems
+            $result = Update-DirTagStatusFromProblems -DirectoryPath $dir -Force:$Force
 
-        if ($result) {
+            if ($result) {
             Write-Host "  Updated DIR.TAG in $dir successfully" -ForegroundColor Green
         }
         else {

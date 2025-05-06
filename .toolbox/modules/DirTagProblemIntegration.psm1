@@ -133,6 +133,17 @@ function Update-DirTagStatusFromProblems {
     return $true
 }
 
+# Alias for update to match naming in tests and scripts
+function Update-DirTagFromProblems {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)] [string]$DirectoryPath,
+        [Parameter(Mandatory=$false)] [switch]$Force,
+        [Parameter(Mandatory=$false)] [switch]$Recurse
+    )
+    return Update-DirTagStatusFromProblems -DirectoryPath $DirectoryPath -Force:$Force -Recurse:$Recurse
+}
+
 function Get-DirTagProblemSummary {
     [CmdletBinding()]
     param (
