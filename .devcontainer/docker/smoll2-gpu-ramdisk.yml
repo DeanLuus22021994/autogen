@@ -1,0 +1,63 @@
+# Docker Compose configuration for smoll2 LLM with GPU acceleration and RAM disk
+version: '3.8'
+
+services:
+  # smoll2 service with GPU acceleration and RAM disk for high-performance inference
+  smoll2-gpu:
+    image: ${SMOLL2_IMAGE:-ai/smoll2:latest}
+    container_name: autogen-smoll2-gpu
+    volumes:
+      - /mnt/ramdisk:/opt/autogen/models
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - MODEL_RUNNER_ENDPOINT=http://model-runner.docker.internal/engines/v1/chat/completions
+      - MODEL_PATH=/opt/autogen/models/smoll2
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - CUDA_VISIBLE_DEVICES=0
+      # RAM configuration for model performance
+      - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128
+      - OMP_NUM_THREADS=8
+      - MKL_NUM_THREADS=8
+      - RAM_DISK_ENABLED=true
+      - RAM_DISK_PATH=/mnt/ramdisk
+      # Performance tuning
+      - GPU_MEMORY_FRACTION=0.9
+      - KV_CACHE_PRECISION=fp16
+      - MODEL_OPTIMIZATION=high_throughput
+
+    # Resource limits and GPU configuration
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu, compute, utility]
+        limits:
+          cpus: '4'
+          memory: 8G
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+
+    # Health check to ensure GPU is available
+    healthcheck:
+      test: ["CMD", "nvidia-smi"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    # Network configuration
+    networks:
+      - autogen-network
+
+    # Add extra host for Docker Model Runner
+    extra_hosts:
+      - "model-runner.docker.internal:host-gateway"
+
+# Network configuration
+networks:
+  autogen-network:
+    driver: bridge

@@ -1,0 +1,98 @@
+# Docker Swarm configuration for smoll2 LLM with GPU acceleration and RAM disk
+version: '3.8'
+
+# Import GPU configuration
+x-gpu-options: &gpu-options
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: 1
+            capabilities: [gpu, compute, utility]
+      limits:
+        cpus: '4'
+        memory: 8G
+    placement:
+      constraints:
+        - "node.labels.gpu==true"
+    restart_policy:
+      condition: on-failure
+      max_attempts: 3
+  environment:
+    - NVIDIA_VISIBLE_DEVICES=all
+    - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    - CUDA_VISIBLE_DEVICES=0
+    - GPU_MEMORY_FRACTION=0.9
+    - KV_CACHE_PRECISION=fp16
+    - MODEL_OPTIMIZATION=high_throughput
+
+# Import RAM disk configuration
+x-ramdisk-options: &ramdisk-options
+  volumes:
+    - type: bind
+      source: /mnt/ramdisk
+      target: /opt/autogen/models
+  environment:
+    - MODEL_PATH=/opt/autogen/models/smoll2
+    - RAM_DISK_ENABLED=true
+    - RAM_DISK_PATH=/mnt/ramdisk
+    - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128
+    - OMP_NUM_THREADS=8
+    - MKL_NUM_THREADS=8
+
+services:
+  # smoll2 service with GPU acceleration and RAM disk for high-performance inference
+  smoll2-service:
+    <<: [*gpu-options, *ramdisk-options]
+    image: ${SMOLL2_IMAGE:-ai/smoll2:latest}
+    healthcheck:
+      test: ["CMD", "nvidia-smi", "&&", "test", "-d", "/opt/autogen/models/smoll2"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - autogen-network
+
+  # API service for model inference
+  smoll2-api:
+    image: ${API_IMAGE:-autogen/model-api:latest}
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - "node.role==manager"
+    ports:
+      - "8080:8080"
+    environment:
+      - MODEL_SERVICE=smoll2-service
+      - MODEL_API_KEY=${MODEL_API_KEY:-default-dev-key}
+    networks:
+      - autogen-network
+    depends_on:
+      - smoll2-service
+
+  # Monitoring service for GPU and model performance
+  model-monitor:
+    image: ${MONITOR_IMAGE:-autogen/model-monitor:latest}
+    deploy:
+      placement:
+        constraints:
+          - "node.role==manager"
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+    environment:
+      - MONITORED_SERVICES=smoll2-service
+    networks:
+      - autogen-network
+
+# Network configuration
+networks:
+  autogen-network:
+    driver: overlay
+    attachable: true
