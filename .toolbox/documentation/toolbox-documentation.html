@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>AutoGen Toolbox Documentation</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
+        h1, h2, h3 { color: #333; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .tag { background-color: #e7f3fe; border-radius: 4px; padding: 2px 6px; margin-right: 4px; }
+        .timestamp { color: #666; font-style: italic; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <h1>AutoGen Toolbox Documentation</h1>
+    <div class='timestamp'>Generated on: 2025-05-06 02:35:37 | Version: 1.0.0</div>
+    <p>
+      Catalog of toolbox scripts and utilities for the AutoGen project.
+      Used for discovery and documentation of available tools.
+    </p>
+
+    <h2>Table of Contents</h2>
+    <ul>
+        <li><a href='#docker'>Docker Tools</a></li>
+        <li><a href='#github'>GitHub Tools</a></li>
+        <li><a href='#markdown'>Markdown Tools</a></li>
+        <li><a href='#environment'>Environment Tools</a></li>
+        <li><a href='#security'>Security Tools</a></li>
+        <li><a href='#config'>Configuration Tools</a></li>
+    </ul>
+
+    <h2>Categories and Tools</h2>
+
+    <h3 id='docker'>Docker Tools</h3>
+    <p>Tools for Docker integration and management</p>
+    <table>
+        <tr>
+            <th>Tool</th>
+            <th>Description</th>
+            <th>Tags</th>
+        </tr>
+        <tr>
+            <td><a href='.toolbox/docker/Fix-DockerModelIntegration.ps1'>Fix-DockerModelIntegration.ps1</a></td>
+            <td>Fixes issues with Docker Model Runner integration</td>
+            <td><span class='tag'>docker</span> <span class='tag'>model-runner</span> <span class='tag'>integration</span> <span class='tag'>xml</span> </td>
+        </tr>
+        <tr>
+            <td><a href='.toolbox/docker/Update-DockerExtensionModelRunner.ps1'>Update-DockerExtensionModelRunner.ps1</a></td>
+            <td>Updates Docker extension for Model Runner compatibility</td>
+            <td><span class='tag'>docker</span> <span class='tag'>model-runner</span> <span class='tag'>extension</span> </td>
+        </tr>
+        <tr>
+            <td><a href='.toolbox/docker/Update-DockerExtension.ps1'>Update-DockerExtension.ps1</a></td>
+            <td>Updates general Docker extension components</td>
+            <td><span class='tag'>docker</span> <span class='tag'>extension</span> </td>
+        </tr>
+    </table>
+
+    <h3 id='github'>GitHub Tools</h3>
+    <p>Tools for GitHub workflows and integration</p>
+    <table>
+        <tr>
+            <th>Tool</th>
+            <th>Description</th>
+            <th>Tags</th>
+        </tr>
+        <tr>
+            <td><a href='.toolbox/github/Fix-GitHubWorkflows.ps1'>Fix-GitHubWorkflows.ps1</a></td>
+            <td>Fixes issues with GitHub workflow files</td>
+            <td><span class='tag'>github</span> <span class='tag'>workflows</span> <span class='tag'>yaml</span> </td>
+        </tr>
+        <tr>
+            <td><a href='.toolbox/github/Setup-GitHubSSH.ps1'>Setup-GitHubSSH.ps1</a></td>
+            <td>Sets up SSH access for GitHub</td>
+            <td><span class='tag'>github</span> <span class='tag'>ssh</span> <span class='tag'>security</span> </td>
+        </tr>
+        <tr>
+            <td><a href='.toolbox/github/Setup-GitSecureEnvironment.ps1'>Setup-GitSecureEnvironment.ps1</a></td>
+            <td>Configures a secure Git environment</td>
+            <td><span class='tag'>github</span> <span class='tag'>security</span> <span class='tag'>git</span> </td>
+        </tr>
+        <tr>
+            <td><a href='.toolbox/github/Resolve-PushBlockedByToken.ps1'>Resolve-PushBlockedByToken.ps1</a></td>
+            <td>Resolves issues with push operations blocked by token</td>
+            <td><span class='tag'>github</span> <span class='tag'>token</span> <span class='tag'>authentication</span> </td>
+        </tr>
+    </table>
+
+    <h3 id='markdown'>Markdown Tools</h3>
+    <p>Tools for markdown linting and fixing</p>
+    <table>
+        <tr>
+            <th>Tool</th>
+            <th>Description</th>
+            <th>Tags</th>
+        </tr>
+        <tr>
+            <td><a href='.toolbox/markdown/Add-MarkdownRulesFunction.ps1'>Add-MarkdownRulesFunction.ps1</a></td>
+            <td>Adds custom functions for markdown rule validation</td>
+            <td><span class='tag'>markdown</span> <span class='tag'>linting</span> <span class='tag'>rules</span> </td>
+        </tr>
+    </table>
+
+    <h3 id='environment'>Environment Tools</h3>
+    <p>Tools for environment setup and validation</p>
+    <table>
+        <tr>
+            <th>Tool</th>
+            <th>Description</th>
+            <th>Tags</th>
+        </tr>
+        <tr>
+            <td><a href='.toolbox/environment/Setup-AutogenEnvironment.ps1'>Setup-AutogenEnvironment.ps1</a></td>
+            <td>Sets up the AutoGen development environment</td>
+            <td><span class='tag'>environment</span> <span class='tag'>setup</span> </td>
+        </tr>
+        <tr>
+            <td><a href='.toolbox/environment/Reset-VSCodeEnvironment.ps1'>Reset-VSCodeEnvironment.ps1</a></td>
+            <td>Resets the VS Code environment settings</td>
+            <td><span class='tag'>vscode</span> <span class='tag'>environment</span> <span class='tag'>reset</span> </td>
+        </tr>
+    </table>
+
+    <h3 id='security'>Security Tools</h3>
+    <p>Tools for security management</p>
+    <table>
+        <tr>
+            <th>Tool</th>
+            <th>Description</th>
+            <th>Tags</th>
+        </tr>
+        <tr>
+            <td><a href='.toolbox/security/Validate-EnvSecrets.ps1'>Validate-EnvSecrets.ps1</a></td>
+            <td>Validates environment secrets</td>
+            <td><span class='tag'>security</span> <span class='tag'>secrets</span> <span class='tag'>environment</span> </td>
+        </tr>
+        <tr>
+            <td><a href='.toolbox/security/Verify-GitHubSecrets.ps1'>Verify-GitHubSecrets.ps1</a></td>
+            <td>Verifies GitHub secrets are configured correctly</td>
+            <td><span class='tag'>security</span> <span class='tag'>github</span> <span class='tag'>secrets</span> </td>
+        </tr>
+    </table>
+
+    <h3 id='config'>Configuration Tools</h3>
+    <p>Tools for configuration management</p>
+    <table>
+        <tr>
+            <th>Tool</th>
+            <th>Description</th>
+            <th>Tags</th>
+        </tr>
+        <tr>
+            <td><a href='.toolbox/config/Commit-SafeVsCodeConfig.ps1'>Commit-SafeVsCodeConfig.ps1</a></td>
+            <td>Commits VS Code configuration files safely</td>
+            <td><span class='tag'>vscode</span> <span class='tag'>config</span> <span class='tag'>git</span> </td>
+        </tr>
+    </table>
+</body>
+</html>
+

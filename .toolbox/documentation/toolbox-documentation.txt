@@ -1,0 +1,125 @@
+AUTOGEN TOOLBOX DOCUMENTATION
+=============================
+
+Generated on: 2025-05-06 02:35:38
+Version: 1.0.0
+
+
+      Catalog of toolbox scripts and utilities for the AutoGen project.
+      Used for discovery and documentation of available tools.
+    
+
+
+DOCKER TOOLS
+------------
+
+Tools for Docker integration and management
+
+Tools:
+------
+
+* Fix-DockerModelIntegration.ps1
+  Description: Fixes issues with Docker Model Runner integration
+  Path: .toolbox/docker/Fix-DockerModelIntegration.ps1
+  Tags: docker,model-runner,integration,xml
+
+* Update-DockerExtensionModelRunner.ps1
+  Description: Updates Docker extension for Model Runner compatibility
+  Path: .toolbox/docker/Update-DockerExtensionModelRunner.ps1
+  Tags: docker,model-runner,extension
+
+* Update-DockerExtension.ps1
+  Description: Updates general Docker extension components
+  Path: .toolbox/docker/Update-DockerExtension.ps1
+  Tags: docker,extension
+
+GITHUB TOOLS
+------------
+
+Tools for GitHub workflows and integration
+
+Tools:
+------
+
+* Fix-GitHubWorkflows.ps1
+  Description: Fixes issues with GitHub workflow files
+  Path: .toolbox/github/Fix-GitHubWorkflows.ps1
+  Tags: github,workflows,yaml
+
+* Setup-GitHubSSH.ps1
+  Description: Sets up SSH access for GitHub
+  Path: .toolbox/github/Setup-GitHubSSH.ps1
+  Tags: github,ssh,security
+
+* Setup-GitSecureEnvironment.ps1
+  Description: Configures a secure Git environment
+  Path: .toolbox/github/Setup-GitSecureEnvironment.ps1
+  Tags: github,security,git
+
+* Resolve-PushBlockedByToken.ps1
+  Description: Resolves issues with push operations blocked by token
+  Path: .toolbox/github/Resolve-PushBlockedByToken.ps1
+  Tags: github,token,authentication
+
+MARKDOWN TOOLS
+--------------
+
+Tools for markdown linting and fixing
+
+Tools:
+------
+
+* Add-MarkdownRulesFunction.ps1
+  Description: Adds custom functions for markdown rule validation
+  Path: .toolbox/markdown/Add-MarkdownRulesFunction.ps1
+  Tags: markdown,linting,rules
+
+ENVIRONMENT TOOLS
+-----------------
+
+Tools for environment setup and validation
+
+Tools:
+------
+
+* Setup-AutogenEnvironment.ps1
+  Description: Sets up the AutoGen development environment
+  Path: .toolbox/environment/Setup-AutogenEnvironment.ps1
+  Tags: environment,setup
+
+* Reset-VSCodeEnvironment.ps1
+  Description: Resets the VS Code environment settings
+  Path: .toolbox/environment/Reset-VSCodeEnvironment.ps1
+  Tags: vscode,environment,reset
+
+SECURITY TOOLS
+--------------
+
+Tools for security management
+
+Tools:
+------
+
+* Validate-EnvSecrets.ps1
+  Description: Validates environment secrets
+  Path: .toolbox/security/Validate-EnvSecrets.ps1
+  Tags: security,secrets,environment
+
+* Verify-GitHubSecrets.ps1
+  Description: Verifies GitHub secrets are configured correctly
+  Path: .toolbox/security/Verify-GitHubSecrets.ps1
+  Tags: security,github,secrets
+
+CONFIGURATION TOOLS
+-------------------
+
+Tools for configuration management
+
+Tools:
+------
+
+* Commit-SafeVsCodeConfig.ps1
+  Description: Commits VS Code configuration files safely
+  Path: .toolbox/config/Commit-SafeVsCodeConfig.ps1
+  Tags: vscode,config,git
+
