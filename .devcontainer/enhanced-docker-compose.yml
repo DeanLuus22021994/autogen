@@ -1,3 +1,5 @@
+# Docker Compose configuration for AutoGen Enhanced DevContainer
+# with Docker Model Runner integration and persistent volumes
 version: '3.8'
 
 services:
@@ -34,7 +36,16 @@ services:
         reservations:
           memory: 1G
 
+    # Health check for Docker Model Runner connectivity
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://model-runner.docker.internal/engines"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
 volumes:
+  # Persistent volumes for fast access to precompiled packages
   python-packages:
     name: autogen-python-packages
   dotnet-packages:

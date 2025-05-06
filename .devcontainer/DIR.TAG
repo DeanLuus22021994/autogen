@@ -16,8 +16,8 @@ description: |
   sprint development cycles. The container is configured for permanent
   operation with precompiled code stored in volumes for optimal performance.
 
-# Docker Model Runner Integration
-- Integration with Docker Desktop 4.40+ for local AI models
-- Support for models: ai/mistral, ai/mistral-nemo, ai/mxbai-embed-large, ai/smollm2
-- Container networking configured for Model Runner access
-- Persistent volume for model storage to avoid redownloading
+  Docker Model Runner Integration:
+  - Integration with Docker Desktop 4.40+ for local AI models
+  - Support for models: ai/mistral, ai/mistral-nemo, ai/mxbai-embed-large, ai/smollm2
+  - Container networking configured for Model Runner access
+  - Persistent volume for model storage to avoid redownloading

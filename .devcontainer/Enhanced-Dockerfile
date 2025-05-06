@@ -76,55 +76,55 @@ RUN ln -sf /workspaces/autogen/python/.venv /opt/python-env \
     && ln -sf /workspaces/autogen/dotnet/artifacts /opt/dotnet-artifacts
 
 # Create script to check Docker Model Runner with proper error handling
-RUN echo '#!/bin/bash\n\
-set -e\n\
-\n\
-echo "Checking Docker Model Runner availability..."\n\
-\n\
-# First check network connectivity to Docker host\n\
-if ! ping -c 1 -W 2 host.docker.internal > /dev/null 2>&1; then\n\
-  echo "❌ Cannot reach host.docker.internal - check Docker network configuration"\n\
-  echo "This is required for Docker Model Runner to function properly."\n\
-  exit 1\n\
-fi\n\
-\n\
-# Check if the Model Runner endpoint is accessible\n\
-if curl -s --head --fail --max-time 5 "http://model-runner.docker.internal/engines" > /dev/null; then\n\
-  echo "✅ Docker Model Runner is accessible"\n\
-  \n\
-  # Get available models\n\
-  MODELS=$(curl -s --max-time 5 "http://model-runner.docker.internal/engines")\n\
-  if [ $? -eq 0 ] && [ -n "$MODELS" ]; then\n\
-    echo "Available models:"\n\
-    echo "$MODELS" | jq -r ".[] | .id" 2>/dev/null || echo "$MODELS"\n\
-  else\n\
-    echo "⚠️ Could not retrieve models list. Docker Model Runner is running but may not have models."\n\
-    echo "Run the following to pull a model:"\n\
-    echo "  docker model pull ai/mistral"\n\
-  fi\n\
-else\n\
-  echo "❌ Docker Model Runner is not accessible."\n\
-  echo "Please ensure:"\n\
-  echo "  1. Docker Desktop 4.40+ is running"\n\
-  echo "  2. Model Runner is enabled in Docker Desktop settings"\n\
-  echo "  3. Network connectivity to Docker host is working"\n\
-  echo "  4. No firewall is blocking connections to model-runner.docker.internal"\n\
-fi\n\
-\n\
-# Check Docker version\n\
-if command -v docker &> /dev/null; then\n\
-  DOCKER_VERSION=$(docker version --format "{{.Server.Version}}" 2>/dev/null || docker --version | cut -d" " -f3 | sed "s/,//")\n\
-  echo "Docker version: $DOCKER_VERSION"\n\
-  if [[ "$DOCKER_VERSION" =~ ^([0-9]+)\.([0-9]+) ]]; then\n\
-    MAJOR=${BASH_REMATCH[1]}\n\
-    MINOR=${BASH_REMATCH[2]}\n\
-    if (( MAJOR < 4 || ( MAJOR == 4 && MINOR < 40 ) )); then\n\
-      echo "⚠️ Warning: Docker Model Runner requires Docker Desktop 4.40+"\n\
-    fi\n\
-  fi\n\
-else\n\
-  echo "⚠️ Docker CLI not available - cannot check Docker version"\n\
-fi\n\
+RUN echo '#!/bin/bash
+set -e
+
+echo "Checking Docker Model Runner availability..."
+
+# First check network connectivity to Docker host
+if ! ping -c 1 -W 2 host.docker.internal > /dev/null 2>&1; then
+  echo "❌ Cannot reach host.docker.internal - check Docker network configuration"
+  echo "This is required for Docker Model Runner to function properly."
+  exit 1
+fi
+
+# Check if the Model Runner endpoint is accessible
+if curl -s --head --fail --max-time 5 "http://model-runner.docker.internal/engines" > /dev/null; then
+  echo "✅ Docker Model Runner is accessible"
+
+  # Get available models
+  MODELS=$(curl -s --max-time 5 "http://model-runner.docker.internal/engines")
+  if [ $? -eq 0 ] && [ -n "$MODELS" ]; then
+    echo "Available models:"
+    echo "$MODELS" | jq -r ".[] | .id" 2>/dev/null || echo "$MODELS"
+  else
+    echo "⚠️ Could not retrieve models list. Docker Model Runner is running but may not have models."
+    echo "Run the following to pull a model:"
+    echo "  docker model pull ai/mistral"
+  fi
+else
+  echo "❌ Docker Model Runner is not accessible."
+  echo "Please ensure:"
+  echo "  1. Docker Desktop 4.40+ is running"
+  echo "  2. Model Runner is enabled in Docker Desktop settings"
+  echo "  3. Network connectivity to Docker host is working"
+  echo "  4. No firewall is blocking connections to model-runner.docker.internal"
+fi
+
+# Check Docker version
+if command -v docker &> /dev/null; then
+  DOCKER_VERSION=$(docker version --format "{{.Server.Version}}" 2>/dev/null || docker --version | cut -d" " -f3 | sed "s/,//")
+  echo "Docker version: $DOCKER_VERSION"
+  if [[ "$DOCKER_VERSION" =~ ^([0-9]+)\.([0-9]+) ]]; then
+    MAJOR=${BASH_REMATCH[1]}
+    MINOR=${BASH_REMATCH[2]}
+    if (( MAJOR < 4 || ( MAJOR == 4 && MINOR < 40 ) )); then
+      echo "⚠️ Warning: Docker Model Runner requires Docker Desktop 4.40+"
+    fi
+  fi
+else
+  echo "⚠️ Docker CLI not available - cannot check Docker version"
+fi
 ' > /usr/local/bin/check-model-runner \
     && chmod +x /usr/local/bin/check-model-runner
 
@@ -133,60 +133,60 @@ COPY model-runner-check.sh /usr/local/bin/model-runner-check
 RUN chmod +x /usr/local/bin/model-runner-check
 
 # Add Docker helper functions to ~/.bashrc for Bash shell
-RUN echo '\n\
-# Docker Model Runner helper functions\n\
-model_pull() {\n\
-  docker model pull "$@"\n\
-}\n\
-model_run() {\n\
-  docker model run "$@"\n\
-}\n\
-model_ls() {\n\
-  docker model ls\n\
-}\n\
+RUN echo '
+# Docker Model Runner helper functions
+model_pull() {
+  docker model pull "$@"
+}
+model_run() {
+  docker model run "$@"
+}
+model_ls() {
+  docker model ls
+}
 ' >> /home/${USERNAME}/.bashrc
 
 # Add Docker helper functions to PowerShell profile
 RUN mkdir -p /home/${USERNAME}/.config/powershell && \
-    echo '\n\
-# Docker Model Runner helper functions\n\
-function Invoke-ModelPull { docker model pull $args }\n\
-function Invoke-ModelRun { docker model run $args }\n\
-function Invoke-ModelList { docker model ls }\n\
-\n\
-# Create aliases\n\
-New-Alias -Name model_pull -Value Invoke-ModelPull\n\
-New-Alias -Name model_run -Value Invoke-ModelRun\n\
-New-Alias -Name model_ls -Value Invoke-ModelList\n\
+    echo '
+# Docker Model Runner helper functions
+function Invoke-ModelPull { docker model pull $args }
+function Invoke-ModelRun { docker model run $args }
+function Invoke-ModelList { docker model ls }
+
+# Create aliases
+New-Alias -Name model_pull -Value Invoke-ModelPull
+New-Alias -Name model_run -Value Invoke-ModelRun
+New-Alias -Name model_ls -Value Invoke-ModelList
 ' > /home/${USERNAME}/.config/powershell/Microsoft.PowerShell_profile.ps1
 
 # Set up enhanced welcome message for Bash
-RUN echo '\n\
-echo ""\n\
-echo "🚀 Welcome to AutoGen Enhanced DevContainer with Docker Model Runner integration!"\n\
-echo ""\n\
-echo "📋 Quick commands:"\n\
-echo "  • check-model-runner     - Check Docker Model Runner availability"\n\
-echo "  • model-runner-check     - Comprehensive check for Docker Model Runner setup"\n\
-echo "  • model_pull MODEL_NAME  - Pull a model from Docker Model Runner"\n\
-echo "  • model_run MODEL_NAME   - Run a model from Docker Model Runner"\n\
-echo "  • model_ls               - List available models"\n\
-echo ""\n\
-echo "📋 Available models include:"\n\
-echo "  • ai/mistral              - Mistral base model"\n\
-echo "  • ai/mistral-nemo         - Mistral NeMo-enhanced model"\n\
-echo "  • ai/mxbai-embed-large    - MxbAI embedding model"\n\
-echo "  • ai/smollm2              - Smol LM2 model"\n\
-echo ""\n\
-echo "📋 Volumes and persistence:"\n\
-echo "  • Python packages: /workspaces/autogen/python/.venv (persistent)"\n\
-echo "  • .NET packages: /workspaces/autogen/dotnet/artifacts (persistent)"\n\
-echo "  • Model cache: /opt/autogen/models (persistent)"\n\
-echo ""\n\
-if [ ! -z "$INVOCATION_ID" ]; then\n\
-  # Only run this check on first login to avoid performance impact\n\
-  check-model-runner\n\
-fi\n\
+RUN echo '
+echo ""
+echo "🚀 Welcome to AutoGen Enhanced DevContainer with Docker Model Runner integration!"
+echo ""
+echo "📋 Quick commands:"
+echo "  • check-model-runner     - Check Docker Model Runner availability"
+echo "  • model-runner-check     - Comprehensive check for Docker Model Runner setup"
+echo "  • model_pull MODEL_NAME  - Pull a model from Docker Model Runner"
+echo "  • model_run MODEL_NAME   - Run a model from Docker Model Runner"
+echo "  • model_ls               - List available models"
+echo ""
+echo "📋 Available models include:"
+echo "  • ai/mistral              - Mistral base model"
+echo "  • ai/mistral-nemo         - Mistral NeMo-enhanced model"
+echo "  • ai/mxbai-embed-large    - MxbAI embedding model"
+echo "  • ai/smollm2              - Smol LM2 model"
+echo ""
+echo "📋 Volumes and persistence:"
+echo "  • Python packages: /workspaces/autogen/python/.venv (persistent)"
+echo "  • .NET packages: /workspaces/autogen/dotnet/artifacts (persistent)"
+echo "  • Model cache: /opt/autogen/models (persistent)"
+echo ""
+if [ ! -z "$INVOCATION_ID" ]; then
+  # Only run this check on first login to avoid performance impact
+  check-model-runner
+fi
 ' >> /home/${USERNAME}/.bashrc
 
 # Set ownership for the user

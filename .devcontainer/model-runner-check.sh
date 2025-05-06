@@ -1,5 +1,4 @@
 #!/bin/bash
-# filepath: c:\Projects\autogen\.devcontainer\model-runner-check.sh
 # Comprehensive Docker Model Runner validation script
 # For AutoGen enhanced DevContainer
 
