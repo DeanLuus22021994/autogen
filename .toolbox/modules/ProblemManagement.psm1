@@ -1,400 +1,159 @@
-# PowerShell module for managing problems and integrating with DIR.TAG files
-
-function Get-ProblemConfig {
+function Optimize-DockerConfiguration {
     [CmdletBinding()]
-    param (
+    param(
         [Parameter(Mandatory = $false)]
-        [string]$ConfigPath = (Join-Path -Path (Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent) -ChildPath ".config\dir-tag\dir-tag-config.xml")
-    )
-
-    if (-not (Test-Path -Path $ConfigPath)) {
-        Write-Warning "Problem configuration file not found at $ConfigPath"
-        return $null
-    }
-
-    try {
-        [xml]$config = Get-Content -Path $ConfigPath -Raw
-        return $config.dir_tag_configuration.problem_mapping
-    }
-    catch {
-        Write-Error "Failed to parse problem configuration: $_"
-        return $null
-    }
-}
-
-function Get-DirectoryProblems {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)]
-        [string]$DirectoryPath,
+        [switch]$EnableGPU,
 
         [Parameter(Mandatory = $false)]
-        [string]$ProblemTypesFilter
+        [switch]$Force,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$PreserveExisting,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateRange(1, 100)]
+        [int]$MaxConcurrentDownloads = 50,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateRange(1, 100)]
+        [int]$MaxConcurrentUploads = 50,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateRange(10, 1000)]
+        [string]$DefaultKeepStorage = "250GB"
     )
 
-    # Check if directory exists
-    if (-not (Test-Path -Path $DirectoryPath -PathType Container)) {
-        Write-Warning "Directory not found: $DirectoryPath"
-        return @()
+    $daemonConfigPath = "$env:USERPROFILE\.docker\daemon.json"
+    $configDir = Split-Path -Path $daemonConfigPath -Parent
+
+    # Create directory if it doesn't exist
+    if (-not (Test-Path $configDir)) {
+        New-Item -Path $configDir -ItemType Directory -Force | Out-Null
     }
 
-    # Get all files in the directory (recursively)
-    $files = Get-ChildItem -Path $DirectoryPath -Recurse -File
-
-    $problems = @()
-
-    foreach ($file in $files) {
-        # Skip certain file types
-        if ($file.Extension -in @('.exe', '.dll', '.pdb', '.obj', '.bin')) {
-            continue
+    # Load existing configuration or create new one
+    if (Test-Path $daemonConfigPath) {
+        try {
+            $config = Get-Content -Path $daemonConfigPath -Raw | ConvertFrom-Json
         }
-
-        # Check for problems based on file type
-        switch -Regex ($file.Extension) {
-            # PowerShell files
-            '\.ps1|\.psm1' {
-                $scriptProblems = Get-PowerShellProblems -FilePath $file.FullName
-                $problems += $scriptProblems
-            }
-            # C# files
-            '\.cs' {
-                $csharpProblems = Get-CSharpProblems -FilePath $file.FullName
-                $problems += $csharpProblems
-            }
-            # Python files
-            '\.py' {
-                $pythonProblems = Get-PythonProblems -FilePath $file.FullName
-                $problems += $pythonProblems
-            }
-            # Markdown files
-            '\.md' {
-                $markdownProblems = Get-MarkdownProblems -FilePath $file.FullName
-                $problems += $markdownProblems
-            }
-            # Default for other file types
-            default {
-                $genericProblems = Get-GenericFileProblems -FilePath $file.FullName
-                $problems += $genericProblems
-            }
+        catch {
+            Write-Warning "Invalid daemon.json file. Creating a new one."
+            $config = [PSCustomObject]@{}
         }
     }
-
-    # Filter by problem type if specified
-    if ($ProblemTypesFilter) {
-        $problems = $problems | Where-Object { $_.Type -match $ProblemTypesFilter }
+    else {
+        $config = [PSCustomObject]@{}
     }
 
-    return $problems
-}
+    $modified = $false
 
-function Get-PowerShellProblems {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)]
-        [string]$FilePath
-    )
+    # Configure Model Runner settings
+    if (-not (Get-Member -InputObject $config -Name "model-runner" -MemberType Properties)) {
+        Add-Member -InputObject $config -MemberType NoteProperty -Name "model-runner" -Value @{
+            "enabled" = $true
+            "port" = 6000
+        }
+        $modified = $true
+    }
 
-    $problems = @()
+    # Configure experimental features
+    if (-not (Get-Member -InputObject $config -Name "experimental" -MemberType Properties)) {
+        Add-Member -InputObject $config -Name "experimental" -MemberType NoteProperty -Value $true
+        $modified = $true
+    }
 
-    try {
-        # Use PSScriptAnalyzer if available
-        if (Get-Module -ListAvailable -Name PSScriptAnalyzer) {
-            $scriptAnalyzerProblems = Invoke-ScriptAnalyzer -Path $FilePath -WarningAction SilentlyContinue
+    # Configure BuildKit
+    if (-not (Get-Member -InputObject $config -Name "features" -MemberType Properties)) {
+        Add-Member -InputObject $config -MemberType NoteProperty -Name "features" -Value @{
+            "buildkit" = $true
+        }
+        $modified = $true
+    }
+    elseif (-not (Get-Member -InputObject $config.features -Name "buildkit" -MemberType Properties)) {
+        Add-Member -InputObject $config.features -MemberType NoteProperty -Name "buildkit" -Value $true
+        $modified = $true
+    }
 
-            foreach ($problem in $scriptAnalyzerProblems) {
-                $problems += [PSCustomObject]@{
-                    FilePath = $FilePath
-                    Line = $problem.Line
-                    Column = $problem.Column
-                    Type = switch ($problem.Severity) {
-                        'Error' { 'error' }
-                        'Warning' { 'warning' }
-                        'Information' { 'info' }
-                        default { 'info' }
-                    }
-                    Message = $problem.Message
-                    RuleId = $problem.RuleName
+    # Configure Builder GC
+    if (-not (Get-Member -InputObject $config -Name "builder" -MemberType Properties)) {
+        Add-Member -InputObject $config -MemberType NoteProperty -Name "builder" -Value @{
+            "gc" = @{
+                "defaultKeepStorage" = $DefaultKeepStorage
+                "enabled" = $true
+            }
+        }
+        $modified = $true
+    }
+    elseif (-not (Get-Member -InputObject $config.builder -Name "gc" -MemberType Properties)) {
+        Add-Member -InputObject $config.builder -MemberType NoteProperty -Name "gc" -Value @{
+            "defaultKeepStorage" = $DefaultKeepStorage
+            "enabled" = $true
+        }
+        $modified = $true
+    }
+
+    # Configure DNS
+    if (-not (Get-Member -InputObject $config -Name "dns" -MemberType Properties)) {
+        Add-Member -InputObject $config -MemberType NoteProperty -Name "dns" -Value @(
+            "8.8.8.8",
+            "8.8.4.4",
+            "1.1.1.1"
+        )
+        $modified = $true
+    }
+
+    # Configure max concurrent downloads/uploads
+    if (-not (Get-Member -InputObject $config -Name "max-concurrent-downloads" -MemberType Properties)) {
+        Add-Member -InputObject $config -MemberType NoteProperty -Name "max-concurrent-downloads" -Value $MaxConcurrentDownloads
+        $modified = $true
+    }
+
+    if (-not (Get-Member -InputObject $config -Name "max-concurrent-uploads" -MemberType Properties)) {
+        Add-Member -InputObject $config -MemberType NoteProperty -Name "max-concurrent-uploads" -Value $MaxConcurrentUploads
+        $modified = $true
+    }
+
+    # Configure GPU support if requested
+    if ($EnableGPU) {
+        if (-not (Get-Member -InputObject $config -Name "runtimes" -MemberType Properties)) {
+            Add-Member -InputObject $config -MemberType NoteProperty -Name "runtimes" -Value @{
+                "nvidia" = @{
+                    "path" = "nvidia-container-runtime"
+                    "runtimeArgs" = @()
                 }
             }
+            $modified = $true
         }
-        else {            # Simple syntax check if PSScriptAnalyzer is not available
-            $errors = $null
-            $tokens = $null
-            $parseResult = [System.Management.Automation.Language.Parser]::ParseFile($FilePath, [ref]$tokens, [ref]$errors)
-
-            foreach ($parseError in $errors) {
-                $problems += [PSCustomObject]@{
-                    FilePath = $FilePath
-                    Line = $parseError.Extent.StartLineNumber
-                    Column = $parseError.Extent.StartColumnNumber
-                    Type = 'error'
-                    Message = $parseError.Message
-                    RuleId = 'SyntaxError'
-                }
+        elseif (-not ($config.runtimes.PSObject.Properties.Name -contains "nvidia")) {
+            $config.runtimes | Add-Member -MemberType NoteProperty -Name "nvidia" -Value @{
+                "path" = "nvidia-container-runtime"
+                "runtimeArgs" = @()
             }
+            $modified = $true
         }
-    }
-    catch {
-        $problems += [PSCustomObject]@{
-            FilePath = $FilePath
-            Line = 0
-            Column = 0
-            Type = 'error'
-            Message = "Failed to analyze file: $_"
-            RuleId = 'AnalysisError'
-        }
-    }
 
-    return $problems
-}
+        # Set as default runtime
+        if (-not (Get-Member -InputObject $config -Name "default-runtime" -MemberType Properties) -or
+            $config."default-runtime" -ne "nvidia") {
 
-function Get-CSharpProblems {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)]
-        [string]$FilePath
-    )
-
-    # This is a placeholder - in a real implementation, you might call
-    # a C# analyzer or parse compiler output
-    return @()
-}
-
-function Get-PythonProblems {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)]
-        [string]$FilePath
-    )
-
-    # This is a placeholder - in a real implementation, you might call
-    # flake8, pylint, or another Python linter
-    return @()
-}
-
-function Get-MarkdownProblems {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)]
-        [string]$FilePath
-    )
-
-    # This is a placeholder - in a real implementation, you might call
-    # markdownlint or another Markdown linter
-    return @()
-}
-
-function Get-GenericFileProblems {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)]
-        [string]$FilePath
-    )
-
-    # Check for basic problems like file size, encoding issues, etc.
-    $problems = @()
-
-    # Check file size
-    $fileInfo = Get-Item -Path $FilePath
-    if ($fileInfo.Length -gt 10MB) {
-        $problems += [PSCustomObject]@{
-            FilePath = $FilePath
-            Line = 0
-            Column = 0
-            Type = 'warning'
-            Message = "File size is large: $([Math]::Round($fileInfo.Length / 1MB, 2)) MB"
-            RuleId = 'FileSizeWarning'
-        }
-    }
-
-    # Check for trailing whitespace or BOM issues
-    try {
-        $content = Get-Content -Path $FilePath -Raw -ErrorAction Stop
-
-        if ($content -match "\r\n" -and $content -match "\n[^\r]") {
-            $problems += [PSCustomObject]@{
-                FilePath = $FilePath
-                Line = 0
-                Column = 0
-                Type = 'warning'
-                Message = "File contains mixed line endings (CRLF and LF)"
-                RuleId = 'MixedLineEndings'
+            if ((Get-Member -InputObject $config -Name "default-runtime" -MemberType Properties)) {
+                $config."default-runtime" = "nvidia"
             }
-        }
-
-        if ($content -match "\s+$") {
-            $problems += [PSCustomObject]@{
-                FilePath = $FilePath
-                Line = 0
-                Column = 0
-                Type = 'info'
-                Message = "File contains trailing whitespace"
-                RuleId = 'TrailingWhitespace'
+            else {
+                Add-Member -InputObject $config -MemberType NoteProperty -Name "default-runtime" -Value "nvidia"
             }
-        }
-    }
-    catch {
-        $problems += [PSCustomObject]@{
-            FilePath = $FilePath
-            Line = 0
-            Column = 0
-            Type = 'error'
-            Message = "Failed to analyze file: $_"
-            RuleId = 'AnalysisError'
+            $modified = $true
         }
     }
 
-    return $problems
-}
-
-function Update-DirTagFromProblems {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)]
-        [string]$DirectoryPath,
-
-        [Parameter(Mandatory = $false)]
-        [switch]$Force
-    )
-
-    # Import DirTagManagement module
-    $modulePath = Join-Path -Path $PSScriptRoot -ChildPath 'DirTagManagement.psm1'
-    if (-not (Test-Path $modulePath)) {
-        Write-Error "DirTagManagement.psm1 not found at $modulePath"
-        return $false
-    }
-    Import-Module $modulePath -Force
-
-    # Get problems in the directory
-    $problems = Get-DirectoryProblems -DirectoryPath $DirectoryPath
-
-    if ($problems.Count -eq 0) {
-        Write-Verbose "No problems found in $DirectoryPath"
+    # Save the configuration if modified
+    if ($modified -or $Force) {
+        $config | ConvertTo-Json -Depth 10 | Set-Content -Path $daemonConfigPath -Force
+        Write-Host "Docker configuration updated. Please restart Docker Desktop for changes to take effect." -ForegroundColor Yellow
         return $true
     }
-
-    # Get problem configuration
-    $problemConfig = Get-ProblemConfig
-    if (-not $problemConfig) {
-        Write-Warning "Problem configuration not found, using default mapping"
-        $problemMapping = @{
-            'error' = 'OUTSTANDING'
-            'warning' = 'PARTIALLY_COMPLETE'
-            'info' = 'NOT_STARTED'
-        }
-    }
     else {
-        $problemMapping = @{}
-        foreach ($type in $problemConfig.problem_type) {
-            $problemMapping[$type.name] = $type.status
-        }
-    }
-
-    # Determine the status based on the highest priority problem
-    $status = 'DONE' # Default if no problems
-    foreach ($priority in @('error', 'warning', 'info')) {
-        if ($problems | Where-Object { $_.Type -eq $priority }) {
-            $status = $problemMapping[$priority]
-            break
-        }
-    }
-
-    # Get current DIR.TAG content or create a new one
-    $tagFilePath = Join-Path -Path $DirectoryPath -ChildPath "DIR.TAG"
-    $todoItems = @()
-
-    if (Test-Path $tagFilePath) {
-        $content = Get-Content -Path $tagFilePath -Raw
-
-        # Extract existing TODO items
-        if ($content -match '#TODO:\s*\n((?:\s*-\s*.+\n)+)') {
-            $todoItems = $matches[1] -split "`n" |
-                Where-Object { $_ -match '\s*-\s*(.+)' } |
-                ForEach-Object { $matches[1].Trim() }
-        }
-
-        # Append problem-related TODO items
-        $problemsByType = $problems | Group-Object -Property Type
-        foreach ($type in $problemsByType) {
-            $todoItems += "Fix $($type.Count) $($type.Name) issues in directory [OUTSTANDING]"
-        }        # Update the DIR.TAG
-        $result = Update-DirTag -DirectoryPath $DirectoryPath -Status $status -TodoItems $todoItems -Force:$Force
-
-        # Handle both boolean and object results for backward compatibility
-        $isSuccess = Convert-DirTagResultToBool -Result $result
-
-        if ($isSuccess) {
-            Write-Verbose "Updated DIR.TAG in $DirectoryPath with problem information"
-
-            # If it's a result object, log any messages
-            if ($result.PSObject.Properties.Name -contains 'Message') {
-                Write-Verbose $result.Message
-            }
-
-            return $true
-        }
-        else {
-            $message = "Failed to update DIR.TAG in $DirectoryPath"
-
-            # If it's a result object, include the error message
-            if ($result.PSObject.Properties.Name -contains 'Message') {
-                $message += ": $($result.Message)"
-            }
-
-            Write-Warning $message
-            return $false
-        }
-    }
-    else {
-        # Append problem-related TODO items
-        $problemsByType = $problems | Group-Object -Property Type
-        foreach ($type in $problemsByType) {
-            $todoItems += "Fix $($type.Count) $($type.Name) issues in directory [OUTSTANDING]"
-        }
-
-        # Create a new DIR.TAG
-        $description = "Directory with $($problems.Count) identified problems"
-        $result = New-DirTag -DirectoryPath $DirectoryPath -Status $status -Description $description -TodoItems $todoItems -Force:$Force
-
-        if ($result) {
-            Write-Verbose "Created DIR.TAG in $DirectoryPath with problem information"
-            return $true
-        }
-        else {
-            Write-Warning "Failed to create DIR.TAG in $DirectoryPath"
-            return $false
-        }
-    }
-}
-
-# Add support for the enhanced Update-DirTag function
-function Convert-DirTagResultToBool {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-        [PSCustomObject]$Result
-    )
-
-    process {
-        # If it's already a boolean, return it
-        if ($Result -is [bool]) {
-            return $Result
-        }
-
-        # If it's a proper result object, check Success property
-        if ($Result.PSObject.Properties.Name -contains 'Success') {
-            return $Result.Success
-        }
-
-        # If it's a proper result object, check StatusCode property
-        if ($Result.PSObject.Properties.Name -contains 'StatusCode') {
-            return $Result.StatusCode -eq [DirTagStatusCode]::Success
-        }
-
-        # Default fallback to avoid runtime errors
+        Write-Host "Docker configuration is already optimized." -ForegroundColor Green
         return $false
     }
 }
-
-# Export the functions
-Export-ModuleMember -Function Get-ProblemConfig, Get-DirectoryProblems, Update-DirTagFromProblems
