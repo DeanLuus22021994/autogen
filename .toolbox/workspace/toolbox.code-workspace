@@ -1,0 +1,138 @@
+{
+    "folders": [
+        {
+            "name": "Toolbox Root",
+            "path": ".."
+        },
+        {
+            "name": "Modules",
+            "path": "../modules"
+        },
+        {
+            "name": "Configuration",
+            "path": "../config"
+        },
+        {
+            "name": "Docker",
+            "path": "../docker"
+        },
+        {
+            "name": "GitHub",
+            "path": "../github"
+        },
+        {
+            "name": "Markdown",
+            "path": "../markdown"
+        },
+        {
+            "name": "Security",
+            "path": "../security"
+        },
+        {
+            "name": "Environment",
+            "path": "../environment"
+        },
+        {
+            "name": "Testing",
+            "path": "../testing"
+        }
+    ],
+    "settings": {
+        "files.exclude": {
+            "**/.git": true,
+            "**/.svn": true,
+            "**/.hg": true,
+            "**/CVS": true,
+            "**/.DS_Store": true,
+            "**/Thumbs.db": true,
+            "**/*.pyc": true,
+            "**/__pycache__": true
+        },
+        "powershell.codeFormatting.preset": "OTBS",
+        "powershell.scriptAnalysis.enable": true,
+        "editor.formatOnSave": true
+    },
+    "tasks": {
+        "version": "2.0.0",
+        "tasks": [
+            {
+                "label": "Update DIR.TAG Files",
+                "type": "shell",
+                "command": "pwsh",
+                "args": [
+                    "-File",
+                    "${workspaceFolder}/../config/Sync-DirTagConfig.ps1",
+                    "-UpdateAll"
+                ],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                }
+            },
+            {
+                "label": "Validate DIR.TAG Structure",
+                "type": "shell",
+                "command": "pwsh",
+                "args": [
+                    "-File",
+                    "${workspaceFolder}/../config/Sync-DirTagConfig.ps1"
+                ],
+                "group": {
+                    "kind": "test",
+                    "isDefault": true
+                }
+            },
+            {
+                "label": "Run All Tests",
+                "type": "shell",
+                "command": "pwsh",
+                "args": [
+                    "-Command",
+                    "Invoke-Pester -Path ${workspaceFolder}/../modules/*.Tests.ps1 -Output Detailed"
+                ],
+                "group": "test"
+            },
+            {
+                "label": "Fix Docker Model Integration",
+                "type": "shell",
+                "command": "pwsh",
+                "args": [
+                    "-File",
+                    "${workspaceFolder}/../docker/Fix-DockerModelIntegration.ps1"
+                ],
+                "group": "build"
+            },
+            {
+                "label": "Fix GitHub Workflows",
+                "type": "shell",
+                "command": "pwsh",
+                "args": [
+                    "-File",
+                    "${workspaceFolder}/../github/Fix-GitHubWorkflows.ps1"
+                ],
+                "group": "build"
+            }
+        ]
+    },
+    "launch": {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "name": "PowerShell: Launch Current File",
+                "type": "PowerShell",
+                "request": "launch",
+                "script": "${file}",
+                "cwd": "${file}"
+            }
+        ]
+    },
+    "extensions": {
+        "recommendations": [
+            "ms-vscode.powershell",
+            "streetsidesoftware.code-spell-checker",
+            "redhat.vscode-yaml",
+            "davidanson.vscode-markdownlint",
+            "editorconfig.editorconfig"
+        ]
+    }
+}

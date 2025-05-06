@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dir_tag_configuration>
+  <settings>
+    <auto_sync>true</auto_sync>
+    <verify_guids>true</verify_guids>
+    <update_timestamp>true</update_timestamp>
+    <default_status>NOT_STARTED</default_status>
+    <exclude_patterns>
+      <pattern>.git</pattern>
+      <pattern>node_modules</pattern>
+      <pattern>bin</pattern>
+      <pattern>obj</pattern>
+      <pattern>packages</pattern>
+    </exclude_patterns>
+  </settings>
+  <statuses>
+    <status>
+      <value>NOT_STARTED</value>
+      <description>Work has not begun on this component</description>
+      <color>#888888</color>
+    </status>
+    <status>
+      <value>PARTIALLY_COMPLETE</value>
+      <description>Work has begun but is not complete</description>
+      <color>#FFA500</color>
+    </status>
+    <status>
+      <value>DONE</value>
+      <description>Work is complete on this component</description>
+      <color>#00AA00</color>
+    </status>
+    <status>
+      <value>OUTSTANDING</value>
+      <description>There are outstanding issues that need attention</description>
+      <color>#FF0000</color>
+    </status>
+  </statuses>
+  <todo_statuses>
+    <status>
+      <value>NOT_STARTED</value>
+      <description>Task has not been started</description>
+    </status>
+    <status>
+      <value>IN_PROGRESS</value>
+      <description>Task is currently being worked on</description>
+    </status>
+    <status>
+      <value>DONE</value>
+      <description>Task has been completed</description>
+    </status>
+    <status>
+      <value>BLOCKED</value>
+      <description>Task is blocked by an external dependency</description>
+    </status>
+    <status>
+      <value>OUTSTANDING</value>
+      <description>Task has issues that need attention</description>
+    </status>
+  </todo_statuses>
+  <problem_mapping>
+    <problem_type>
+      <name>error</name>
+      <status>OUTSTANDING</status>
+      <priority>high</priority>
+    </problem_type>
+    <problem_type>
+      <name>warning</name>
+      <status>PARTIALLY_COMPLETE</status>
+      <priority>medium</priority>
+    </problem_type>
+    <problem_type>
+      <name>info</name>
+      <status>NOT_STARTED</status>
+      <priority>low</priority>
+    </problem_type>
+  </problem_mapping>
+</dir_tag_configuration>

@@ -3,16 +3,6 @@
 # IMPORTANT: Only run this after verifying the .toolbox migration is complete and working correctly
 
 param(
-    [switch]$WhatIf = $false,
-    [switch]$Force = $false,
-    [switch]$Confirm = $true
-)
-
-Write-Host "Cleaning up original files after .toolbox migration..." -ForegroundColor Cyan
-
-
-# Optionally load migrated files from config or parameter
-param(
     [string[]]$MigratedFiles = @(
         "fix-docker-model-integration.ps1",
         "update-docker-extension-model-runner.ps1",
@@ -30,8 +20,10 @@ param(
     ),
     [switch]$WhatIf = $false,
     [switch]$Force = $false,
-    [switch]$Confirm = $true
+    [switch]$Confirm
 )
+
+Write-Host "Cleaning up original files after .toolbox migration..." -ForegroundColor Cyan
 
 Import-Module "$PSScriptRoot\modules\FileRemoval.psm1" -Force
 
