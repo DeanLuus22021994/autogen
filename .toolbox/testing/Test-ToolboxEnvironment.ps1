@@ -217,14 +217,14 @@ try {
                 $schema.Add($null, $schemaPath) | Out-Null
                 $catalog.Schemas = $schema
 
-                $errorOccurred = $false
+                $validationErrors = @()
                 $catalog.Validate({
-                    param($sender, $e)
+                    param($s, $e)
+                    $validationErrors += $e.Message
                     Write-Host "    XML Validation Error: $($e.Message)" -ForegroundColor Red
-                    $errorOccurred = $true
                 })
 
-                if ($errorOccurred) {
+                if ($validationErrors.Count -gt 0) {
                     Write-Host "FAILED" -ForegroundColor Red
                     Write-Host "    Catalog validation against schema failed" -ForegroundColor Red
                     return $false
