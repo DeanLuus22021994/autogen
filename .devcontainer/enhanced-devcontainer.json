@@ -1,0 +1,73 @@
+{
+    "name": "AutoGen Enhanced DevContainer",
+    "dockerComposeFile": "enhanced-docker-compose.yml",
+    "service": "devcontainer",
+    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+
+    // Environment variables with appropriate passthrough
+    "remoteEnv": {
+        "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}",
+        "FORK_AUTOGEN_OWNER": "${localEnv:FORK_AUTOGEN_OWNER}",
+        "FORK_AUTOGEN_SSH_REPO_URL": "${localEnv:FORK_AUTOGEN_SSH_REPO_URL}",
+        "FORK_AUTOGEN_USER_PERSONAL_ACCESS_TOKEN": "${localEnv:FORK_AUTOGEN_USER_PERSONAL_ACCESS_TOKEN}",
+        "FORK_AUTOGEN_USER_DOCKER_USERNAME": "${localEnv:FORK_AUTOGEN_USER_DOCKER_USERNAME}",
+        "FORK_USER_DOCKER_ACCESS_TOKEN": "${localEnv:FORK_USER_DOCKER_ACCESS_TOKEN}",
+        "FORK_HUGGINGFACE_ACCESS_TOKEN": "${localEnv:FORK_HUGGINGFACE_ACCESS_TOKEN}"
+    },
+
+    // Container features - minimal to reduce footprint
+    "features": {
+        // Docker access from within container
+        "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+            "moby": true,
+            "installDockerBuildx": true,
+            "version": "latest",
+            "dockerDashComposeVersion": "none"
+        },
+        // Git is essential
+        "ghcr.io/devcontainers/features/git:1": {}
+    },
+
+    // Use enhanced startup script
+    "postCreateCommand": "bash .devcontainer/enhanced-startup.sh",
+
+    // Run as root for appropriate permissions
+    "remoteUser": "root",
+
+    // VS Code customizations
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.debugpy",
+                "GitHub.copilot",
+                "ms-dotnettools.csdevkit",
+                "ms-dotnettools.vscodeintellicode-csharp",
+                "github.vscode-github-actions",
+                "ms-azuretools.vscode-docker"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "/workspaces/autogen/python/.venv/bin/python",
+                "python.linting.enabled": true,
+                "python.linting.pylintEnabled": true,
+                "dotnet.preferCSharpExtension": true,
+                "editor.formatOnSave": true,
+                "editor.rulers": [100],
+                "files.insertFinalNewline": true,
+                "files.trimTrailingWhitespace": true
+            }
+        }
+    },
+
+    // Lifecycle and shutdown handling
+    "shutdownAction": "none", // Prevents automatic container shutdown
+    "waitFor": "onCreateCommand", // Wait for container creation to complete
+
+    // Additional metadata
+    "portsAttributes": {
+        "5000": {
+            "label": "Web App",
+            "onAutoForward": "notify"
+        }
+    }
+}

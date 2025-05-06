@@ -1,0 +1,83 @@
+# DevContainer Dockerfile for AutoGen with Docker Model Runner support
+# Enhanced for permanent operation with precompiled code in volumes
+
+FROM mcr.microsoft.com/devcontainers/base:ubuntu
+
+# Arguments for customization
+ARG PYTHON_VERSION=3.10
+ARG DOTNET_VERSION=8.0
+ARG USERNAME=vscode
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+
+# Environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PATH="${PATH}:/home/${USERNAME}/.local/bin" \
+    DEBIAN_FRONTEND=noninteractive \
+    MODEL_RUNNER_ENDPOINT="http://model-runner.docker.internal/engines/v1/chat/completions" \
+    DOTNET_SKIP_FIRST_TIME_EXPERIENCE=true
+
+# Install system packages
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    git curl wget unzip zip bzip2 \
+    make build-essential libssl-dev zlib1g-dev \
+    libbz2-dev libreadline-dev libsqlite3-dev \
+    libncursesw5-dev xz-utils tk-dev libxml2-dev \
+    libxmlsec1-dev libffi-dev liblzma-dev \
+    python3-openssl libpq-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Python
+RUN if [ "${PYTHON_VERSION}" != "system" ]; then \
+        curl -sSL https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -o /tmp/miniconda.sh && \
+        bash /tmp/miniconda.sh -bfp /usr/local && \
+        rm -rf /tmp/miniconda.sh && \
+        conda install -y python=${PYTHON_VERSION} && \
+        conda clean -ya && \
+        pip install --no-cache-dir --upgrade pip setuptools wheel; \
+    fi
+
+# Install .NET SDK
+RUN curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel ${DOTNET_VERSION} --install-dir /usr/share/dotnet && \
+    ln -s /usr/share/dotnet/dotnet /usr/local/bin
+
+# Create a non-root user with sudo access
+RUN groupadd --gid $USER_GID $USERNAME && \
+    useradd --uid $USER_UID --gid $USER_GID -m $USERNAME && \
+    apt-get update && \
+    apt-get install -y sudo && \
+    echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME && \
+    chmod 0440 /etc/sudoers.d/$USERNAME && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set up docker CLI
+COPY --from=docker:latest /usr/local/bin/docker /usr/local/bin/
+
+# Create directories for persisting data
+RUN mkdir -p /opt/autogen/python/packages/.compiled && \
+    mkdir -p /opt/autogen/dotnet/artifacts && \
+    mkdir -p /opt/autogen/models/cache && \
+    chown -R ${USERNAME}:${USERNAME} /opt/autogen
+
+# Add script for Docker Model Runner verification
+COPY verify-model-runner.sh /usr/local/bin/verify-model-runner.sh
+RUN chmod +x /usr/local/bin/verify-model-runner.sh
+
+# Switch to non-root user
+USER $USERNAME
+
+# Install Python package management tools
+RUN pip install --no-cache-dir uv
+
+# Cleanup and finalization
+USER root
+RUN apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Switch back to non-root user for security
+USER $USERNAME
+WORKDIR /workspaces
