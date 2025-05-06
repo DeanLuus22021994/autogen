@@ -319,30 +319,27 @@
     {
       "label": "Toolbox: Docker Model Integration Fix",
       "group": "build",
-      "type": "shell",
-      "args": [
+      "type": "shell",      "args": [
         "-File",
-        "\\.toolbox\\docker\\Fix-DockerModelIntegration.ps1"
+        "${workspaceFolder}\\.toolbox\\docker\\Fix-DockerModelIntegration.ps1"
       ],
       "command": "pwsh"
     },
     {
       "label": "Toolbox: GitHub Workflows Fix",
       "group": "build",
-      "type": "shell",
-      "args": [
+      "type": "shell",      "args": [
         "-File",
-        "\\.toolbox\\github\\Fix-GitHubWorkflows.ps1"
+        "${workspaceFolder}\\.toolbox\\github\\Fix-GitHubWorkflows.ps1"
       ],
       "command": "pwsh"
     },
     {
       "label": "Toolbox: List Available Tools",
       "group": "none",
-      "type": "shell",
-      "args": [
+      "type": "shell",      "args": [
         "-File",
-        "\\.scripts\\toolbox\\Get-AvailableTools.ps1"
+        "${workspaceFolder}\\.scripts\\toolbox\\Get-AvailableTools.ps1"
       ],
       "command": "pwsh"
     }

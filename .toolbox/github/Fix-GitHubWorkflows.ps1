@@ -149,7 +149,7 @@ jobs:
 
 # Fix the README.md file for Docker Model Runner
 function Fix-DockerReadmeFile {
-    $filePath = "c:\Projects\autogen\autogen_extensions\docker\README.md"
+    $filePath = "$PSScriptRoot\..\..\autogen_extensions\docker\README.md"
 
     # Read the content of the file
     $content = Get-Content -Path $filePath -Raw
@@ -164,7 +164,7 @@ function Fix-DockerReadmeFile {
 
 # Create an XML configuration file for Docker documentation
 function Create-DockerDocumentationXML {
-    $filePath = "c:\Projects\autogen\.config\host\docker_documentation.xml"
+    $filePath = "$PSScriptRoot\..\..\\.config\host\docker_documentation.xml"
 
     # Create the directory if it doesn't exist
     $directory = [System.IO.Path]::GetDirectoryName($filePath)
@@ -236,7 +236,7 @@ function Create-DockerDocumentationXML {
 
 # Create XML schema for Docker documentation
 function Create-DockerDocumentationSchema {
-    $filePath = "c:\Projects\autogen\.github\schemas\docker_documentation_schema.xsd"
+    $filePath = "$PSScriptRoot\..\..\\.github\schemas\docker_documentation_schema.xsd"
 
     # Create the directory if it doesn't exist
     $directory = [System.IO.Path]::GetDirectoryName($filePath)
