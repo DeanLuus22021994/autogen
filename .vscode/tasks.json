@@ -407,6 +407,99 @@
       "args": [
         "${workspaceFolder}\\.toolbox\\workspace\\toolbox.code-workspace"
       ]
+    },
+    // DIR.TAG Toolbox Tasks
+    {
+      "label": "Toolbox: Update DIR.TAG Files",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-File",
+        "${workspaceFolder}\\.toolbox\\config\\Sync-DirTagConfig.ps1",
+        "-UpdateAll"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "focus": true
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Toolbox: Sync DIR.TAG with Problems",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-File",
+        "${workspaceFolder}\\.toolbox\\config\\Sync-DirTagProblems.ps1"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "focus": true
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Toolbox: Generate DIR.TAG Report",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-File",
+        "${workspaceFolder}\\.toolbox\\config\\Generate-DirTagReport.ps1"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "focus": true
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Toolbox: Run All DIR.TAG Tests",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-Command",
+        "Invoke-Pester -Path \"${workspaceFolder}\\.toolbox\\modules\\*.Tests.ps1\" -Output Detailed"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "focus": true
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Toolbox: Open Toolbox Workspace",
+      "type": "shell",
+      "command": "code",
+      "args": [
+        "${workspaceFolder}\\.toolbox\\workspace\\toolbox.code-workspace"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "focus": false
+      },
+      "group": "none",
+      "problemMatcher": []
     }
   ],
   "inputs": [
