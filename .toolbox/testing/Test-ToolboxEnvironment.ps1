@@ -420,7 +420,6 @@ try {
                         }
 
                         # Add the tool to the category with improved XML handling
-                        $toolsElement = $categoryElement.SelectSingleNode("tools") ?? $categoryElement
                         $toolElement = New-XmlElement -Document $catalog -ElementName "tool"
 
                         # Add tool properties using cleaner pipeline approach
