@@ -69,12 +69,12 @@ The implementation includes several key optimizations:
 The implementation integrates with Docker Model Runner, allowing you to:
 
 1. Pull the smoll2 model:
-   ```
+   ```bash
    docker model pull ai/smoll2:latest
    ```
 
 2. Run the model:
-   ```
+   ```bash
    docker model run ai/smoll2:latest
    ```
 

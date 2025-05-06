@@ -32,19 +32,12 @@ services:
 
     # Add extra host for Docker Model Runner
     extra_hosts:
-      - "model-runner.docker.internal:host-gateway"
-
-    # Resource limits - adjust as needed
+      - "model-runner.docker.internal:host-gateway"    # Resource limits - adjust as needed
     deploy:
       resources:
         limits:
           memory: 8G
           cpus: '4'
-          # GPU resource using the newer devices syntax
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
         reservations:
           memory: 1G
 
