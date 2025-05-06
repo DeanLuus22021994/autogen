@@ -1,10 +1,12 @@
-#INDEX: .toolbox/security
+#INDEX: C:/Projects/autogen/.toolbox/security
+#GUID: ba54bc35-65ec-409b-8a8e-c2928dabb548
 #TODO:
   - Enhance secret scanning capabilities NOT_STARTED
   - Add vulnerability checking tools NOT_STARTED
   - Implement credential rotation automation NOT_STARTED
+
 status: PARTIALLY_COMPLETE
-updated: 2025-05-06T00:00:00Z
+updated: 2025-05-06T04:02:51Z
 description: |
   Security management tools for AutoGen.
   Contains scripts for validating secrets, securing GitHub tokens,

@@ -1,4 +1,5 @@
-#INDEX: .config/devcontainer
+#INDEX: C:/Projects/autogen/.config/devcontainer
+#GUID: 7c5cfb40-a273-4252-8674-5245bc4fa1fc
 #TODO:
   - Complete XML migration for all config files [DONE]
   - Remove legacy .config and .txt files [DONE]
@@ -7,8 +8,9 @@
   - Document Docker image references for local development [DONE]
   - Automate DIR.TAG propagation and update [OUTSTANDING]
   - Migrate from Ollama to Docker Model Runner [OUTSTANDING]
+
 status: PARTIALLY_COMPLETE
-updated: 2025-05-06T00:10:00Z
+updated: 2025-05-06T04:02:50Z
 description: |
   All configuration files are now XML. DIR.TAG and .gitkeep files are present.
   Docker Model Runner is documented for AI model integration.
@@ -26,4 +28,3 @@ description: |
   ## Usage
   1. Ensure Docker Desktop 4.40+ is installed
   2. Enable Docker Model Runner in Docker Desktop settings
-  3. Use the CLI: `docker model pull/run ai/model-name`
