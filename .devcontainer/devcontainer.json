@@ -26,8 +26,8 @@
         "ghcr.io/devcontainers/features/python:1": {},
         "ghcr.io/devcontainers/features/git-lfs:1": {}
     },
-    // Use 'forwardPorts' to make a list of ports inside the container available locally.
-    // "forwardPorts": [],
+    // Forward ports for model servers and AutoGen Studio
+    "forwardPorts": [8000, 8080, 3000],
 
     // Use 'postCreateCommand' to run commands after the container is created.
     "postCreateCommand": "bash .devcontainer/startup.sh",
