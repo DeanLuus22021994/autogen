@@ -10,7 +10,8 @@
 	"hostRequirements": {
 		"cpus": 4,
 		"memory": "8gb",
-		"storage": "32gb"
+		"storage": "32gb",
+		"gpu":"optional"
 	},
 
 	// Use this environment variable if you need to bind mount your local source code into a new container.
@@ -82,5 +83,4 @@
 	// Performance optimization flags
 	"waitFor": "updateContentCommand",
 	"updateContentCommand": "echo 'Container is ready!' > /tmp/container-ready"
-}
 }
