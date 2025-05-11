@@ -11,12 +11,22 @@
 		"cpus": 4,
 		"memory": "8gb",
 		"storage": "32gb",
-		"gpu":"optional"
+		"gpu": "optional"
 	},
+
+	// Docker-specific optimization settings
+	"initializeCommand": [
+		"powershell.exe -Command \"if (-not (Test-Path ${localWorkspaceFolder}\\.docker-cache)) { New-Item -ItemType Directory -Path ${localWorkspaceFolder}\\.docker-cache -Force }\"",
+		"powershell.exe -Command \"if (-not (Test-Path $env:TEMP\\autogen-deps)) { New-Item -ItemType Directory -Path $env:TEMP\\autogen-deps -Force }\""
+	],
 
 	// Use this environment variable if you need to bind mount your local source code into a new container.
 	"remoteEnv": {
-		"LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
+		"LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}",
+		"CACHE_MOUNT_POINT": "/tmp/autogen-deps",
+		"BUILDKIT_PROGRESS": "plain",
+		"DOCKER_BUILDKIT": "1",
+		"COMPOSE_DOCKER_CLI_BUILD": "1"
 	},
 
 	"features": {
@@ -52,6 +62,15 @@
 	// Use 'postCreateCommand' to run commands after the container is created.
 	"postCreateCommand": "bash .devcontainer/startup.sh",
 
+	// Use 'postStartCommand' for operations after container is started
+	"postStartCommand": "echo 'Container ready for development' > /dev/null",
+
+	// GPU passthrough environment variables for development
+	"containerEnv": {
+		"NVIDIA_VISIBLE_DEVICES": "all",
+		"NVIDIA_DRIVER_CAPABILITIES": "compute,utility"
+	},
+
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	"remoteUser": "root",
 	"customizations": {
@@ -75,7 +94,25 @@
 				"python.formatting.provider": "black",
 				"dotnet.server.useOmnisharp": true,
 				"editor.bracketPairColorization.enabled": true,
-				"terminal.integrated.defaultProfile.linux": "bash"
+				"terminal.integrated.defaultProfile.linux": "bash",
+				"files.watcherExclude": {
+					"**/.git/objects/**": true,
+					"**/.git/subtree-cache/**": true,
+					"**/node_modules/**": true,
+					"**/.venv/**": true,
+					"**/__pycache__/**": true,
+					"**/.*/**": true
+				},
+				"files.exclude": {
+					"**/__pycache__": true,
+					"**/.pytest_cache": true,
+					"**/*.egg-info": true
+				},
+				"search.exclude": {
+					"**/dist": true,
+					"**/.venv": true,
+					"**/node_modules": true
+				}
 			}
 		}
 	},

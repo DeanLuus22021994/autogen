@@ -1,61 +1,51 @@
 #!/bin/bash
 set -e
 
-# Create a timer to track startup performance
 start_time=$(date +%s)
-echo "Starting container setup..."
+MARKER_FILE="/tmp/container-initialized"
+[ -f "$MARKER_FILE" ] && {
+    echo "Container already initialized."
+    echo "Container is ready!" > /tmp/container-ready
+    echo "Container ready in 0 seconds (cached)."
+    exit 0
+}
 
-# Run dotnet and python setup in parallel
+configure_gpu() {
+    if [ -c /dev/nvidia0 ] || [ -d /proc/driver/nvidia ]; then
+        export NVIDIA_VISIBLE_DEVICES=all
+        export CUDA_VISIBLE_DEVICES=0
+        python3 -c 'import ctypes; ctypes.CDLL("libcuda.so.1")' || true
+    fi
+}
+
 setup_dotnet() {
-  echo "Setting up .NET environment..."
-  # Use restore instead of update for faster startup
-  dotnet workload restore
-  dotnet dev-certs https --trust
-  echo ".NET environment setup complete."
+    [ -d "/root/.nuget/packages" ] && [ "$(ls -A /root/.nuget/packages)" ] || dotnet workload restore
+    dotnet dev-certs https --trust
 }
 
 setup_python() {
-  echo "Setting up Python environment..."
-  # shellcheck disable=SC2164
-  pushd python
-  # Use uv for faster package installation
-  if [ ! -f .venv/bin/activate ]; then
-    echo "Creating Python virtual environment..."
-    python -m pip install --upgrade pip
-    pip install uv
-    uv venv
-  fi
-  
-  # Only run sync if packages have changed (check timestamp of pyproject.toml)
-  if [ ! -f .venv/.last_sync ] || [ pyproject.toml -nt .venv/.last_sync ]; then
-    echo "Syncing Python packages..."
-    uv pip sync
-    touch .venv/.last_sync
-  else
-    echo "Python packages already up to date."
-  fi
-  
-  # shellcheck disable=SC1091
-  source .venv/bin/activate
-  
-  # Only update PATH if not already done
-  if ! grep -q "$(pwd)/.venv/bin" ~/.bashrc; then
-    echo "export PATH=$PATH:$(pwd)/.venv/bin" >> ~/.bashrc
-  fi
-  
-  # shellcheck disable=SC2164
-  popd
-  echo "Python environment setup complete."
+    local py_dir="/workspaces/autogen/python"
+    [ -d ../python ] && py_dir="../python" || [ -d ./python ] && py_dir="./python"
+    [ -d "$py_dir" ] || return
+    cd "$py_dir"
+    [ -f .venv/bin/activate ] || {
+        python3 -m pip install --upgrade pip
+        command -v uv &>/dev/null || pip install uv
+        uv venv --system-site-packages .venv
+    }
+    if [ ! -f .venv/.last_sync ] || [ pyproject.toml -nt .venv/.last_sync ] || [ uv.lock -nt .venv/.last_sync ]; then
+        uv pip sync --no-cache-dir --jobs "$(nproc)"
+        touch .venv/.last_sync
+    fi
+    source .venv/bin/activate
+    grep -q "$(pwd)/.venv/bin" ~/.bashrc || echo "export PATH=\$PATH:$(pwd)/.venv/bin" >> ~/.bashrc
+    cd - >/dev/null
 }
 
-# Run setup functions in parallel
+configure_gpu
 setup_dotnet &
 setup_python &
-
-# Wait for all background jobs to complete
 wait
-
-# Display total setup time
-end_time=$(date +%s)
-elapsed=$((end_time - start_time))
-echo "Container setup completed in ${elapsed} seconds."
+touch "$MARKER_FILE"
+echo "Container is ready!" > /tmp/container-ready
+echo "Container setup completed in $(( $(date +%s) - start_time )) seconds."
