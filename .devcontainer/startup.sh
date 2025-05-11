@@ -49,3 +49,4 @@ wait
 touch "$MARKER_FILE"
 echo "Container is ready!" > /tmp/container-ready
 echo "Container setup completed in $(( $(date +%s) - start_time )) seconds."
+

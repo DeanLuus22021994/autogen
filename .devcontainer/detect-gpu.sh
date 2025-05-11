@@ -46,3 +46,4 @@ echo ""
 echo "To verify GPU access in Python, you can run:"
 echo "python3 -c 'import subprocess; subprocess.run([\"nvidia-smi\"], check=False)'"
 echo ""
+
