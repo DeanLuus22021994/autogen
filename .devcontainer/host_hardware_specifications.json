@@ -1,0 +1,29 @@
+{
+    "developmentHostSpecifications": {
+        "systemResources": {
+            "machineModel": "MSI Katana 15 B13UDXK (GF family)",
+            "cpu": "Intel Core i7-13620H (10 cores/16 threads, 2.4GHz, 9.7MB L2, 24MB L3)",
+            "ram": "16GB (2×8GB SK Hynix, 5600MHz/5200MHz)",
+            "primaryGpu": "NVIDIA RTX 3050 (6GB, Driver 572.16)",
+            "secondaryGpu": "Intel UHD Graphics (Integrated, 1GB shared)",
+            "storage": "1TB Samsung 970 NVMe SSD (250GB free)",
+            "network": "Wi-Fi 6 AX201 (1Gbps)",
+            "os": "Windows 11 (10.0.26120, 64-bit)",
+            "display": "1920×1080 (144Hz)",
+            "python": "3.13.2",
+            "powerShell": "7.5.0"
+        },
+        "gpuAcceleration": {
+            "driver": "NVIDIA-SMI 572.16 (CUDA 12.8)",
+            "model": "NVIDIA GeForce RTX 3050 (WDDM)",
+            "busId": "00000000:01:00.0",
+            "displayEnabled": true,
+            "temperatureCelsius": 60,
+            "performanceLevel": "P0",
+            "powerUsageWatts": 61,
+            "vramUsageMiB": 6144,
+            "computeMode": "Default",
+            "migMode": "N/A"
+        }
+    }
+}

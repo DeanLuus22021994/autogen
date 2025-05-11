@@ -6,6 +6,13 @@
 	"service": "devcontainer",
 	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 
+	// Host requirements
+	"hostRequirements": {
+		"cpus": 4,
+		"memory": "8gb",
+		"storage": "32gb"
+	},
+
 	// Use this environment variable if you need to bind mount your local source code into a new container.
 	"remoteEnv": {
 		"LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
@@ -21,10 +28,23 @@
 		"ghcr.io/elanhasson/devcontainer-features/dotnet-aspire-daily:1": {},
 		"ghcr.io/devcontainers/features/azure-cli:1": {},
 		"ghcr.io/devcontainers/features/git:1": {},
-		"ghcr.io/devcontainers/features/dotnet:2": {},
+		"ghcr.io/devcontainers/features/dotnet:2": {
+			"installUsingApt": true,
+			"version": "latest"
+		},
 		"ghcr.io/azure/azure-dev/azd:0": {},
-		"ghcr.io/devcontainers/features/python:1": {}
+		"ghcr.io/devcontainers/features/python:1": {
+			"installTools": true,
+			"optimize": true,
+			"version": "3.11"
+		}
 	},
+	
+	// Performance optimization settings
+	"otherPortsAttributes": {
+		"onAutoForward": "silent"
+	},
+	
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 
@@ -41,8 +61,26 @@
 				"GitHub.copilot",
 				"ms-dotnettools.csdevkit",
 				"ms-dotnettools.vscodeintellicode-csharp",
-				"github.vscode-github-actions"
-			]
+				"github.vscode-github-actions",
+				"ms-azuretools.vscode-docker",
+				"streetsidesoftware.code-spell-checker",
+				"redhat.vscode-yaml",
+				"ms-vscode.powershell"
+			],
+			"settings": {
+				"files.autoSave": "afterDelay",
+				"editor.formatOnSave": true,
+				"python.linting.enabled": true,
+				"python.formatting.provider": "black",
+				"dotnet.server.useOmnisharp": true,
+				"editor.bracketPairColorization.enabled": true,
+				"terminal.integrated.defaultProfile.linux": "bash"
+			}
 		}
-	}
+	},
+	
+	// Performance optimization flags
+	"waitFor": "updateContentCommand",
+	"updateContentCommand": "echo 'Container is ready!' > /tmp/container-ready"
+}
 }
